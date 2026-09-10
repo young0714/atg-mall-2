@@ -4,6 +4,8 @@ import { pricingService } from "@/lib/services/pricingService";
 import { DESTINATIONS } from "@/lib/destination";
 import type { Country } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request, { params }: { params: { slug: string } }) {
   const { searchParams } = new URL(req.url);
   const destinationParam = (searchParams.get("destination") as Country) || "NIGERIA";

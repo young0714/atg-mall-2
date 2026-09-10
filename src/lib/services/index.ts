@@ -11,7 +11,7 @@ export { orderService } from "./orderService";
 export type { OrderService } from "./orderService";
 export { warehouseService } from "./warehouseService";
 export type { WarehouseService } from "./warehouseService";
-export { shippingService, SHIPPING_METHOD_LABELS, SHIPPING_METHOD_DESCRIPTIONS } from "./shippingService";
+export { shippingService } from "./shippingService";
 export type { ShippingService, ShippingQuote } from "./shippingService";
 export { trackingService, generateAtgNumber } from "./trackingService";
 export type { TrackingService, TrackingResult } from "./trackingService";

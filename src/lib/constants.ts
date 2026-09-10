@@ -2,7 +2,7 @@
 // "server-only" dependency so both server and client components can import
 // it — unlike the service layer under src/lib/services, which talks to the
 // database and must stay server-side.
-import type { ShippingMethod, Country, Role } from "@prisma/client";
+import type { ShippingMethod, Country, Currency, Role } from "@prisma/client";
 
 export const SHIPPING_METHOD_LABELS: Record<ShippingMethod, string> = {
   AIR_FREIGHT: "Air Freight",
@@ -18,6 +18,20 @@ export const SHIPPING_METHOD_DESCRIPTIONS: Record<ShippingMethod, string> = {
   COURIER: "Door-to-door express service via international courier, for small urgent parcels.",
   LCL: "Less-than-container-load sea freight — shared container, priced per cubic meter/kg.",
   FCL: "Full-container-load sea freight — for large wholesale/bulk shipments.",
+};
+
+export const DESTINATION_COOKIE = "atg_destination";
+
+export interface Destination {
+  country: Country;
+  currency: Currency;
+  label: string;
+  flag: string;
+}
+
+export const DESTINATIONS: Record<Country, Destination> = {
+  NIGERIA: { country: "NIGERIA", currency: "NGN", label: "Nigeria", flag: "🇳🇬" },
+  GAMBIA: { country: "GAMBIA", currency: "GMD", label: "Gambia", flag: "🇬🇲" },
 };
 
 export const COUNTRY_LABELS: Record<Country, string> = {

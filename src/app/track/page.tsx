@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Track your ATG Mall shipment with your ATG tracking number.",
 };
 
-function trackAction(formData: FormData) {
+async function trackAction(formData: FormData) {
   "use server";
   const trackingNumber = String(formData.get("trackingNumber") ?? "").trim();
   if (trackingNumber) redirect(`/track/${encodeURIComponent(trackingNumber)}`);

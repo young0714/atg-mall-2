@@ -13,7 +13,7 @@ export async function addAddressAction(formData: FormData) {
   const user = await requireUser();
   const parsed = addressSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid address" };
+    redirect("/checkout?error=" + encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid address"));
   }
 
   const existingCount = await db.address.count({ where: { userId: user.id } });

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { DESTINATION_COOKIE } from "@/lib/destination";
+import { DESTINATION_COOKIE } from "@/lib/constants";
 import type { Country } from "@prisma/client";
 
 const OPTIONS: { country: Country; label: string; flag: string }[] = [

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/v1/catalog/products?q=&category=&wholesale=&page=&pageSize=
  * Public product listing — the same query the web catalog page uses,

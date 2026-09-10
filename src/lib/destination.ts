@@ -1,20 +1,9 @@
 import "server-only";
 import { cookies } from "next/headers";
-import type { Country, Currency } from "@prisma/client";
+import { DESTINATION_COOKIE, DESTINATIONS, type Destination } from "@/lib/constants";
 
-export const DESTINATION_COOKIE = "atg_destination";
-
-export interface Destination {
-  country: Country;
-  currency: Currency;
-  label: string;
-  flag: string;
-}
-
-export const DESTINATIONS: Record<Country, Destination> = {
-  NIGERIA: { country: "NIGERIA", currency: "NGN", label: "Nigeria", flag: "🇳🇬" },
-  GAMBIA: { country: "GAMBIA", currency: "GMD", label: "Gambia", flag: "🇬🇲" },
-};
+export { DESTINATION_COOKIE, DESTINATIONS };
+export type { Destination };
 
 /** Reads the visitor's selected shopping destination from a cookie, defaulting to Nigeria. */
 export function getDestination(): Destination {
