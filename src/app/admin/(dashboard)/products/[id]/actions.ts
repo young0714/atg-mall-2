@@ -30,6 +30,9 @@ export async function updateProductAction(formData: FormData) {
       weightGrams: data.weightGrams,
       isWholesale: data.isWholesale,
       isFeatured: data.isFeatured,
+      sourcePlatform: data.sourcePlatform,
+      affiliateUrl: data.affiliateUrl || null,
+      affiliateProvider: data.affiliateProvider || null,
     },
   });
 

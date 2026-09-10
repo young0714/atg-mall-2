@@ -28,6 +28,9 @@ export async function createProductAction(formData: FormData) {
       weightGrams: data.weightGrams,
       isWholesale: data.isWholesale,
       isFeatured: data.isFeatured,
+      sourcePlatform: data.sourcePlatform,
+      affiliateUrl: data.affiliateUrl || null,
+      affiliateProvider: data.affiliateProvider || null,
       images: data.imageUrl ? { create: [{ url: data.imageUrl, sortOrder: 0 }] } : undefined,
     },
   });

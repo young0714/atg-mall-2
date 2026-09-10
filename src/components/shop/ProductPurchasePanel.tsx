@@ -23,6 +23,8 @@ export function ProductPurchasePanel({
   breakdown,
   imageUrl,
   productName,
+  affiliateUrl,
+  affiliateProvider,
 }: {
   productId: string;
   slug: string;
@@ -33,12 +35,40 @@ export function ProductPurchasePanel({
   breakdown: Breakdown;
   imageUrl: string | null;
   productName: string;
+  affiliateUrl?: string | null;
+  affiliateProvider?: string | null;
 }) {
   const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
   const [quantity, setQuantity] = useState(moq);
 
   const selectedVariant = variants.find((v) => v.id === variantId);
   const unitPrice = basePriceMinor + (selectedVariant?.priceDeltaMinor ?? 0);
+
+  if (affiliateUrl) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-navy-400">Price at partner</p>
+          <p className="text-2xl font-display font-bold text-navy-900">
+            {formatMoney(unitPrice, baseCurrency)}{" "}
+            <span className="text-sm font-normal text-navy-400">/ unit</span>
+          </p>
+        </div>
+        <p className="text-sm text-navy-500">
+          This item is sold and fulfilled by {affiliateProvider || "our partner"}, not ATG Mall directly. You&apos;ll
+          complete your purchase on their site.
+        </p>
+        <a
+          href={affiliateUrl}
+          target="_blank"
+          rel="noopener noreferrer sponsored"
+          className="btn-primary w-full text-center"
+        >
+          Buy from {affiliateProvider || "Partner"} →
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">

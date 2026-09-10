@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { notFound } from "next/navigation";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
+import { SOURCE_PLATFORM_LABELS } from "@/lib/sourcePlatform";
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
@@ -66,6 +67,19 @@ export default async function AdminProductDetailPage({
             <Select id="categoryId" name="categoryId" defaultValue={product.categoryId} required>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
+          </Field>
+          <Field label="Source" htmlFor="sourcePlatform" required>
+            <Select id="sourcePlatform" name="sourcePlatform" defaultValue={product.sourcePlatform} required>
+              {Object.entries(SOURCE_PLATFORM_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Affiliate URL" htmlFor="affiliateUrl" hint="Only used when Source = Affiliate">
+            <Input id="affiliateUrl" name="affiliateUrl" type="url" defaultValue={product.affiliateUrl ?? ""} />
+          </Field>
+          <Field label="Affiliate provider name" htmlFor="affiliateProvider" hint="e.g. Amazon, Jumia — shown on the Buy button">
+            <Input id="affiliateProvider" name="affiliateProvider" defaultValue={product.affiliateProvider ?? ""} />
           </Field>
           <Field label="Base price (minor units)" htmlFor="basePriceMinor" required hint="e.g. 3500 = ¥35.00">
             <Input id="basePriceMinor" name="basePriceMinor" type="number" defaultValue={product.basePriceMinor} required />

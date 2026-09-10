@@ -13,6 +13,7 @@ export interface ProductCardData {
   reviewCount: number;
   isWholesale: boolean;
   isFeatured: boolean;
+  isAffiliate: boolean;
   moq: number;
   estimatedLandedMinor: number;
   currency: Currency;
@@ -36,13 +37,16 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         <div className="absolute left-2 top-2 flex flex-col gap-1">
           {product.isFeatured && <Badge tone="gold">Trending</Badge>}
           {product.isWholesale && <Badge tone="blue">Wholesale</Badge>}
+          {product.isAffiliate && <Badge tone="neutral">Partner</Badge>}
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-1.5 p-4">
         <h3 className="line-clamp-2 text-sm font-semibold text-navy-900">{product.name}</h3>
         <StarRating rating={product.avgRating} reviewCount={product.reviewCount} size="sm" />
         <div className="mt-auto pt-2">
-          <p className="text-[11px] uppercase tracking-wide text-navy-400">Est. landed cost from</p>
+          <p className="text-[11px] uppercase tracking-wide text-navy-400">
+            {product.isAffiliate ? "Price at partner" : "Est. landed cost from"}
+          </p>
           <p className="text-lg font-display font-bold text-navy-900">
             {formatMoney(product.estimatedLandedMinor, product.currency)}
           </p>

@@ -109,6 +109,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 breakdown={breakdown}
                 imageUrl={product.images[0]?.url ?? null}
                 productName={product.name}
+                affiliateUrl={product.sourcePlatform === "AFFILIATE" ? product.affiliateUrl : null}
+                affiliateProvider={product.affiliateProvider}
               />
             </div>
 

@@ -81,6 +81,9 @@ export const productSchema = z.object({
   isWholesale: z.coerce.boolean().default(false),
   isFeatured: z.coerce.boolean().default(false),
   imageUrl: z.string().url().optional().or(z.literal("")),
+  sourcePlatform: z.enum(["ATG", "MOCK_1688", "MOCK_TAOBAO", "ALIBABA", "SELLER", "AFFILIATE"]).default("ATG"),
+  affiliateUrl: z.string().url().optional().or(z.literal("")),
+  affiliateProvider: z.string().optional().or(z.literal("")),
 });
 export type ProductInput = z.infer<typeof productSchema>;
 

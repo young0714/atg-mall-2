@@ -48,6 +48,12 @@ class DefaultOrderService implements OrderService {
     if (!cart || cart.items.length === 0) {
       throw new Error("Cart is empty");
     }
+    // Defense-in-depth: affiliate products should never reach here (blocked
+    // at the UI and in addToCartAction), but never let one become a normal
+    // ATG order if it somehow does.
+    if (cart.items.some((item) => item.product.sourcePlatform === "AFFILIATE")) {
+      throw new Error("Cart contains an affiliate product, which cannot be purchased through ATG Mall directly");
+    }
 
     // Cart items are priced in each product's supplier (base) currency —
     // almost always CNY. Convert every line into the order's currency before

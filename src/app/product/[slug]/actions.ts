@@ -16,6 +16,15 @@ export async function addToCartAction(formData: FormData) {
     redirect(`/login?next=/product/${formData.get("slug")}`);
   }
 
+  const product = await db.product.findUniqueOrThrow({ where: { id: productId } });
+  if (product.sourcePlatform === "AFFILIATE") {
+    // Affiliate products are never ATG orders — they route to the
+    // partner's own checkout via ProductPurchasePanel's "Buy from
+    // Partner" link, which doesn't post to this action at all. This is
+    // a defense-in-depth guard against a stale/tampered form.
+    redirect(`/product/${formData.get("slug")}`);
+  }
+
   const cart = await db.cart.upsert({
     where: { userId: user.id },
     update: {},

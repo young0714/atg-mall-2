@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
 import { createProductAction, toggleProductActiveAction, deleteProductAction } from "./actions";
+import { SOURCE_PLATFORM_LABELS } from "@/lib/sourcePlatform";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -43,7 +44,20 @@ export default async function AdminProductsPage({
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
           </Field>
+          <Field label="Source" htmlFor="sourcePlatform" required>
+            <Select id="sourcePlatform" name="sourcePlatform" defaultValue="ATG" required>
+              {Object.entries(SOURCE_PLATFORM_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </Select>
+          </Field>
           <Field label="Image URL" htmlFor="imageUrl"><Input id="imageUrl" name="imageUrl" type="url" /></Field>
+          <Field label="Affiliate URL" htmlFor="affiliateUrl" hint="Only used when Source = Affiliate">
+            <Input id="affiliateUrl" name="affiliateUrl" type="url" />
+          </Field>
+          <Field label="Affiliate provider name" htmlFor="affiliateProvider" hint="e.g. Amazon, Jumia — shown on the Buy button">
+            <Input id="affiliateProvider" name="affiliateProvider" />
+          </Field>
           <Field label="Base price (minor units)" htmlFor="basePriceMinor" required hint="e.g. 3500 = ¥35.00"><Input id="basePriceMinor" name="basePriceMinor" type="number" required /></Field>
           <Field label="Base currency" htmlFor="baseCurrency" required>
             <Select id="baseCurrency" name="baseCurrency" defaultValue="CNY" required>
@@ -70,6 +84,7 @@ export default async function AdminProductsPage({
             <tr>
               <th className="p-3">Product</th>
               <th className="p-3">Category</th>
+              <th className="p-3">Source</th>
               <th className="p-3">Price</th>
               <th className="p-3">Status</th>
               <th className="p-3"></th>
@@ -82,6 +97,7 @@ export default async function AdminProductsPage({
                   <Link href={`/admin/products/${p.id}`} className="hover:underline">{p.name}</Link>
                 </td>
                 <td className="p-3 text-navy-500">{p.category.name}</td>
+                <td className="p-3 text-navy-500">{SOURCE_PLATFORM_LABELS[p.sourcePlatform]}</td>
                 <td className="p-3 text-navy-500">{formatMoney(p.basePriceMinor, p.baseCurrency)}</td>
                 <td className="p-3">
                   <Badge tone={p.isActive ? "green" : "neutral"}>{p.isActive ? "Active" : "Inactive"}</Badge>
