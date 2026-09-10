@@ -84,6 +84,34 @@ export const productSchema = z.object({
 });
 export type ProductInput = z.infer<typeof productSchema>;
 
+export const productImageSchema = z.object({
+  url: z.string().url(),
+  altText: z.string().optional().or(z.literal("")),
+  sortOrder: z.coerce.number().int().min(0).default(0),
+});
+export type ProductImageInput = z.infer<typeof productImageSchema>;
+
+export const productVariantSchema = z.object({
+  name: z.string().min(1),
+  sku: z.string().optional().or(z.literal("")),
+  priceDeltaMinor: z.coerce.number().int().default(0),
+  stock: z.coerce.number().int().min(0).default(999),
+  attributes: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .transform((val, ctx) => {
+      if (!val) return {};
+      try {
+        return JSON.parse(val);
+      } catch {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Attributes must be valid JSON, e.g. {\"color\":\"Black\"}" });
+        return z.NEVER;
+      }
+    }),
+});
+export type ProductVariantInput = z.infer<typeof productVariantSchema>;
+
 export const categorySchema = z.object({
   name: z.string().min(2),
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/),

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
 import { createProductAction, toggleProductActiveAction, deleteProductAction } from "./actions";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Products" };
@@ -77,7 +78,9 @@ export default async function AdminProductsPage({
           <tbody className="divide-y divide-navy-100">
             {products.map((p) => (
               <tr key={p.id}>
-                <td className="p-3 font-medium text-navy-800">{p.name}</td>
+                <td className="p-3 font-medium text-navy-800">
+                  <Link href={`/admin/products/${p.id}`} className="hover:underline">{p.name}</Link>
+                </td>
                 <td className="p-3 text-navy-500">{p.category.name}</td>
                 <td className="p-3 text-navy-500">{formatMoney(p.basePriceMinor, p.baseCurrency)}</td>
                 <td className="p-3">
