@@ -13,6 +13,7 @@ import { walletService } from "./walletService";
 import { notificationService, NOTIFICATION_EVENTS } from "./notificationService";
 import { currencyConversionService } from "./currencyConversionService";
 import { sumMinor } from "@/lib/money";
+import { fulfillmentTypeForSourcePlatform } from "@/lib/fulfillment";
 
 /**
  * OrderService — order creation and status-transition logic shared by the
@@ -99,6 +100,15 @@ class DefaultOrderService implements OrderService {
             quantity: item.quantity,
             unitPriceMinor,
             currency: params.currency,
+            fulfillmentType: fulfillmentTypeForSourcePlatform(item.product.sourcePlatform, item.product.sellerId),
+            // The product's own base price *is* its cost basis for ATG's own
+            // catalog; for vendor/sourced items this is a placeholder until
+            // a dedicated vendor-cost field exists — not a fabricated figure,
+            // just the same number already shown as the product's price.
+            costBasisMinor: item.product.basePriceMinor,
+            costCurrency: item.product.baseCurrency,
+            sourcePlatformSnapshot: item.product.sourcePlatform,
+            sellerIdSnapshot: item.product.sellerId,
           })),
         },
       },
@@ -186,7 +196,10 @@ class DefaultOrderService implements OrderService {
   }) {
     const quotation = await db.quotation.findUniqueOrThrow({
       where: { id: quotationId },
-      include: { shopForMeRequest: true, sourcingRequest: true },
+      include: {
+        shopForMeRequest: true,
+        sourcingRequest: { include: { options: { include: { supplier: true } } } },
+      },
     });
 
     const userId = quotation.shopForMeRequest?.userId ?? quotation.sourcingRequest?.userId;
@@ -196,6 +209,18 @@ class DefaultOrderService implements OrderService {
     const source = quotation.shopForMeRequestId ? "SHOP_FOR_ME" : "SOURCING";
     const name =
       quotation.shopForMeRequest?.productName ?? quotation.sourcingRequest?.productName ?? "Sourced item";
+
+    // Shop for Me always goes through a China-based purchase on the
+    // customer's behalf. Source a Product resolves from the customer's
+    // selected supplier option when one exists (an international/non-China
+    // supplier there means INTERNATIONAL_SOURCING); falls back to
+    // CHINA_SOURCING, the common case, if no option was ever selected.
+    const selectedOption = quotation.sourcingRequest?.options.find((o) => o.isSelected);
+    const fulfillmentType = quotation.shopForMeRequestId
+      ? "CHINA_SOURCING"
+      : selectedOption?.supplier
+        ? fulfillmentTypeForSourcePlatform(selectedOption.supplier.platform, null)
+        : "CHINA_SOURCING";
 
     const order = await db.order.create({
       data: {
@@ -221,6 +246,9 @@ class DefaultOrderService implements OrderService {
               quantity: 1,
               unitPriceMinor: quotation.productCostMinor,
               currency: quotation.currency,
+              fulfillmentType,
+              costBasisMinor: quotation.productCostMinor,
+              costCurrency: quotation.currency,
             },
           ],
         },
