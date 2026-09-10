@@ -128,6 +128,7 @@ enum SourcePlatform {
   MOCK_TAOBAO
   ALIBABA
   SELLER
+  AFFILIATE
 }
 
 model Category {
@@ -204,6 +205,12 @@ model Product {
   sourcePlatform SourcePlatform @default(ATG)
   sourceUrl      String?
   sourceProductId String?
+
+  // Set when sourcePlatform = AFFILIATE: an approved affiliate program's
+  // tracking link and display name. Affiliate products never go through
+  // cart/checkout — see ProductPurchasePanel and orderService guards.
+  affiliateUrl      String?
+  affiliateProvider String?
 
   // Base pricing, in CNY minor units (fen) for China-sourced products, or NGN/GMD for ATG's own stock.
   basePriceMinor   Int
@@ -353,6 +360,14 @@ model Order {
   @@index([status])
 }
 
+enum FulfillmentType {
+  ATG_INVENTORY
+  VENDOR
+  CHINA_SOURCING
+  INTERNATIONAL_SOURCING
+  AFFILIATE
+}
+
 model OrderItem {
   id         String          @id @default(cuid())
   orderId    String
@@ -366,6 +381,15 @@ model OrderItem {
   quantity   Int
   unitPriceMinor Int
   currency   Currency
+
+  // Fulfillment-path snapshot, taken at order-creation time so it stays
+  // accurate even if the product's own source/seller changes later.
+  // Nullable because orders created before this field existed have none.
+  fulfillmentType        FulfillmentType?
+  costBasisMinor         Int?
+  costCurrency           Currency?
+  sourcePlatformSnapshot SourcePlatform?
+  sellerIdSnapshot       String?
 }
 
 enum PaymentMethod {
@@ -747,6 +771,17 @@ model ShippingRate {
   updatedAt      DateTime       @updatedAt
 
   @@unique([destinationCountry, method])
+}
+
+// Singleton row (there should only ever be exactly one) holding the ATG
+// service-fee policy and China-domestic-shipping estimate that pricingService
+// used to hardcode as constants. Admin-editable via /admin/settings.
+model PricingPolicy {
+  id                            String   @id @default(cuid())
+  serviceFeePercent             Int      @default(8)
+  serviceFeeMinMinorCny         Int      @default(1000)
+  chinaDomesticShippingMinorCny Int      @default(800)
+  updatedAt                     DateTime @updatedAt
 }
 
 model DeliveryZone {

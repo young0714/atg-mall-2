@@ -4,6 +4,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { getDestination } from "@/lib/destination";
 import { pricingService } from "@/lib/services/pricingService";
+import { sourcePlatformLabel } from "@/lib/sourcePlatform";
 import { StarRating } from "@/components/shop/StarRating";
 import { Badge } from "@/components/ui/Badge";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
@@ -79,7 +80,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
             <div className="mb-2 flex flex-wrap gap-2">
               {product.isFeatured && <Badge tone="gold">Trending</Badge>}
               {product.isWholesale && <Badge tone="blue">Wholesale</Badge>}
-              <Badge tone="neutral">{product.sourcePlatform.replace("MOCK_", "").replace("_", " ")}</Badge>
+              <Badge tone="neutral">{sourcePlatformLabel(product.sourcePlatform)}</Badge>
             </div>
             <h1 className="text-2xl font-display font-bold text-navy-900 sm:text-3xl">{product.name}</h1>
             <div className="mt-2">
