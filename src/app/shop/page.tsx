@@ -3,7 +3,8 @@ import { getDestination } from "@/lib/destination";
 import { toProductCard } from "@/lib/product-view";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { Container, Section } from "@/components/ui/Section";
-import { Input, Select } from "@/components/ui/Form";
+import { Input } from "@/components/ui/Form";
+import { SortSelect } from "@/components/shop/SortSelect";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 
@@ -115,12 +116,7 @@ export default async function ShopPage({
                 {category && <input type="hidden" name="category" value={category} />}
                 {wholesale && <input type="hidden" name="wholesale" value={wholesale} />}
                 <label className="text-navy-500">Sort by</label>
-                <Select name="sort" defaultValue={sort ?? "newest"} onChange={(e) => e.currentTarget.form?.submit()}>
-                  <option value="newest">Newest</option>
-                  <option value="price_asc">Price: Low to High</option>
-                  <option value="price_desc">Price: High to Low</option>
-                  <option value="rating">Top Rated</option>
-                </Select>
+                <SortSelect defaultValue={sort ?? "newest"} />
               </form>
             </div>
 
