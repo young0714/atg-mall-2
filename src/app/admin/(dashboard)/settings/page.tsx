@@ -9,6 +9,7 @@ import {
   upsertDeliveryZoneAction,
   toggleDeliveryZoneActiveAction,
   deleteDeliveryZoneAction,
+  updatePricingPolicyAction,
 } from "./actions";
 import type { Metadata } from "next";
 import type { Country } from "@prisma/client";
@@ -22,7 +23,10 @@ export default async function AdminSettingsPage({
   searchParams: { saved?: string; error?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_SETTINGS);
-  const zones = await db.deliveryZone.findMany({ orderBy: [{ country: "asc" }, { city: "asc" }] });
+  const [zones, pricingPolicy] = await Promise.all([
+    db.deliveryZone.findMany({ orderBy: [{ country: "asc" }, { city: "asc" }] }),
+    db.pricingPolicy.findFirst(),
+  ]);
 
   const byCountry: Record<Country, typeof zones> = { NIGERIA: [], GAMBIA: [] };
   for (const z of zones) byCountry[z.country].push(z);
@@ -113,6 +117,45 @@ export default async function AdminSettingsPage({
             </div>
           ))}
         </div>
+      </section>
+
+      <section className="card p-5">
+        <h2 className="mb-2 font-semibold text-navy-900">Landed-Cost Pricing</h2>
+        <p className="mb-4 text-sm text-navy-500">
+          ATG&apos;s service-fee policy and the flat China-domestic-shipping estimate used in every landed-cost
+          calculation on product pages. Shipping lane rates themselves are configured separately under{" "}
+          <a href="/admin/shipping-rates" className="text-atgblue-600 hover:underline">Shipping Rates</a>.
+        </p>
+        <form action={updatePricingPolicyAction} className="grid gap-4 sm:grid-cols-3">
+          <Field label="ATG service fee (%)" htmlFor="serviceFeePercent" required hint="Percentage of product cost">
+            <Input
+              id="serviceFeePercent"
+              name="serviceFeePercent"
+              type="number"
+              defaultValue={pricingPolicy?.serviceFeePercent ?? 8}
+              required
+            />
+          </Field>
+          <Field label="Min service fee (CNY minor units)" htmlFor="serviceFeeMinMinorCny" required hint="e.g. 1000 = ¥10.00">
+            <Input
+              id="serviceFeeMinMinorCny"
+              name="serviceFeeMinMinorCny"
+              type="number"
+              defaultValue={pricingPolicy?.serviceFeeMinMinorCny ?? 1000}
+              required
+            />
+          </Field>
+          <Field label="China domestic shipping (CNY minor units)" htmlFor="chinaDomesticShippingMinorCny" required hint="Flat per-parcel estimate">
+            <Input
+              id="chinaDomesticShippingMinorCny"
+              name="chinaDomesticShippingMinorCny"
+              type="number"
+              defaultValue={pricingPolicy?.chinaDomesticShippingMinorCny ?? 800}
+              required
+            />
+          </Field>
+          <button type="submit" className="btn-primary sm:col-span-3 sm:w-fit">Save Pricing Policy</button>
+        </form>
       </section>
 
       <section className="card p-5">

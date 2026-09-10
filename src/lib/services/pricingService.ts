@@ -1,6 +1,8 @@
 import "server-only";
+import { cache } from "react";
 import type { Country, Currency } from "@prisma/client";
 import { currencyConversionService } from "./currencyConversionService";
+import { db } from "@/lib/db";
 
 /**
  * PricingService — computes the estimated LANDED COST shown on product pages:
@@ -10,9 +12,28 @@ import { currencyConversionService } from "./currencyConversionService";
  *
  * All shipping figures ultimately trace back to admin-configured
  * `ShippingRate` rows (see shippingService.ts) — nothing here hardcodes a
- * "real" carrier rate. This service only assembles the breakdown and applies
- * ATG's fee policy.
+ * "real" carrier rate. The ATG service-fee policy and flat China-domestic-
+ * shipping estimate come from the admin-editable `PricingPolicy` singleton
+ * (see /admin/settings), falling back to these defaults only if that row is
+ * somehow missing (e.g. a fresh database before the first seed).
  */
+
+// Defaults, used only if no PricingPolicy row exists yet.
+const DEFAULT_CHINA_DOMESTIC_SHIPPING_MINOR_CNY = 800;
+const DEFAULT_SERVICE_FEE_PERCENT = 8;
+const DEFAULT_SERVICE_FEE_MIN_MINOR_CNY = 1000;
+
+// React's cache() dedupes this within a single request/render — every
+// product card on a listing page shares one DB read instead of one each.
+const getPricingPolicy = cache(async () => {
+  const policy = await db.pricingPolicy.findFirst();
+  return {
+    serviceFeePercent: policy?.serviceFeePercent ?? DEFAULT_SERVICE_FEE_PERCENT,
+    serviceFeeMinMinorCny: policy?.serviceFeeMinMinorCny ?? DEFAULT_SERVICE_FEE_MIN_MINOR_CNY,
+    chinaDomesticShippingMinorCny:
+      policy?.chinaDomesticShippingMinorCny ?? DEFAULT_CHINA_DOMESTIC_SHIPPING_MINOR_CNY,
+  };
+});
 
 export interface LandedCostBreakdown {
   productCostMinor: number;
@@ -25,18 +46,6 @@ export interface LandedCostBreakdown {
   isEstimate: true;
 }
 
-// Flat estimate for getting a package from a 1688/Taobao supplier's
-// warehouse to ATG's Guangzhou consolidation warehouse. Admin-configurable
-// in a future iteration (currently a documented default, not a live rate).
-const CHINA_DOMESTIC_SHIPPING_MINOR_CNY = 800; // ~8 CNY flat, per parcel estimate
-
-// ATG's service/sourcing fee policy: greater of a flat minimum or a
-// percentage of product cost. This is business policy, not a fabricated
-// carrier rate, so it is reasonable to encode here — but it is still
-// clearly surfaced to the customer as ATG's own fee line, never blended in.
-const SERVICE_FEE_PERCENT = 8; // 8% of product cost
-const SERVICE_FEE_MIN_MINOR_CNY = 1000; // ~10 CNY minimum
-
 export interface PricingService {
   estimateLandedCost(params: {
     productCostMinor: number;
@@ -44,11 +53,11 @@ export interface PricingService {
     destination: Country;
     destinationCurrency: Currency;
     intlShippingMinorInProductCurrency?: number;
-  }): LandedCostBreakdown;
+  }): Promise<LandedCostBreakdown>;
 }
 
 class DefaultPricingService implements PricingService {
-  estimateLandedCost({
+  async estimateLandedCost({
     productCostMinor,
     productCostCurrency,
     destinationCurrency,
@@ -59,10 +68,12 @@ class DefaultPricingService implements PricingService {
     destination: Country;
     destinationCurrency: Currency;
     intlShippingMinorInProductCurrency?: number;
-  }): LandedCostBreakdown {
+  }): Promise<LandedCostBreakdown> {
+    const policy = await getPricingPolicy();
+
     const serviceFeeCny = Math.max(
-      Math.round((productCostMinor * SERVICE_FEE_PERCENT) / 100),
-      SERVICE_FEE_MIN_MINOR_CNY,
+      Math.round((productCostMinor * policy.serviceFeePercent) / 100),
+      policy.serviceFeeMinMinorCny,
     );
     const intlShippingCny =
       intlShippingMinorInProductCurrency ?? Math.round(productCostMinor * 0.35 + 2500);
@@ -75,7 +86,7 @@ class DefaultPricingService implements PricingService {
       );
 
     const productCostMinorDest = toDest(productCostMinor);
-    const chinaDomesticMinorDest = toDest(CHINA_DOMESTIC_SHIPPING_MINOR_CNY);
+    const chinaDomesticMinorDest = toDest(policy.chinaDomesticShippingMinorCny);
     const intlShippingMinorDest = toDest(intlShippingCny);
     const serviceFeeMinorDest = toDest(serviceFeeCny);
 

@@ -53,6 +53,7 @@ export default async function ShopPage({
   ]);
 
   const activeCategory = categories.find((c) => c.slug === category);
+  const productCards = await Promise.all(products.map((p) => toProductCard(p, destination)));
 
   return (
     <Section className="!py-10">
@@ -126,8 +127,8 @@ export default async function ShopPage({
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                {products.map((p) => (
-                  <ProductCard key={p.id} product={toProductCard(p, destination)} />
+                {productCards.map((p) => (
+                  <ProductCard key={p.slug} product={p} />
                 ))}
               </div>
             )}

@@ -33,6 +33,11 @@ export default async function HomePage() {
     }),
   ]);
 
+  const [featuredCards, wholesaleCards] = await Promise.all([
+    Promise.all(featuredProducts.map((p) => toProductCard(p, destination))),
+    Promise.all(wholesaleProducts.map((p) => toProductCard(p, destination))),
+  ]);
+
   return (
     <>
       <Hero destination={destination.country} />
@@ -45,8 +50,8 @@ export default async function HomePage() {
             <Link href="/shop" className="btn-outline shrink-0">View all</Link>
           </div>
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {featuredProducts.map((p) => (
-              <ProductCard key={p.id} product={toProductCard(p, destination)} />
+            {featuredCards.map((p) => (
+              <ProductCard key={p.slug} product={p} />
             ))}
           </div>
         </Container>
@@ -63,7 +68,7 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      {wholesaleProducts.length > 0 && (
+      {wholesaleCards.length > 0 && (
         <Section tone="sand">
           <Container>
             <div className="flex items-end justify-between gap-4">
@@ -71,8 +76,8 @@ export default async function HomePage() {
               <Link href="/shop?wholesale=1" className="btn-outline shrink-0">See all wholesale</Link>
             </div>
             <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {wholesaleProducts.map((p) => (
-                <ProductCard key={p.id} product={toProductCard(p, destination)} />
+              {wholesaleCards.map((p) => (
+                <ProductCard key={p.slug} product={p} />
               ))}
             </div>
           </Container>

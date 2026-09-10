@@ -40,7 +40,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
   if (!product || !product.isActive) notFound();
 
-  const breakdown = pricingService.estimateLandedCost({
+  const breakdown = await pricingService.estimateLandedCost({
     productCostMinor: product.basePriceMinor,
     productCostCurrency: product.baseCurrency,
     destination: destination.country,

@@ -120,6 +120,13 @@ export const categorySchema = z.object({
 });
 export type CategoryInput = z.infer<typeof categorySchema>;
 
+export const pricingPolicySchema = z.object({
+  serviceFeePercent: z.coerce.number().int().min(0).max(100),
+  serviceFeeMinMinorCny: z.coerce.number().int().min(0),
+  chinaDomesticShippingMinorCny: z.coerce.number().int().min(0),
+});
+export type PricingPolicyInput = z.infer<typeof pricingPolicySchema>;
+
 export const shippingRateSchema = z.object({
   destinationCountry: z.enum(["NIGERIA", "GAMBIA"]),
   method: z.enum(["AIR_FREIGHT", "SEA_FREIGHT", "COURIER", "LCL", "FCL"]),

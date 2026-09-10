@@ -20,7 +20,7 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  const breakdown = pricingService.estimateLandedCost({
+  const breakdown = await pricingService.estimateLandedCost({
     productCostMinor: product.basePriceMinor,
     productCostCurrency: product.baseCurrency,
     destination: destination.country,

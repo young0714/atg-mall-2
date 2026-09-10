@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
-import { deliveryZoneSchema } from "@/lib/validation/schemas";
+import { deliveryZoneSchema, pricingPolicySchema } from "@/lib/validation/schemas";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -58,4 +58,33 @@ export async function deleteDeliveryZoneAction(formData: FormData) {
   const id = String(formData.get("zoneId"));
   await db.deliveryZone.delete({ where: { id } });
   revalidatePath("/admin/settings");
+}
+
+export async function updatePricingPolicyAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_SETTINGS);
+  const parsed = pricingPolicySchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    redirect(`/admin/settings?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid pricing policy")}`);
+  }
+  const data = parsed.data!;
+
+  const existing = await db.pricingPolicy.findFirst();
+  if (existing) {
+    await db.pricingPolicy.update({ where: { id: existing.id }, data });
+  } else {
+    await db.pricingPolicy.create({ data });
+  }
+
+  await db.auditLog.create({
+    data: {
+      actorId: staff.id,
+      action: "PRICING_POLICY_UPDATED",
+      entityType: "PricingPolicy",
+      entityId: existing?.id ?? "singleton",
+      summary: `Pricing policy updated: ${data.serviceFeePercent}% service fee`,
+    },
+  });
+
+  revalidatePath("/admin/settings");
+  redirect("/admin/settings?saved=1");
 }

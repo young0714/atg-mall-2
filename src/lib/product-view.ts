@@ -7,8 +7,8 @@ import type { ProductCardData } from "@/components/shop/ProductCard";
 type ProductWithImages = Product & { images: ProductImage[] };
 
 /** Builds the display-ready card data (with a converted landed-cost estimate) for a product grid. */
-export function toProductCard(product: ProductWithImages, destination: Destination): ProductCardData {
-  const breakdown = pricingService.estimateLandedCost({
+export async function toProductCard(product: ProductWithImages, destination: Destination): Promise<ProductCardData> {
+  const breakdown = await pricingService.estimateLandedCost({
     productCostMinor: product.basePriceMinor,
     productCostCurrency: product.baseCurrency,
     destination: destination.country,
