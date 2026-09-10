@@ -1,0 +1,883 @@
+// ATG Mall — Prisma schema
+// Apex Terra Global Limited — "SHOP GLOBAL. DELIVERED LOCAL."
+//
+// Conventions:
+// - All money fields are integer MINOR UNITS (kobo for NGN, butut for GMD, cents for USD)
+//   paired with an explicit currency column. Never store money as float.
+// - Every mutable business-status field is an enum matching the values specified
+//   in the ATG Mall product brief exactly.
+// - `sourcePlatform` on Product lets the same table serve ATG's own catalog and
+//   future 1688 / Taobao / seller-marketplace listings without a schema change.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity & access
+// ---------------------------------------------------------------------------
+
+enum Role {
+  SUPER_ADMIN
+  OPERATIONS_ADMIN
+  SOURCING_STAFF
+  WAREHOUSE_STAFF
+  SHIPPING_STAFF
+  FINANCE_STAFF
+  CUSTOMER_SUPPORT
+  SELLER
+  CUSTOMER
+}
+
+enum Country {
+  NIGERIA
+  GAMBIA
+}
+
+enum Currency {
+  NGN
+  GMD
+  USD
+  EUR
+  GBP
+  CNY
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  whatsapp     String?
+  role         Role     @default(CUSTOMER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customerProfile CustomerProfile?
+  seller          Seller?
+  addresses       Address[]
+  wallet          Wallet?
+  orders          Order[]
+  cart            Cart?
+  shopForMeRequests   ShopForMeRequest[]
+  sourcingRequests    SourcingRequest[]
+  reviews             Review[]
+  supportTickets      SupportTicket[]        @relation("TicketCustomer")
+  assignedTickets     SupportTicket[]        @relation("TicketAssignee")
+  supportMessages     SupportMessage[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  warehouseReceipts   WarehouseReceipt[]     @relation("ReceivedBy")
+  quotationsIssued    Quotation[]            @relation("QuotationIssuedBy")
+  sourcingOptionsAdded SourcingOption[]      @relation("SourcingOptionAddedBy")
+  packages            Package[]
+  consolidations      Consolidation[]
+
+  @@index([role])
+}
+
+model CustomerProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  country          Country  @default(NIGERIA)
+  state            String?
+  city             String?
+  preferredCurrency Currency @default(NGN)
+  defaultAddressId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Address {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label        String   @default("Home")
+  fullName     String
+  phone        String
+  country      Country
+  state        String
+  city         String
+  addressLine1 String
+  addressLine2 String?
+  landmark     String?
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  orders   Order[]
+  packages Package[]
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+enum SourcePlatform {
+  ATG
+  MOCK_1688
+  MOCK_TAOBAO
+  ALIBABA
+  SELLER
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  imageUrl    String?
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  products    Product[]
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  @@index([parentId])
+}
+
+model Supplier {
+  id           String   @id @default(cuid())
+  name         String
+  platform     SourcePlatform @default(MOCK_1688)
+  externalUrl  String?
+  contactName  String?
+  contactPhone String?
+  location     String?  // e.g. "Guangzhou, China"
+  rating       Float?   @default(4.5)
+  verified     Boolean  @default(false)
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  products         Product[]
+  sourcingOptions  SourcingOption[]
+  warehouseReceipts WarehouseReceipt[]
+
+  @@index([platform])
+}
+
+model Seller {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName    String
+  storeSlug    String   @unique
+  description  String?
+  logoUrl      String?
+  status       SellerStatus @default(PENDING)
+  commissionPct Float   @default(10)
+  createdAt    DateTime @default(now())
+
+  products    Product[]
+  commissions Commission[]
+  payouts     Payout[]
+}
+
+enum SellerStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+  REJECTED
+}
+
+model Product {
+  id             String         @id @default(cuid())
+  name           String
+  slug           String         @unique
+  description    String
+  categoryId     String
+  category       Category       @relation(fields: [categoryId], references: [id])
+  supplierId     String?
+  supplier       Supplier?      @relation(fields: [supplierId], references: [id])
+  sellerId       String?
+  seller         Seller?        @relation(fields: [sellerId], references: [id])
+  sourcePlatform SourcePlatform @default(ATG)
+  sourceUrl      String?
+  sourceProductId String?
+
+  // Base pricing, in CNY minor units (fen) for China-sourced products, or NGN/GMD for ATG's own stock.
+  basePriceMinor   Int
+  baseCurrency     Currency @default(CNY)
+  moq              Int      @default(1)
+  weightGrams      Int      @default(500)
+
+  isWholesale    Boolean  @default(false)
+  isFeatured     Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  avgRating      Float    @default(0)
+  reviewCount    Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  images      ProductImage[]
+  variants    ProductVariant[]
+  reviews     Review[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+
+  @@index([categoryId])
+  @@index([sourcePlatform])
+  @@index([isFeatured])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  sortOrder Int     @default(0)
+}
+
+model ProductVariant {
+  id             String  @id @default(cuid())
+  productId      String
+  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name           String  // e.g. "Color / Size"
+  sku            String?
+  priceDeltaMinor Int    @default(0) // added to base price, same currency as product
+  stock          Int     @default(999)
+  attributes     Json    // { color: "Black", size: "XL" }
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  title     String?
+  body      String
+  isApproved Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Cart & Orders
+// ---------------------------------------------------------------------------
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String          @id @default(cuid())
+  cartId    String
+  cart      Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product         @relation(fields: [productId], references: [id])
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+  quantity  Int             @default(1)
+  createdAt DateTime        @default(now())
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  PURCHASED
+  SUPPLIER_SHIPPED
+  RECEIVED_AT_WAREHOUSE
+  READY_FOR_SHIPPING
+  SHIPPED
+  IN_TRANSIT
+  CUSTOMS
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum OrderSource {
+  CATALOG
+  SHOP_FOR_ME
+  SOURCING
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique // e.g. ATG-NG-2026000123
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  addressId     String?
+  address       Address?    @relation(fields: [addressId], references: [id])
+  source        OrderSource @default(CATALOG)
+  status        OrderStatus @default(PENDING_PAYMENT)
+  destination   Country
+  currency      Currency
+
+  subtotalMinor        Int
+  serviceFeeMinor       Int      @default(0)
+  domesticShippingMinor Int      @default(0)
+  intlShippingMinor     Int      @default(0)
+  otherChargesMinor     Int      @default(0)
+  totalMinor            Int
+
+  shopForMeRequestId String?      @unique
+  shopForMeRequest   ShopForMeRequest? @relation(fields: [shopForMeRequestId], references: [id])
+  sourcingRequestId  String?      @unique
+  sourcingRequest    SourcingRequest?  @relation(fields: [sourcingRequestId], references: [id])
+
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  items      OrderItem[]
+  payments   Payment[]
+  packages   Package[]
+  trackingEvents TrackingEvent[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id         String          @id @default(cuid())
+  orderId    String
+  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String?
+  product    Product?        @relation(fields: [productId], references: [id])
+  variantId  String?
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  nameSnapshot String
+  imageSnapshot String?
+  quantity   Int
+  unitPriceMinor Int
+  currency   Currency
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  WALLET
+  CASH_ON_DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id])
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  amountMinor   Int
+  currency      Currency
+  providerRef   String?       // opaque reference from the (mock) PaymentService
+  providerName  String        @default("MOCK") // e.g. "MOCK", "PAYSTACK", "FLUTTERWAVE"
+  createdAt     DateTime      @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Wallet (ledger-style — never mutate balance directly)
+// ---------------------------------------------------------------------------
+
+enum WalletTransactionType {
+  DEPOSIT
+  PAYMENT
+  REFUND
+  ADJUSTMENT
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency  Currency @default(NGN)
+  balanceMinor Int   @default(0) // cached projection of the ledger below
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id          String                @id @default(cuid())
+  walletId    String
+  wallet      Wallet                @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type        WalletTransactionType
+  amountMinor Int                   // positive for credit, negative for debit
+  currency    Currency
+  balanceAfterMinor Int
+  referenceType String?             // "ORDER" | "DEPOSIT" | "MANUAL"
+  referenceId   String?
+  description   String
+  createdAt     DateTime @default(now())
+
+  @@index([walletId])
+}
+
+// ---------------------------------------------------------------------------
+// Sourcing: Shop for Me / Source a Product / Quotations
+// ---------------------------------------------------------------------------
+
+enum RequestStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  QUOTED
+  APPROVED
+  REJECTED
+  CONVERTED_TO_ORDER
+  CANCELLED
+}
+
+model ShopForMeRequest {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  productUrl    String
+  productName   String
+  productImageUrl String?
+  quantity      Int           @default(1)
+  size          String?
+  color         String?
+  destination   Country
+  instructions  String?
+  status        RequestStatus @default(SUBMITTED)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  quotations Quotation[]
+  order      Order?
+
+  @@index([userId])
+  @@index([status])
+}
+
+model SourcingRequest {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  productName   String
+  productImageUrl String?
+  productUrl    String?
+  quantity      Int           @default(1)
+  targetPriceMinor Int?
+  targetCurrency Currency?    @default(USD)
+  destination   Country
+  notes         String?
+  status        RequestStatus @default(SUBMITTED)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  options    SourcingOption[]
+  quotations Quotation[]
+  order      Order?
+
+  @@index([userId])
+  @@index([status])
+}
+
+model SourcingOption {
+  id              String   @id @default(cuid())
+  sourcingRequestId String
+  sourcingRequest SourcingRequest @relation(fields: [sourcingRequestId], references: [id], onDelete: Cascade)
+  supplierId      String?
+  supplier        Supplier? @relation(fields: [supplierId], references: [id])
+  imageUrl        String?
+  unitPriceMinor  Int
+  currency        Currency @default(USD)
+  moq             Int      @default(1)
+  estimatedShippingMinor Int @default(0)
+  sourcingFeeMinor Int     @default(0)
+  leadTimeDays    Int      @default(14)
+  notes           String?
+  isSelected      Boolean  @default(false)
+  addedById       String?
+  addedBy         User?    @relation("SourcingOptionAddedBy", fields: [addedById], references: [id])
+  createdAt       DateTime @default(now())
+}
+
+enum QuotationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+model Quotation {
+  id            String   @id @default(cuid())
+  quotationNumber String @unique
+  shopForMeRequestId String?
+  shopForMeRequest ShopForMeRequest? @relation(fields: [shopForMeRequestId], references: [id])
+  sourcingRequestId  String?
+  sourcingRequest    SourcingRequest? @relation(fields: [sourcingRequestId], references: [id])
+
+  productCostMinor      Int
+  chinaShippingMinor    Int @default(0)
+  serviceFeeMinor       Int @default(0)
+  intlShippingMinor     Int @default(0)
+  otherChargesMinor     Int @default(0)
+  totalMinor            Int
+  currency              Currency @default(USD)
+
+  status      QuotationStatus @default(PENDING)
+  validUntil  DateTime?
+  issuedById  String
+  issuedBy    User     @relation("QuotationIssuedBy", fields: [issuedById], references: [id])
+  createdAt   DateTime @default(now())
+
+  lineItems QuotationLineItem[]
+
+  @@index([status])
+}
+
+model QuotationLineItem {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  label       String
+  amountMinor Int
+}
+
+// ---------------------------------------------------------------------------
+// Logistics: Warehouse, Packages, Consolidation, Shipments, Tracking
+// ---------------------------------------------------------------------------
+
+model Warehouse {
+  id        String   @id @default(cuid())
+  name      String
+  city      String
+  country   String   @default("China")
+  addressLine String?
+  isActive  Boolean  @default(true)
+
+  receipts  WarehouseReceipt[]
+  packages  Package[]
+}
+
+model WarehouseReceipt {
+  id           String   @id @default(cuid())
+  warehouseId  String
+  warehouse    Warehouse @relation(fields: [warehouseId], references: [id])
+  packageId    String    @unique
+  package      Package   @relation(fields: [packageId], references: [id])
+  supplierId   String?
+  supplier     Supplier? @relation(fields: [supplierId], references: [id])
+  receivedById String?
+  receivedBy   User?     @relation("ReceivedBy", fields: [receivedById], references: [id])
+  trackingNumberIn String? // inbound domestic-China tracking number
+  weightGrams  Int
+  lengthCm     Int?
+  widthCm      Int?
+  heightCm     Int?
+  photos       String[]
+  notes        String?
+  receivedAt   DateTime @default(now())
+}
+
+enum PackageStatus {
+  ORDERED
+  IN_TRANSIT_TO_WAREHOUSE
+  RECEIVED
+  INSPECTION
+  AWAITING_CUSTOMER_INSTRUCTION
+  CONSOLIDATION
+  READY_TO_SHIP
+  SHIPPED
+  IN_TRANSIT
+  CUSTOMS
+  OUT_FOR_DELIVERY
+  DELIVERED
+}
+
+enum ShippingMethod {
+  AIR_FREIGHT
+  SEA_FREIGHT
+  COURIER
+  LCL
+  FCL
+}
+
+model Package {
+  id            String        @id @default(cuid())
+  packageCode   String        @unique // e.g. ATG-PKG-000123
+  orderId       String?
+  order         Order?        @relation(fields: [orderId], references: [id])
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  warehouseId   String?
+  warehouse     Warehouse?    @relation(fields: [warehouseId], references: [id])
+  supplierName  String?
+  status        PackageStatus @default(ORDERED)
+  shippingMethod ShippingMethod?
+  weightGrams   Int?
+  lengthCm      Int?
+  widthCm       Int?
+  heightCm      Int?
+  photos        String[]
+  destination   Country
+  addressId     String?
+  address       Address?      @relation(fields: [addressId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  warehouseReceipt WarehouseReceipt?
+  consolidationLinks ConsolidationPackage[]
+  shipmentLinks      ShipmentPackage[]
+  trackingEvents     TrackingEvent[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Consolidation {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g. ATG-CONS-000045
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  status      String   @default("OPEN") // OPEN | PACKED | CLOSED
+  totalWeightGrams Int @default(0)
+  notes       String?
+  createdAt   DateTime @default(now())
+  closedAt    DateTime?
+
+  packages ConsolidationPackage[]
+}
+
+model ConsolidationPackage {
+  id              String        @id @default(cuid())
+  consolidationId String
+  consolidation   Consolidation @relation(fields: [consolidationId], references: [id], onDelete: Cascade)
+  packageId       String
+  package         Package       @relation(fields: [packageId], references: [id])
+
+  @@unique([consolidationId, packageId])
+}
+
+enum ShipmentStatus {
+  READY_TO_SHIP
+  SHIPPED
+  IN_TRANSIT
+  CUSTOMS
+  OUT_FOR_DELIVERY
+  DELIVERED
+}
+
+model Shipment {
+  id            String         @id @default(cuid())
+  trackingNumber String        @unique // e.g. ATG-NG-2026000123
+  method        ShippingMethod
+  origin        String         @default("Guangzhou, China")
+  destinationCountry Country
+  destinationCity    String?
+  status        ShipmentStatus @default(READY_TO_SHIP)
+  estimatedDeliveryAt DateTime?
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  totalWeightGrams Int @default(0)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  packages       ShipmentPackage[]
+  trackingEvents TrackingEvent[]
+
+  @@index([status])
+}
+
+model ShipmentPackage {
+  id         String   @id @default(cuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  packageId  String
+  package    Package  @relation(fields: [packageId], references: [id])
+
+  @@unique([shipmentId, packageId])
+}
+
+model TrackingEvent {
+  id          String    @id @default(cuid())
+  shipmentId  String?
+  shipment    Shipment? @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  packageId   String?
+  package     Package?  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?    @relation(fields: [orderId], references: [id])
+  status      String
+  location    String?
+  description String
+  occurredAt  DateTime  @default(now())
+
+  @@index([shipmentId])
+  @@index([packageId])
+}
+
+// Admin-managed shipping rate table — never hardcoded "real" carrier rates in code.
+model ShippingRate {
+  id             String         @id @default(cuid())
+  originCountry  String         @default("China")
+  destinationCountry Country
+  method         ShippingMethod
+  pricePerKgMinor Int
+  currency       Currency       @default(USD)
+  minChargeableWeightGrams Int  @default(1000)
+  estimatedDaysMin Int
+  estimatedDaysMax Int
+  notes          String?
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([destinationCountry, method])
+}
+
+model DeliveryZone {
+  id          String   @id @default(cuid())
+  country     Country
+  city        String
+  isActive    Boolean  @default(true)
+  localFeeMinor Int    @default(0)
+  currency    Currency
+  etaDaysMin  Int      @default(1)
+  etaDaysMax  Int      @default(3)
+
+  @@unique([country, city])
+}
+
+// ---------------------------------------------------------------------------
+// Marketplace (Phase 3 — schema ready)
+// ---------------------------------------------------------------------------
+
+model Commission {
+  id          String   @id @default(cuid())
+  sellerId    String
+  seller      Seller   @relation(fields: [sellerId], references: [id])
+  orderItemRef String
+  amountMinor Int
+  currency    Currency
+  createdAt   DateTime @default(now())
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  REJECTED
+}
+
+model Payout {
+  id          String       @id @default(cuid())
+  sellerId    String
+  seller      Seller       @relation(fields: [sellerId], references: [id])
+  amountMinor Int
+  currency    Currency
+  status      PayoutStatus @default(PENDING)
+  requestedAt DateTime     @default(now())
+  paidAt      DateTime?
+}
+
+// ---------------------------------------------------------------------------
+// Marketing / support / ops
+// ---------------------------------------------------------------------------
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+model Coupon {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  type        CouponType
+  value       Int        // percentage (0-100) or fixed minor-unit amount
+  currency    Currency?
+  isActive    Boolean    @default(true)
+  usageLimit  Int?
+  usedCount   Int        @default(0)
+  expiresAt   DateTime?
+  createdAt   DateTime   @default(now())
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+  IN_APP
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   NotificationChannel @default(IN_APP)
+  event     String              // e.g. "ORDER_CREATED", "PACKAGE_RECEIVED"
+  title     String
+  body      String
+  isRead    Boolean             @default(false)
+  createdAt DateTime            @default(now())
+
+  @@index([userId])
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model SupportTicket {
+  id          String       @id @default(cuid())
+  ticketNumber String      @unique
+  customerId  String
+  customer    User         @relation("TicketCustomer", fields: [customerId], references: [id])
+  assigneeId  String?
+  assignee    User?        @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  subject     String
+  status      TicketStatus @default(OPEN)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  messages SupportMessage[]
+}
+
+model SupportMessage {
+  id        String        @id @default(cuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User          @relation(fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime      @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id])
+  action     String   // e.g. "PRODUCT_UPDATED", "ORDER_STATUS_CHANGED"
+  entityType String
+  entityId   String
+  summary    String
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
