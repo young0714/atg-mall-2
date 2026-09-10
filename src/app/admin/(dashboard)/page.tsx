@@ -24,6 +24,7 @@ export default async function AdminDashboardPage() {
     nigeriaCustomers,
     gambiaCustomers,
     recentOrders,
+    ordersForMargin,
   ] = await Promise.all([
     db.order.count(),
     db.order.count({ where: { status: "PENDING_PAYMENT" } }),
@@ -38,7 +39,27 @@ export default async function AdminDashboardPage() {
     db.customerProfile.count({ where: { country: "NIGERIA" } }),
     db.customerProfile.count({ where: { country: "GAMBIA" } }),
     db.order.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { user: true } }),
+    db.order.findMany({
+      where: { status: { not: "CANCELLED" } },
+      select: {
+        totalMinor: true,
+        domesticShippingMinor: true,
+        intlShippingMinor: true,
+        otherChargesMinor: true,
+        items: { select: { costBasisMinor: true, quantity: true } },
+      },
+    }),
   ]);
+
+  // Same crude cross-currency approximation the GMV tile already uses (sum
+  // raw minor units regardless of each order's actual currency) — not a
+  // real FX-converted total, just a directional estimate. Items without a
+  // recorded cost basis (pre-Phase-3 orders) are excluded from their
+  // order's cost side, so those orders skew optimistic.
+  const estimatedMarginMinor = ordersForMargin.reduce((total, order) => {
+    const costBasis = order.items.reduce((sum, item) => sum + (item.costBasisMinor ?? 0) * item.quantity, 0);
+    return total + order.totalMinor - costBasis - order.domesticShippingMinor - order.intlShippingMinor - order.otherChargesMinor;
+  }, 0);
 
   return (
     <div className="space-y-8">
@@ -54,6 +75,7 @@ export default async function AdminDashboardPage() {
         <Stat label="GMV (all currencies, mixed)" value={formatMoney(revenueAgg._sum.totalMinor ?? 0, "NGN")} tone="blue" hint="Approximate — orders span multiple currencies" />
         <Stat label="Shipping Revenue" value={formatMoney(shippingRevenueAgg._sum.intlShippingMinor ?? 0, "NGN")} />
         <Stat label="Sourcing/Service Revenue" value={formatMoney(sourcingOrdersAgg._sum.serviceFeeMinor ?? 0, "NGN")} />
+        <Stat label="Est. Margin" value={formatMoney(estimatedMarginMinor, "NGN")} tone="gold" hint="Approximate — mixed currencies; excludes items without recorded cost" />
         <Stat label="Active Customers" value={activeCustomers} />
         <Stat label="Packages in Warehouse" value={packagesInWarehouse} tone="blue" />
         <Stat label="Packages in Transit" value={packagesInTransit} tone="blue" />

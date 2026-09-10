@@ -37,3 +37,12 @@ export async function requirePermission(permission: Permission) {
   }
   return user;
 }
+
+/** Redirects to /login if not authenticated as a SELLER-role user. */
+export async function requireSeller() {
+  const user = await requireUser();
+  if (user.role !== "SELLER") {
+    redirect("/login");
+  }
+  return user;
+}

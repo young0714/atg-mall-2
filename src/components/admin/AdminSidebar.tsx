@@ -21,6 +21,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
     section: "Catalog",
     items: [
       { href: "/admin/products", label: "Products", permission: PERMISSIONS.MANAGE_PRODUCTS },
+      { href: "/admin/product-sources", label: "Product Sources", permission: PERMISSIONS.MANAGE_PRODUCTS },
       { href: "/admin/categories", label: "Categories", permission: PERMISSIONS.MANAGE_CATEGORIES },
       { href: "/admin/suppliers", label: "Suppliers", permission: PERMISSIONS.MANAGE_SUPPLIERS },
     ],

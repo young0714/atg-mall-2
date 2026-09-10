@@ -3,10 +3,10 @@ import { Section, Container } from "@/components/ui/Section";
 
 const services = [
   {
-    title: "Shop From China",
-    desc: "Browse products sourced from 1688, Taobao and trusted suppliers, already priced with landed cost estimates.",
-    href: "/shop-from-china",
-    cta: "Browse listings",
+    title: "Shop Products",
+    desc: "Browse ATG's own catalog, marketplace vendors, and products sourced from 1688, Taobao and trusted suppliers — all in one place, already priced with landed cost estimates.",
+    href: "/shop",
+    cta: "Browse the catalog",
     tone: "bg-atgblue-500",
   },
   {
