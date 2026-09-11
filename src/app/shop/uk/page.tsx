@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Shop from UK — Amazon UK, Argos, Currys & More | ATG Mall",
+  title: "Shop from UK — Amazon UK, Argos, Currys & More",
   description:
     "UK shopping through ATG — Amazon UK, Argos, Currys, Tesco, ASOS and more. Send us a product link from any UK store and we'll source, consolidate and ship it to Nigeria or Gambia.",
   keywords: [

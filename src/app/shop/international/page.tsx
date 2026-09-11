@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "International Stores — Shop from China, USA & UK | ATG Mall",
+  title: "International Stores — Shop from China, USA & UK",
   description:
     "International shopping from Nigeria and Gambia — browse ATG Mall's directory of stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping.",
   keywords: [
