@@ -7,15 +7,16 @@ import type { Currency } from "@prisma/client";
 /**
  * ShippingService — the international shipping calculator.
  *
- * Rates are read from the admin-managed `ShippingRate` table (per
- * destination country + method), never hardcoded here as "real" carrier
- * pricing. If no admin rate exists yet for a lane, this service returns
- * `null` rather than inventing a number — the UI must say "not yet
+ * Rates are read from the admin-managed `ShippingRate` table (per origin
+ * country + destination country + method), never hardcoded here as "real"
+ * carrier pricing. If no admin rate exists yet for a lane, this service
+ * returns `null` rather than inventing a number — the UI must say "not yet
  * available" instead of showing a fabricated price.
  */
 
 export interface ShippingQuote {
   method: ShippingMethod;
+  originCountry: string;
   destinationCountry: Country;
   billableWeightGrams: number;
   pricePerKgMinor: number;
@@ -32,11 +33,12 @@ export interface ShippingService {
     destinationCountry: Country;
     method: ShippingMethod;
     weightGrams: number;
+    originCountry?: string;
     lengthCm?: number;
     widthCm?: number;
     heightCm?: number;
   }): Promise<ShippingQuote | null>;
-  listAvailableMethods(destinationCountry: Country): Promise<ShippingMethod[]>;
+  listAvailableMethods(destinationCountry: Country, originCountry?: string): Promise<ShippingMethod[]>;
   convertQuoteTo(quote: ShippingQuote, currency: Currency): ShippingQuote;
 }
 
@@ -48,6 +50,7 @@ class DefaultShippingService implements ShippingService {
     destinationCountry,
     method,
     weightGrams,
+    originCountry = "China",
     lengthCm,
     widthCm,
     heightCm,
@@ -55,12 +58,13 @@ class DefaultShippingService implements ShippingService {
     destinationCountry: Country;
     method: ShippingMethod;
     weightGrams: number;
+    originCountry?: string;
     lengthCm?: number;
     widthCm?: number;
     heightCm?: number;
   }): Promise<ShippingQuote | null> {
     const rate = await db.shippingRate.findUnique({
-      where: { destinationCountry_method: { destinationCountry, method } },
+      where: { originCountry_destinationCountry_method: { originCountry, destinationCountry, method } },
     });
     if (!rate || !rate.isActive) return null;
 
@@ -79,6 +83,7 @@ class DefaultShippingService implements ShippingService {
 
     return {
       method,
+      originCountry,
       destinationCountry,
       billableWeightGrams: billableGrams,
       pricePerKgMinor: rate.pricePerKgMinor,
@@ -91,9 +96,9 @@ class DefaultShippingService implements ShippingService {
     };
   }
 
-  async listAvailableMethods(destinationCountry: Country): Promise<ShippingMethod[]> {
+  async listAvailableMethods(destinationCountry: Country, originCountry = "China"): Promise<ShippingMethod[]> {
     const rates = await db.shippingRate.findMany({
-      where: { destinationCountry, isActive: true },
+      where: { destinationCountry, originCountry, isActive: true },
       select: { method: true },
     });
     return rates.map((r) => r.method);

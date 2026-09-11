@@ -16,7 +16,13 @@ export async function upsertShippingRateAction(formData: FormData) {
   const data = parsed.data!;
 
   await db.shippingRate.upsert({
-    where: { destinationCountry_method: { destinationCountry: data.destinationCountry, method: data.method } },
+    where: {
+      originCountry_destinationCountry_method: {
+        originCountry: data.originCountry,
+        destinationCountry: data.destinationCountry,
+        method: data.method,
+      },
+    },
     update: {
       pricePerKgMinor: data.pricePerKgMinor,
       currency: data.currency,

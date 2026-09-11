@@ -129,6 +129,28 @@ enum SourcePlatform {
   ALIBABA
   SELLER
   AFFILIATE
+  USA_STORE
+  UK_STORE
+  INTERNATIONAL_STORE
+}
+
+// Sourcing/origin country for a Store or a PricingPolicy row — distinct from
+// `Country` (NIGERIA|GAMBIA), which is always the CUSTOMER's delivery
+// destination. Kept as its own enum rather than widening `Country`, since
+// mixing origin and destination into one enum would be a real semantic bug.
+enum StoreCountry {
+  CHINA
+  USA
+  UK
+}
+
+// How ATG actually connects to a store today — never claim more than this.
+enum StoreIntegrationType {
+  API             // a real, authorized product/search API is connected
+  AFFILIATE       // an approved affiliate program/tracking link
+  DIRECT_LINK     // just an external link to the store's own site
+  SHOP_FOR_ME     // no live integration; customers paste a link, ATG buys it manually
+  FUTURE          // planned, not yet built in any form
 }
 
 model Category {
@@ -167,6 +189,44 @@ model Supplier {
   @@index([platform])
 }
 
+// A retail storefront ATG offers "shop for me" access to (Amazon, Walmart,
+// 1688, etc.) — distinct from `Supplier` (a China wholesale supplier ATG
+// buys directly from) and `Seller` (a vendor on ATG's own marketplace).
+// Every field here is admin-configured; nothing about a Store implies a
+// live product feed unless integrationType is actually API.
+model Store {
+  id                 String   @id @default(cuid())
+  name               String
+  slug               String   @unique
+  country            StoreCountry
+  logoUrl            String?
+  // External "Browse" destination (the store's real website). Null for the
+  // "Other Store" catch-all, which only offers Send Product Link.
+  websiteUrl         String?
+  // When set, "Browse" links here instead of `websiteUrl` — used only by
+  // 1688/Taobao, which already have a real (mock-data, clearly labeled)
+  // browse experience at /shop-from-china/1688 and /shop-from-china/taobao.
+  internalBrowsePath String?
+  description        String?
+  integrationType    StoreIntegrationType @default(SHOP_FOR_ME)
+  affiliateUrl       String?
+  // Free-text status note for staff, e.g. "Mock demo data — pending
+  // authorized API" or "Not yet configured" — never a claim of a live
+  // integration that doesn't exist.
+  apiStatus          String?
+  isActive           Boolean  @default(true)
+  shopForMeEnabled   Boolean  @default(true)
+  supportedDestinations Country[] @default([NIGERIA, GAMBIA])
+  sortOrder          Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  products          Product[]
+  shopForMeRequests ShopForMeRequest[]
+
+  @@index([country])
+}
+
 model Seller {
   id           String   @id @default(cuid())
   userId       String   @unique
@@ -202,6 +262,8 @@ model Product {
   supplier       Supplier?      @relation(fields: [supplierId], references: [id])
   sellerId       String?
   seller         Seller?        @relation(fields: [sellerId], references: [id])
+  storeId        String?
+  store          Store?         @relation(fields: [storeId], references: [id])
   sourcePlatform SourcePlatform @default(ATG)
   sourceUrl      String?
   sourceProductId String?
@@ -476,6 +538,8 @@ model ShopForMeRequest {
   id            String        @id @default(cuid())
   userId        String
   user          User          @relation(fields: [userId], references: [id])
+  storeId       String?
+  store         Store?        @relation(fields: [storeId], references: [id])
   productUrl    String
   productName   String
   productImageUrl String?
@@ -770,18 +834,23 @@ model ShippingRate {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
-  @@unique([destinationCountry, method])
+  @@unique([originCountry, destinationCountry, method])
 }
 
-// Singleton row (there should only ever be exactly one) holding the ATG
-// service-fee policy and China-domestic-shipping estimate that pricingService
-// used to hardcode as constants. Admin-editable via /admin/settings.
+// One row per sourcing origin (China/USA/UK), holding ATG's service-fee
+// policy and the flat domestic-shipping/warehouse-handling estimates used in
+// every landed-cost calculation for that origin. Admin-editable via
+// /admin/settings. Replaces the old China-only singleton pricingService used
+// to hardcode as constants.
 model PricingPolicy {
-  id                            String   @id @default(cuid())
-  serviceFeePercent             Int      @default(8)
-  serviceFeeMinMinorCny         Int      @default(1000)
-  chinaDomesticShippingMinorCny Int      @default(800)
-  updatedAt                     DateTime @updatedAt
+  id                        String       @id @default(cuid())
+  originCountry             StoreCountry @unique
+  currency                  Currency
+  domesticShippingMinor     Int          @default(0)
+  serviceFeePercent         Int          @default(0)
+  serviceFeeMinMinor        Int          @default(0)
+  warehouseHandlingFeeMinor Int          @default(0)
+  updatedAt                 DateTime     @updatedAt
 }
 
 model DeliveryZone {

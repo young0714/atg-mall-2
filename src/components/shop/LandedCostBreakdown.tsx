@@ -10,8 +10,11 @@ export function LandedCostBreakdown({
   quantity?: number;
 }) {
   const rows: { label: string; amount: number }[] = [
-    { label: "Product cost (China price)", amount: breakdown.productCostMinor * quantity },
-    { label: "China domestic shipping (to ATG warehouse)", amount: breakdown.chinaDomesticShippingMinor * quantity },
+    { label: "Product cost", amount: breakdown.productCostMinor * quantity },
+    { label: "Domestic shipping (to ATG warehouse)", amount: breakdown.domesticShippingMinor * quantity },
+    ...(breakdown.warehouseHandlingFeeMinor > 0
+      ? [{ label: "Warehouse / handling fee", amount: breakdown.warehouseHandlingFeeMinor * quantity }]
+      : []),
     { label: "Estimated international shipping", amount: breakdown.intlShippingMinor * quantity },
     { label: "ATG service / sourcing fee", amount: breakdown.serviceFeeMinor * quantity },
   ];

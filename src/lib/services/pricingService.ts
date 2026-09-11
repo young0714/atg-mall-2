@@ -1,44 +1,52 @@
 import "server-only";
 import { cache } from "react";
-import type { Country, Currency } from "@prisma/client";
+import type { Country, Currency, StoreCountry } from "@prisma/client";
 import { currencyConversionService } from "./currencyConversionService";
 import { db } from "@/lib/db";
 
 /**
  * PricingService — computes the estimated LANDED COST shown on product pages:
- * China price + China domestic shipping + international shipping + ATG's
- * service/sourcing fee = total estimated landed cost, converted into the
- * customer's destination currency.
+ * product price + domestic shipping (to ATG's consolidation warehouse) +
+ * warehouse/handling + international shipping + ATG's service/sourcing fee
+ * = total estimated landed cost, converted into the customer's destination
+ * currency.
  *
  * All shipping figures ultimately trace back to admin-configured
  * `ShippingRate` rows (see shippingService.ts) — nothing here hardcodes a
- * "real" carrier rate. The ATG service-fee policy and flat China-domestic-
- * shipping estimate come from the admin-editable `PricingPolicy` singleton
- * (see /admin/settings), falling back to these defaults only if that row is
+ * "real" carrier rate. The service-fee policy and domestic-shipping/
+ * warehouse-handling estimates come from the admin-editable `PricingPolicy`
+ * table (see /admin/settings) — one row per sourcing origin (China/USA/UK) —
+ * falling back to honest zero defaults only if a given origin's row is
  * somehow missing (e.g. a fresh database before the first seed).
  */
 
-// Defaults, used only if no PricingPolicy row exists yet.
-const DEFAULT_CHINA_DOMESTIC_SHIPPING_MINOR_CNY = 800;
-const DEFAULT_SERVICE_FEE_PERCENT = 8;
-const DEFAULT_SERVICE_FEE_MIN_MINOR_CNY = 1000;
+const DEFAULT_POLICY = {
+  currency: "CNY" as Currency,
+  domesticShippingMinor: 0,
+  serviceFeePercent: 0,
+  serviceFeeMinMinor: 0,
+  warehouseHandlingFeeMinor: 0,
+};
 
-// React's cache() dedupes this within a single request/render — every
-// product card on a listing page shares one DB read instead of one each.
-const getPricingPolicy = cache(async () => {
-  const policy = await db.pricingPolicy.findFirst();
+// React's cache() dedupes this per origin within a single request/render —
+// every product card on a listing page shares one DB read per origin
+// instead of one each.
+const getPricingPolicy = cache(async (originCountry: StoreCountry) => {
+  const policy = await db.pricingPolicy.findUnique({ where: { originCountry } });
   return {
-    serviceFeePercent: policy?.serviceFeePercent ?? DEFAULT_SERVICE_FEE_PERCENT,
-    serviceFeeMinMinorCny: policy?.serviceFeeMinMinorCny ?? DEFAULT_SERVICE_FEE_MIN_MINOR_CNY,
-    chinaDomesticShippingMinorCny:
-      policy?.chinaDomesticShippingMinorCny ?? DEFAULT_CHINA_DOMESTIC_SHIPPING_MINOR_CNY,
+    currency: policy?.currency ?? DEFAULT_POLICY.currency,
+    domesticShippingMinor: policy?.domesticShippingMinor ?? DEFAULT_POLICY.domesticShippingMinor,
+    serviceFeePercent: policy?.serviceFeePercent ?? DEFAULT_POLICY.serviceFeePercent,
+    serviceFeeMinMinor: policy?.serviceFeeMinMinor ?? DEFAULT_POLICY.serviceFeeMinMinor,
+    warehouseHandlingFeeMinor: policy?.warehouseHandlingFeeMinor ?? DEFAULT_POLICY.warehouseHandlingFeeMinor,
   };
 });
 
 export interface LandedCostBreakdown {
   productCostMinor: number;
   productCostCurrency: Currency;
-  chinaDomesticShippingMinor: number;
+  domesticShippingMinor: number;
+  warehouseHandlingFeeMinor: number;
   intlShippingMinor: number;
   serviceFeeMinor: number;
   totalMinor: number;
@@ -52,6 +60,7 @@ export interface PricingService {
     productCostCurrency: Currency;
     destination: Country;
     destinationCurrency: Currency;
+    originCountry?: StoreCountry;
     intlShippingMinorInProductCurrency?: number;
   }): Promise<LandedCostBreakdown>;
 }
@@ -61,21 +70,23 @@ class DefaultPricingService implements PricingService {
     productCostMinor,
     productCostCurrency,
     destinationCurrency,
+    originCountry = "CHINA",
     intlShippingMinorInProductCurrency,
   }: {
     productCostMinor: number;
     productCostCurrency: Currency;
     destination: Country;
     destinationCurrency: Currency;
+    originCountry?: StoreCountry;
     intlShippingMinorInProductCurrency?: number;
   }): Promise<LandedCostBreakdown> {
-    const policy = await getPricingPolicy();
+    const policy = await getPricingPolicy(originCountry);
 
-    const serviceFeeCny = Math.max(
+    const serviceFeeInPolicyCurrency = Math.max(
       Math.round((productCostMinor * policy.serviceFeePercent) / 100),
-      policy.serviceFeeMinMinorCny,
+      policy.serviceFeeMinMinor,
     );
-    const intlShippingCny =
+    const intlShippingInProductCurrency =
       intlShippingMinorInProductCurrency ?? Math.round(productCostMinor * 0.35 + 2500);
 
     const toDest = (amountInProductCurrency: number) =>
@@ -84,19 +95,27 @@ class DefaultPricingService implements PricingService {
         productCostCurrency,
         destinationCurrency,
       );
+    const policyToDest = (amountInPolicyCurrency: number) =>
+      currencyConversionService.convert(amountInPolicyCurrency, policy.currency, destinationCurrency);
 
     const productCostMinorDest = toDest(productCostMinor);
-    const chinaDomesticMinorDest = toDest(policy.chinaDomesticShippingMinorCny);
-    const intlShippingMinorDest = toDest(intlShippingCny);
-    const serviceFeeMinorDest = toDest(serviceFeeCny);
+    const domesticShippingMinorDest = policyToDest(policy.domesticShippingMinor);
+    const warehouseHandlingFeeMinorDest = policyToDest(policy.warehouseHandlingFeeMinor);
+    const intlShippingMinorDest = toDest(intlShippingInProductCurrency);
+    const serviceFeeMinorDest = policyToDest(serviceFeeInPolicyCurrency);
 
     const totalMinor =
-      productCostMinorDest + chinaDomesticMinorDest + intlShippingMinorDest + serviceFeeMinorDest;
+      productCostMinorDest +
+      domesticShippingMinorDest +
+      warehouseHandlingFeeMinorDest +
+      intlShippingMinorDest +
+      serviceFeeMinorDest;
 
     return {
       productCostMinor: productCostMinorDest,
       productCostCurrency: destinationCurrency,
-      chinaDomesticShippingMinor: chinaDomesticMinorDest,
+      domesticShippingMinor: domesticShippingMinorDest,
+      warehouseHandlingFeeMinor: warehouseHandlingFeeMinorDest,
       intlShippingMinor: intlShippingMinorDest,
       serviceFeeMinor: serviceFeeMinorDest,
       totalMinor,

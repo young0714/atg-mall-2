@@ -124,13 +124,17 @@ export const categorySchema = z.object({
 export type CategoryInput = z.infer<typeof categorySchema>;
 
 export const pricingPolicySchema = z.object({
+  originCountry: z.enum(["CHINA", "USA", "UK"]),
+  currency: z.enum(["CNY", "USD", "GBP", "NGN", "GMD", "EUR"]),
+  domesticShippingMinor: z.coerce.number().int().min(0),
   serviceFeePercent: z.coerce.number().int().min(0).max(100),
-  serviceFeeMinMinorCny: z.coerce.number().int().min(0),
-  chinaDomesticShippingMinorCny: z.coerce.number().int().min(0),
+  serviceFeeMinMinor: z.coerce.number().int().min(0),
+  warehouseHandlingFeeMinor: z.coerce.number().int().min(0),
 });
 export type PricingPolicyInput = z.infer<typeof pricingPolicySchema>;
 
 export const shippingRateSchema = z.object({
+  originCountry: z.string().min(1).default("China"),
   destinationCountry: z.enum(["NIGERIA", "GAMBIA"]),
   method: z.enum(["AIR_FREIGHT", "SEA_FREIGHT", "COURIER", "LCL", "FCL"]),
   pricePerKgMinor: z.coerce.number().int().min(0),

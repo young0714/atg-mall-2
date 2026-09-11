@@ -100,7 +100,13 @@ async function main() {
   ];
   for (const r of rateDefs) {
     await db.shippingRate.upsert({
-      where: { destinationCountry_method: { destinationCountry: r.destinationCountry, method: r.method } },
+      where: {
+        originCountry_destinationCountry_method: {
+          originCountry: "China",
+          destinationCountry: r.destinationCountry,
+          method: r.method,
+        },
+      },
       update: {},
       create: {
         destinationCountry: r.destinationCountry,

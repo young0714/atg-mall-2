@@ -68,20 +68,19 @@ export async function updatePricingPolicyAction(formData: FormData) {
   }
   const data = parsed.data!;
 
-  const existing = await db.pricingPolicy.findFirst();
-  if (existing) {
-    await db.pricingPolicy.update({ where: { id: existing.id }, data });
-  } else {
-    await db.pricingPolicy.create({ data });
-  }
+  await db.pricingPolicy.upsert({
+    where: { originCountry: data.originCountry },
+    update: data,
+    create: data,
+  });
 
   await db.auditLog.create({
     data: {
       actorId: staff.id,
       action: "PRICING_POLICY_UPDATED",
       entityType: "PricingPolicy",
-      entityId: existing?.id ?? "singleton",
-      summary: `Pricing policy updated: ${data.serviceFeePercent}% service fee`,
+      entityId: data.originCountry,
+      summary: `Pricing policy updated for ${data.originCountry}: ${data.serviceFeePercent}% service fee`,
     },
   });
 

@@ -11,15 +11,28 @@ import type { SourcePlatform } from "@prisma/client";
 export const metadata: Metadata = { title: "Admin — Product Sources" };
 export const dynamic = "force-dynamic";
 
-const SOURCE_ORDER: SourcePlatform[] = ["ATG", "SELLER", "MOCK_1688", "MOCK_TAOBAO", "ALIBABA", "AFFILIATE"];
+const SOURCE_ORDER: SourcePlatform[] = [
+  "ATG",
+  "SELLER",
+  "MOCK_1688",
+  "MOCK_TAOBAO",
+  "ALIBABA",
+  "USA_STORE",
+  "UK_STORE",
+  "INTERNATIONAL_STORE",
+  "AFFILIATE",
+];
 
 export default async function AdminProductSourcesPage() {
   await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
 
   const products = await db.product.findMany({
-    include: { category: true, seller: true },
+    include: { category: true, seller: true, store: true },
     orderBy: { createdAt: "desc" },
   });
+
+  const isStoreSource = (s: SourcePlatform) =>
+    s === "USA_STORE" || s === "UK_STORE" || s === "INTERNATIONAL_STORE";
 
   const bySource: Record<SourcePlatform, typeof products> = {
     ATG: [],
@@ -27,6 +40,9 @@ export default async function AdminProductSourcesPage() {
     MOCK_1688: [],
     MOCK_TAOBAO: [],
     ALIBABA: [],
+    USA_STORE: [],
+    UK_STORE: [],
+    INTERNATIONAL_STORE: [],
     AFFILIATE: [],
   };
   for (const p of products) bySource[p.sourcePlatform].push(p);
@@ -55,7 +71,7 @@ export default async function AdminProductSourcesPage() {
                   <tr>
                     <th className="p-2">Product</th>
                     <th className="p-2">Category</th>
-                    <th className="p-2">{source === "SELLER" ? "Vendor" : source === "AFFILIATE" ? "Partner" : "Price"}</th>
+                    <th className="p-2">{source === "SELLER" ? "Vendor" : source === "AFFILIATE" ? "Partner" : isStoreSource(source) ? "Store" : "Price"}</th>
                     <th className="p-2">Status</th>
                   </tr>
                 </thead>
@@ -71,7 +87,9 @@ export default async function AdminProductSourcesPage() {
                           ? (p.seller?.storeName ?? "—")
                           : source === "AFFILIATE"
                             ? (p.affiliateProvider ?? "—")
-                            : formatMoney(p.basePriceMinor, p.baseCurrency)}
+                            : isStoreSource(source)
+                              ? (p.store?.name ?? "—")
+                              : formatMoney(p.basePriceMinor, p.baseCurrency)}
                       </td>
                       <td className="p-2">
                         <Badge tone={p.isActive ? "green" : "neutral"}>{p.isActive ? "Active" : "Inactive"}</Badge>

@@ -11,6 +11,9 @@ export const SOURCE_PLATFORM_LABELS: Record<SourcePlatform, string> = {
   MOCK_TAOBAO: "Taobao",
   ALIBABA: "International Supplier",
   AFFILIATE: "Affiliate",
+  USA_STORE: "USA Store",
+  UK_STORE: "UK Store",
+  INTERNATIONAL_STORE: "International Store",
 };
 
 export const FULFILLMENT_TYPE_LABELS: Record<FulfillmentType, string> = {

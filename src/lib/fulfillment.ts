@@ -16,7 +16,14 @@ export function fulfillmentTypeForSourcePlatform(
   if (sourcePlatform === "AFFILIATE") return "AFFILIATE";
   if (sourcePlatform === "SELLER" || sellerId) return "VENDOR";
   if (sourcePlatform === "ATG") return "ATG_INVENTORY";
-  if (sourcePlatform === "ALIBABA") return "INTERNATIONAL_SOURCING";
+  if (
+    sourcePlatform === "ALIBABA" ||
+    sourcePlatform === "USA_STORE" ||
+    sourcePlatform === "UK_STORE" ||
+    sourcePlatform === "INTERNATIONAL_STORE"
+  ) {
+    return "INTERNATIONAL_SOURCING";
+  }
   // MOCK_1688 / MOCK_TAOBAO
   return "CHINA_SOURCING";
 }
