@@ -24,6 +24,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/admin/product-sources", label: "Product Sources", permission: PERMISSIONS.MANAGE_PRODUCTS },
       { href: "/admin/categories", label: "Categories", permission: PERMISSIONS.MANAGE_CATEGORIES },
       { href: "/admin/suppliers", label: "Suppliers", permission: PERMISSIONS.MANAGE_SUPPLIERS },
+      { href: "/admin/international-stores", label: "International Stores", permission: PERMISSIONS.MANAGE_STORES },
     ],
   },
   {

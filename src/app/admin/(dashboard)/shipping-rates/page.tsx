@@ -16,7 +16,7 @@ export default async function AdminShippingRatesPage({
   searchParams: { saved?: string; error?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_SHIPPING_RATES);
-  const rates = await db.shippingRate.findMany({ orderBy: [{ destinationCountry: "asc" }, { method: "asc" }] });
+  const rates = await db.shippingRate.findMany({ orderBy: [{ originCountry: "asc" }, { destinationCountry: "asc" }, { method: "asc" }] });
 
   return (
     <div className="space-y-6">
@@ -34,6 +34,13 @@ export default async function AdminShippingRatesPage({
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add / Update Rate</summary>
         <form action={upsertShippingRateAction} className="mt-4 grid gap-4 sm:grid-cols-2">
+          <Field label="Origin" htmlFor="originCountry" required>
+            <Select id="originCountry" name="originCountry" defaultValue="China" required>
+              <option value="China">🇨🇳 China</option>
+              <option value="USA">🇺🇸 USA</option>
+              <option value="UK">🇬🇧 UK</option>
+            </Select>
+          </Field>
           <Field label="Destination" htmlFor="destinationCountry" required>
             <Select id="destinationCountry" name="destinationCountry" required>
               <option value="NIGERIA">Nigeria</option>
@@ -73,6 +80,7 @@ export default async function AdminShippingRatesPage({
         <table className="w-full min-w-[720px] text-sm">
           <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
             <tr>
+              <th className="p-3">Origin</th>
               <th className="p-3">Destination</th>
               <th className="p-3">Method</th>
               <th className="p-3">Rate</th>
@@ -85,6 +93,7 @@ export default async function AdminShippingRatesPage({
           <tbody className="divide-y divide-navy-100">
             {rates.map((r) => (
               <tr key={r.id}>
+                <td className="p-3 text-navy-500">{r.originCountry}</td>
                 <td className="p-3 font-medium text-navy-800">{r.destinationCountry}</td>
                 <td className="p-3 text-navy-500">{r.method.replaceAll("_", " ")}</td>
                 <td className="p-3 text-navy-500">{formatMoney(r.pricePerKgMinor, r.currency)}/kg</td>

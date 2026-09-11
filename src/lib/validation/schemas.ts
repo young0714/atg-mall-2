@@ -123,6 +123,26 @@ export const categorySchema = z.object({
 });
 export type CategoryInput = z.infer<typeof categorySchema>;
 
+export const storeSchema = z.object({
+  name: z.string().min(2),
+  slug: z.string().min(2).regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, hyphens only"),
+  country: z.enum(["CHINA", "USA", "UK"]),
+  logoUrl: z.string().url().optional().or(z.literal("")),
+  websiteUrl: z.string().url().optional().or(z.literal("")),
+  internalBrowsePath: z.string().optional().or(z.literal("")),
+  description: z.string().optional(),
+  integrationType: z.enum(["API", "AFFILIATE", "DIRECT_LINK", "SHOP_FOR_ME", "FUTURE"]),
+  affiliateUrl: z.string().url().optional().or(z.literal("")),
+  apiStatus: z.string().optional(),
+  isActive: z.coerce.boolean().default(true),
+  shopForMeEnabled: z.coerce.boolean().default(true),
+  supportedDestinations: z
+    .array(z.enum(["NIGERIA", "GAMBIA"]))
+    .default(["NIGERIA", "GAMBIA"]),
+  sortOrder: z.coerce.number().int().default(0),
+});
+export type StoreInput = z.infer<typeof storeSchema>;
+
 export const pricingPolicySchema = z.object({
   originCountry: z.enum(["CHINA", "USA", "UK"]),
   currency: z.enum(["CNY", "USD", "GBP", "NGN", "GMD", "EUR"]),
