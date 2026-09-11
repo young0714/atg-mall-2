@@ -19,6 +19,7 @@ export async function submitShopForMeAction(formData: FormData) {
   await db.shopForMeRequest.create({
     data: {
       userId: user.id,
+      storeId: data.storeId || undefined,
       productUrl: data.productUrl,
       productName: data.productName,
       productImageUrl: data.productImageUrl || undefined,

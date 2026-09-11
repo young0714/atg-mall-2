@@ -16,6 +16,7 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const shopForMeSchema = z.object({
+  storeId: z.string().optional(),
   productUrl: z.string().url("Paste a valid product link"),
   productName: z.string().min(2),
   productImageUrl: z.string().url().optional().or(z.literal("")),

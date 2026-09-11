@@ -1,20 +1,25 @@
+import { db } from "@/lib/db";
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
+import { STORE_COUNTRY_LABELS, STORE_COUNTRY_FLAGS } from "@/lib/store";
 import { submitShopForMeAction } from "./actions";
 import { getDestination } from "@/lib/destination";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Shop For Me — We buy it, you receive it",
-  description: "Send us a product link from any Chinese marketplace and ATG Mall will purchase, inspect, warehouse and ship it to Nigeria or Gambia.",
+  description: "Send us a product link from any store — China, USA, UK or anywhere else — and ATG Mall will purchase, inspect, warehouse and ship it to Nigeria or Gambia.",
 };
 
-export default function ShopForMePage({
+export default async function ShopForMePage({
   searchParams,
 }: {
-  searchParams: { error?: string; productUrl?: string; productName?: string; productImageUrl?: string };
+  searchParams: { error?: string; storeId?: string; productUrl?: string; productName?: string; productImageUrl?: string };
 }) {
   const destination = getDestination();
+  const store = searchParams.storeId
+    ? await db.store.findUnique({ where: { id: searchParams.storeId } })
+    : null;
 
   return (
     <Section className="!py-12">
@@ -22,14 +27,21 @@ export default function ShopForMePage({
         <SectionHeading
           eyebrow="Shop for Me"
           title="Found something online? We'll buy it for you."
-          description="Paste a product link from 1688, Taobao, or anywhere else — our team will review it, quote you the full landed cost, and purchase it once you approve."
+          description="Paste a product link from any store — our team will review it, quote you the full landed cost, and purchase it once you approve."
         />
+
+        {store && (
+          <div className="mt-4 rounded-xl2 border border-atgblue-200 bg-atgblue-50 p-4 text-sm text-atgblue-700">
+            Requesting from <strong>{store.name}</strong> ({STORE_COUNTRY_FLAGS[store.country]} {STORE_COUNTRY_LABELS[store.country]}) — paste the link to the specific product you want below.
+          </div>
+        )}
 
         {searchParams.error && (
           <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>
         )}
 
         <form action={submitShopForMeAction} className="card mt-8 space-y-4 p-6">
+          {store && <input type="hidden" name="storeId" value={store.id} />}
           <Field label="Product link (URL)" htmlFor="productUrl" required>
             <Input id="productUrl" name="productUrl" type="url" required defaultValue={searchParams.productUrl} placeholder="https://www.1688.com/..." />
           </Field>

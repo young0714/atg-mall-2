@@ -19,7 +19,7 @@ export default async function AdminShopForMePage({
 
   const requests = await db.shopForMeRequest.findMany({
     orderBy: { createdAt: "desc" },
-    include: { user: true, quotations: true },
+    include: { user: true, quotations: true, store: true },
   });
 
   return (
@@ -35,6 +35,7 @@ export default async function AdminShopForMePage({
                 <p className="font-semibold text-navy-800">{req.productName}</p>
                 <p className="text-xs text-navy-400">
                   {req.user.fullName} · Qty {req.quantity} · {req.destination} · {formatDate(req.createdAt)}
+                  {req.store && <> · <span className="font-medium text-atgblue-600">{req.store.name}</span></>}
                 </p>
                 <a href={req.productUrl} target="_blank" rel="noreferrer" className="text-xs text-atgblue-600 underline">
                   View product link
