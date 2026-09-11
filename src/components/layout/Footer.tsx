@@ -6,8 +6,10 @@ const columns = [
     title: "Shop",
     links: [
       { href: "/shop", label: "All products" },
-      { href: "/shop-from-china/1688", label: "1688" },
-      { href: "/shop-from-china/taobao", label: "Taobao" },
+      { href: "/shop-from-china", label: "Shop from China" },
+      { href: "/shop/usa", label: "Shop from USA" },
+      { href: "/shop/uk", label: "Shop from UK" },
+      { href: "/shop/international", label: "International Stores" },
       { href: "/shop?wholesale=1", label: "Wholesale deals" },
     ],
   },

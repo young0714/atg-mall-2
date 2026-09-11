@@ -3,6 +3,7 @@ import { getDestination } from "@/lib/destination";
 import { toProductCard } from "@/lib/product-view";
 import { Hero } from "@/components/home/Hero";
 import { ServicesPromo } from "@/components/home/ServicesPromo";
+import { ShopTheWorld } from "@/components/home/ShopTheWorld";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { ShippingOptionsSection } from "@/components/home/ShippingOptionsSection";
@@ -42,6 +43,7 @@ export default async function HomePage() {
     <>
       <Hero destination={destination.country} />
       <ServicesPromo />
+      <ShopTheWorld />
 
       <Section tone="sand">
         <Container>

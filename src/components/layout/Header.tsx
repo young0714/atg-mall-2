@@ -45,20 +45,26 @@ export async function Header() {
           </Link>
           <div className="group relative">
             <button className="flex items-center gap-1 text-sm font-medium text-navy-600 hover:text-navy-900">
-              Shop From China
+              Shop
               <svg width="10" height="10" viewBox="0 0 10 6" fill="none">
                 <path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.4" />
               </svg>
             </button>
             <div className="invisible absolute left-0 top-full z-50 w-56 rounded-xl border border-navy-100 bg-white p-2 opacity-0 shadow-card-hover transition-all group-hover:visible group-hover:opacity-100">
+              <Link href="/shop" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">
+                ATG Marketplace
+              </Link>
               <Link href="/shop-from-china" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">
-                Overview
+                🇨🇳 Shop from China
               </Link>
-              <Link href="/shop-from-china/1688" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">
-                1688
+              <Link href="/shop/usa" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">
+                🇺🇸 Shop from USA
               </Link>
-              <Link href="/shop-from-china/taobao" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">
-                Taobao
+              <Link href="/shop/uk" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">
+                🇬🇧 Shop from UK
+              </Link>
+              <Link href="/shop/international" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">
+                International Stores
               </Link>
             </div>
           </div>
@@ -67,9 +73,6 @@ export async function Header() {
               {link.label}
             </Link>
           ))}
-          <Link href="/shop" className="text-sm font-medium text-navy-600 hover:text-navy-900">
-            Shop
-          </Link>
         </nav>
 
         <div className="flex items-center gap-3">
