@@ -13,7 +13,7 @@ export default function AdminLoginPage({
   return (
     <div className="flex min-h-screen items-center justify-center bg-navy-950 px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex justify-center"><Logo /></div>
+        <div className="mb-8 flex justify-center"><Logo size="hero" /></div>
         <div className="rounded-xl2 bg-white p-7 shadow-card-hover">
           <h1 className="text-lg font-display font-bold text-navy-900">ATG Mall Admin Console</h1>
           <p className="mt-1 text-sm text-navy-500">Staff sign-in only.</p>

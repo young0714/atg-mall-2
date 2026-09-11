@@ -16,7 +16,7 @@ export default function LoginPage({
     <Section className="!py-16">
       <Container className="max-w-md">
         <div className="mb-8 flex justify-center">
-          <Logo dark />
+          <Logo dark size="hero" />
         </div>
         <div className="card p-7">
           <h1 className="text-xl font-display font-bold text-navy-900">Sign in to ATG Mall</h1>
