@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { pricingService } from "@/lib/services/pricingService";
+import { sourcePlatformToStoreCountry } from "@/lib/services/storeOrigin";
 import { DESTINATIONS } from "@/lib/destination";
 import type { Country } from "@prisma/client";
 
@@ -25,6 +26,8 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
     productCostCurrency: product.baseCurrency,
     destination: destination.country,
     destinationCurrency: destination.currency,
+    originCountry: sourcePlatformToStoreCountry(product.sourcePlatform),
+    weightGrams: product.weightGrams,
   });
 
   return NextResponse.json({

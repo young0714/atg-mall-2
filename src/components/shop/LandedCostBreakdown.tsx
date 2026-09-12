@@ -15,7 +15,10 @@ export function LandedCostBreakdown({
     ...(breakdown.warehouseHandlingFeeMinor > 0
       ? [{ label: "Warehouse / handling fee", amount: breakdown.warehouseHandlingFeeMinor * quantity }]
       : []),
-    { label: "Estimated international shipping", amount: breakdown.intlShippingMinor * quantity },
+    {
+      label: breakdown.intlShippingIsWeightBased ? "International shipping (by weight)" : "Estimated international shipping",
+      amount: breakdown.intlShippingMinor * quantity,
+    },
     { label: "ATG service / sourcing fee", amount: breakdown.serviceFeeMinor * quantity },
   ];
   const total = rows.reduce((sum, r) => sum + r.amount, 0);

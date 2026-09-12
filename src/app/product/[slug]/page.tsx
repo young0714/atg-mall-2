@@ -4,6 +4,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { getDestination } from "@/lib/destination";
 import { pricingService } from "@/lib/services/pricingService";
+import { sourcePlatformToStoreCountry } from "@/lib/services/storeOrigin";
 import { sourcePlatformLabel } from "@/lib/sourcePlatform";
 import { StarRating } from "@/components/shop/StarRating";
 import { Badge } from "@/components/ui/Badge";
@@ -45,6 +46,8 @@ export default async function ProductPage({ params }: { params: { slug: string }
     productCostCurrency: product.baseCurrency,
     destination: destination.country,
     destinationCurrency: destination.currency,
+    originCountry: sourcePlatformToStoreCountry(product.sourcePlatform),
+    weightGrams: product.weightGrams,
   });
 
   return (

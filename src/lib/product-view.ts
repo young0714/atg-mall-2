@@ -3,6 +3,7 @@ import type { Product, ProductImage } from "@prisma/client";
 import type { Destination } from "@/lib/destination";
 import { pricingService } from "@/lib/services/pricingService";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
+import { sourcePlatformToStoreCountry } from "@/lib/services/storeOrigin";
 import type { ProductCardData } from "@/components/shop/ProductCard";
 
 type ProductWithImages = Product & { images: ProductImage[] };
@@ -22,6 +23,8 @@ export async function toProductCard(product: ProductWithImages, destination: Des
             productCostCurrency: product.baseCurrency,
             destination: destination.country,
             destinationCurrency: destination.currency,
+            originCountry: sourcePlatformToStoreCountry(product.sourcePlatform),
+            weightGrams: product.weightGrams,
           })
         ).totalMinor;
 
