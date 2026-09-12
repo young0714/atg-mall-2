@@ -281,6 +281,24 @@ model Product {
   moq              Int      @default(1)
   weightGrams      Int      @default(500)
 
+  // Shipping-engine data (Phase 2). shippingOriginId is the authoritative
+  // origin for the new shipping calculator — nullable so existing products
+  // aren't broken; backfilled in Phase 3 from sourcePlatform via
+  // sourcePlatformToStoreCountry()/storeCountryToShippingOrigin(). Weight
+  // above is mandatory already (has a default); dimensions are optional at
+  // the DB layer but required by validation for new/edited shippable
+  // products (Phase 3) — enforcing NOT NULL here would break existing rows.
+  shippingOriginId              String?
+  shippingOrigin                ShippingOrigin? @relation(fields: [shippingOriginId], references: [id])
+  packageLengthCm               Int?
+  packageWidthCm                Int?
+  packageHeightCm               Int?
+  shippingCategory              String?
+  internationalShippingAllowed  Boolean  @default(true)
+  customsRequired               Boolean  @default(false)
+  isFragile                     Boolean  @default(false)
+  isHazardous                   Boolean  @default(false)
+
   isWholesale    Boolean  @default(false)
   isFeatured     Boolean  @default(false)
   isActive       Boolean  @default(true)
@@ -1009,6 +1027,9 @@ model DestinationCountry {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  rateCards      ShippingRateCard[]
+  customsSetting CustomsSetting?
+
   @@index([isActive])
 }
 
@@ -1026,8 +1047,8 @@ model ShippingOrigin {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  // Product.shippingOriginId back-relation added in Phase 2, alongside the
-  // rest of Product's new shipping-data fields.
+  products  Product[]
+  rateCards ShippingRateCard[]
 
   @@index([isActive])
 }
@@ -1040,6 +1061,8 @@ model Carrier {
   isActive         Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  rateCards ShippingRateCard[]
 
   @@index([isActive])
 }
@@ -1060,8 +1083,7 @@ model ShippingServiceLevel {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // ShippingRateCard back-relation added in Phase 2, alongside the rate-card
-  // schema itself.
+  rateCards ShippingRateCard[]
 }
 
 // Singleton row (exactly one) for engine-wide defaults. Seeded with
@@ -1075,4 +1097,109 @@ model ShippingGlobalSettings {
   defaultMarkupFixedMinor  Int      @default(0)
   defaultHandlingFeeMinor  Int      @default(0)
   updatedAt                DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Shipping Calculation Engine (Phase 2 — rate cards)
+// ---------------------------------------------------------------------------
+
+// One row per Origin -> Destination(+optional region) -> Service Level lane,
+// e.g. "USA -> Gambia -> Express". Weight-bracket pricing lives on the child
+// `ShippingRateBracket` rows. markup/handling fields are nullable — null
+// means "inherit from ShippingGlobalSettings" (see decision #4 in the plan:
+// a rate card is already scoped by origin+destination+method, which covers
+// per-origin/per-destination/per-method configuration without a separate
+// waterfall-rule table).
+model ShippingRateCard {
+  id                   String   @id @default(cuid())
+  shippingOriginId     String
+  shippingOrigin       ShippingOrigin      @relation(fields: [shippingOriginId], references: [id])
+  destinationCountryId String
+  destinationCountry   DestinationCountry  @relation(fields: [destinationCountryId], references: [id])
+  destinationRegion    String?             // sub-national e.g. a state/region name; null = all regions of the country
+  serviceLevelId       String
+  serviceLevel         ShippingServiceLevel @relation(fields: [serviceLevelId], references: [id])
+  carrierId            String
+  carrier              Carrier             @relation(fields: [carrierId], references: [id])
+
+  // Plain ISO currency code (not the bounded `Currency` enum) so rate cards
+  // can be priced in currencies ATG doesn't otherwise support natively
+  // (ZAR, GHS, XOF, ...) — mirrors the existing `ShippingRate.originCountry`
+  // precedent of using a plain string specifically for extensibility.
+  currency String
+
+  deliveryDaysMin    Int
+  deliveryDaysMax    Int
+  trackingAvailable  Boolean  @default(true)
+
+  markupEnabled     Boolean? // null = inherit ShippingGlobalSettings.markupEnabled
+  markupPercent     Int?     // null = inherit
+  markupFixedMinor  Int?     // null = inherit
+  handlingFeeMinor  Int?     // null = inherit
+
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brackets ShippingRateBracket[]
+
+  @@unique([shippingOriginId, destinationCountryId, destinationRegion, serviceLevelId])
+  @@index([isActive])
+}
+
+// A weight range within one rate card, e.g. "0-1kg = $20 base + $0/kg" or
+// "1-3kg = $20 base + $7.5/kg, min charge $35". maxGrams null = open-ended
+// (no upper bound — the last/heaviest bracket on a card).
+model ShippingRateBracket {
+  id             String           @id @default(cuid())
+  rateCardId     String
+  rateCard       ShippingRateCard @relation(fields: [rateCardId], references: [id], onDelete: Cascade)
+  minGrams       Int
+  maxGrams       Int?
+  basePriceMinor Int    @default(0)
+  pricePerKgMinor Int   @default(0)
+  minChargeMinor Int    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([rateCardId])
+}
+
+// Optional, per-destination-country customs/duty disclosure. When
+// isConfigured=false (the default — nothing here is a real customs
+// integration), checkout must show the exact required disclaimer instead of
+// implying duties are included. See src/lib/services/shipping/customsService.ts.
+model CustomsSetting {
+  id                        String   @id @default(cuid())
+  destinationCountryId      String   @unique
+  destinationCountry        DestinationCountry @relation(fields: [destinationCountryId], references: [id])
+  estimatedDutyPercent      Int?
+  importTaxPercent          Int?
+  customsProcessingFeeMinor Int?
+  currency                  String?  // ISO code for customsProcessingFeeMinor, if set
+  notes                     String?
+  isConfigured              Boolean  @default(false)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+// Admin-managed exchange rates for the shipping engine's currency
+// conversions — replaces the hardcoded USD_RATES map in
+// currencyConversionService.ts. Plain ISO currency strings (not the bounded
+// `Currency` enum) for the same extensibility reason as ShippingRateCard.
+// `fetchedAt` lets callers flag a stale rate instead of silently trusting an
+// old number — see currencyRateService.ts.
+model CurrencyRate {
+  id           String   @id @default(cuid())
+  fromCurrency String
+  toCurrency   String
+  rate         Float
+  source       String   @default("MANUAL") // "MANUAL" | a future live-provider name
+  fetchedAt    DateTime @default(now())
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([fromCurrency, toCurrency])
 }
