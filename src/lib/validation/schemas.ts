@@ -233,4 +233,70 @@ export const deliveryZoneSchema = z.object({
   etaDaysMin: z.coerce.number().int().min(0),
   etaDaysMax: z.coerce.number().int().min(0),
 });
+
+// ---------------------------------------------------------------------------
+// Shipping Calculation Engine — reference-data admin forms (Phase 6)
+// ---------------------------------------------------------------------------
+
+export const shippingOriginSchema = z.object({
+  name: z.string().min(2, "Enter a name"),
+  countryIso: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .length(2, "Use a 2-letter ISO country code, e.g. CN"),
+  city: z.string().optional(),
+});
+export type ShippingOriginInput = z.infer<typeof shippingOriginSchema>;
+
+export const destinationCountrySchema = z.object({
+  name: z.string().min(2, "Enter a name"),
+  isoCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .length(2, "Use a 2-letter ISO country code, e.g. GM"),
+  region: z.string().optional(),
+});
+export type DestinationCountryInput = z.infer<typeof destinationCountrySchema>;
+
+export const carrierSchema = z.object({
+  name: z.string().min(2, "Enter a name"),
+  code: z.string().trim().toUpperCase().min(2, "Enter a short code, e.g. DHL"),
+  isLiveApiEnabled: z.coerce.boolean().default(false),
+});
+export type CarrierInput = z.infer<typeof carrierSchema>;
+
+export const shippingServiceLevelSchema = z.object({
+  name: z.string().min(2, "Enter a name"),
+  sortOrder: z.coerce.number().int().min(0).default(0),
+});
+export type ShippingServiceLevelInput = z.infer<typeof shippingServiceLevelSchema>;
+
+export const shippingGlobalSettingsSchema = z.object({
+  volumetricDivisor: z.coerce.number().int().min(1, "Must be greater than 0"),
+  markupEnabled: z.coerce.boolean().default(false),
+  defaultMarkupPercent: z.coerce.number().int().min(0),
+  defaultMarkupFixedMinor: z.coerce.number().int().min(0),
+  defaultHandlingFeeMinor: z.coerce.number().int().min(0),
+});
+export type ShippingGlobalSettingsInput = z.infer<typeof shippingGlobalSettingsSchema>;
+
+export const customsSettingSchema = z.object({
+  destinationCountryId: z.string().min(1),
+  estimatedDutyPercent: z.coerce.number().int().min(0).optional(),
+  importTaxPercent: z.coerce.number().int().min(0).optional(),
+  customsProcessingFeeMinor: z.coerce.number().int().min(0).optional(),
+  currency: z.string().trim().toUpperCase().optional(),
+  notes: z.string().optional(),
+  isConfigured: z.coerce.boolean().default(false),
+});
+export type CustomsSettingInput = z.infer<typeof customsSettingSchema>;
+
+export const currencyRateSchema = z.object({
+  fromCurrency: z.string().trim().toUpperCase().length(3, "Use a 3-letter ISO currency code, e.g. USD"),
+  toCurrency: z.string().trim().toUpperCase().length(3, "Use a 3-letter ISO currency code, e.g. NGN"),
+  rate: z.coerce.number().positive("Rate must be greater than 0"),
+});
+export type CurrencyRateInput = z.infer<typeof currencyRateSchema>;
 export type DeliveryZoneInput = z.infer<typeof deliveryZoneSchema>;

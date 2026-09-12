@@ -47,6 +47,18 @@ const NAV: { section: string; items: NavItem[] }[] = [
     ],
   },
   {
+    section: "Shipping Management",
+    items: [
+      { href: "/admin/shipping-origins", label: "Shipping Origins", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
+      { href: "/admin/destination-countries", label: "Destination Countries", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
+      { href: "/admin/carriers", label: "Carriers", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
+      { href: "/admin/service-levels", label: "Service Levels", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
+      { href: "/admin/customs-settings", label: "Customs Settings", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
+      { href: "/admin/currency-rates", label: "Currency Rates", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
+      { href: "/admin/shipping-settings", label: "Global Settings", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
+    ],
+  },
+  {
     section: "Finance",
     items: [
       { href: "/admin/payments", label: "Payments", permission: PERMISSIONS.MANAGE_PAYMENTS },
