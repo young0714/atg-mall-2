@@ -436,6 +436,7 @@ model Order {
   payments   Payment[]
   packages   Package[]
   trackingEvents TrackingEvent[]
+  shipments  OrderShipment[]
 
   @@index([userId])
   @@index([status])
@@ -471,6 +472,14 @@ model OrderItem {
   costCurrency           Currency?
   sourcePlatformSnapshot SourcePlatform?
   sellerIdSnapshot       String?
+
+  // Which shipment group (see OrderShipment) this line was quoted/shipped
+  // under, and the weight actually used for that quote — snapshotted the
+  // same way as the fields above, for the same reason (an order's shipping
+  // math must never silently change if the product is edited later).
+  orderShipmentId    String?
+  orderShipment      OrderShipment? @relation(fields: [orderShipmentId], references: [id])
+  weightGramsSnapshot Int?
 }
 
 enum PaymentMethod {
@@ -1047,8 +1056,9 @@ model ShippingOrigin {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  products  Product[]
-  rateCards ShippingRateCard[]
+  products       Product[]
+  rateCards      ShippingRateCard[]
+  orderShipments OrderShipment[]
 
   @@index([isActive])
 }
@@ -1062,7 +1072,8 @@ model Carrier {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  rateCards ShippingRateCard[]
+  rateCards      ShippingRateCard[]
+  orderShipments OrderShipment[]
 
   @@index([isActive])
 }
@@ -1202,4 +1213,62 @@ model CurrencyRate {
   updatedAt    DateTime @updatedAt
 
   @@unique([fromCurrency, toCurrency])
+}
+
+// ---------------------------------------------------------------------------
+// Shipping Calculation Engine (Phase 4 — order-time snapshots)
+// ---------------------------------------------------------------------------
+
+enum ShippingRateSource {
+  MANUAL   // matched an admin-configured ShippingRateCard/Bracket
+  LIVE_API // came from a live carrier API
+  FALLBACK // a live API was tried and failed; fell back to MANUAL rates
+}
+
+// One row per origin-group within an order (see requirement: a cart with
+// USA + China products becomes two shipments, shown and charged
+// separately). Every field that could otherwise drift if reference data is
+// later edited is snapshotted here as plain data, not just a live FK —
+// mirrors the exact pattern OrderItem already uses for
+// fulfillmentType/costBasisMinor/sourcePlatformSnapshot: "stays accurate
+// even if the product/origin/carrier changes later." This is what makes
+// "the shipping price on an old order does not change when rates are later
+// updated" true by construction, not by convention.
+model OrderShipment {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  shippingOriginId       String?
+  shippingOrigin         ShippingOrigin? @relation(fields: [shippingOriginId], references: [id])
+  originNameSnapshot     String
+  destinationCountryIso  String // e.g. "NG", "GM" — bridges to Order.destination
+  carrierId              String?
+  carrier                Carrier?        @relation(fields: [carrierId], references: [id])
+  carrierNameSnapshot    String
+  serviceLevelNameSnapshot String // e.g. "Express"
+
+  actualWeightGrams     Int
+  volumetricWeightGrams Int
+  chargeableWeightGrams Int
+
+  carrierCostMinor     Int // before markup/handling/customs
+  markupMinor          Int @default(0)
+  handlingFeeMinor     Int @default(0)
+  customsEstimateMinor Int? // null = not configured/estimated for this lane
+  customerPriceMinor   Int // final price the customer was charged for this shipment
+  currency             Currency // the order's own (enum-bound) currency — what was actually charged
+
+  estimatedDeliveryDaysMin Int
+  estimatedDeliveryDaysMax Int
+
+  rateSource          ShippingRateSource @default(MANUAL)
+  rawProviderResponse Json? // live-API response, for audit — null for manual/fallback
+
+  quotedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  items OrderItem[]
+
+  @@index([orderId])
 }
