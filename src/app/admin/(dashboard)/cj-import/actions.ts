@@ -58,13 +58,18 @@ export async function importCjProductAction(formData: FormData) {
     },
   });
 
+  // Best-effort: register this product in CJ's own "My Products" list too,
+  // purely so it's visible in the CJ dashboard for the admin's own tracking.
+  // Never blocks the ATG import itself if it fails.
+  const addedToCjMyProducts = await cjDropshippingService.addToMyProduct(pid);
+
   await db.auditLog.create({
     data: {
       actorId: staff.id,
       action: "PRODUCT_IMPORTED_FROM_CJ",
       entityType: "Product",
       entityId: product.id,
-      summary: `Imported "${product.name}" from CJdropshipping (pid ${pid})`,
+      summary: `Imported "${product.name}" from CJdropshipping (pid ${pid})${addedToCjMyProducts ? " and added to CJ My Products" : " (could not register in CJ My Products)"}`,
     },
   });
 

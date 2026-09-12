@@ -51,6 +51,14 @@ export interface CjDropshippingService {
   isConfigured(): boolean;
   search(keyword: string, page?: number): Promise<CjProductSummary[]>;
   getById(pid: string): Promise<CjProductDetail | null>;
+  /**
+   * Registers a product in CJ's own "My Products" list (visible in your CJ
+   * dashboard) — purely for your own tracking of what you're sourcing
+   * through CJ. Does not place an order or move money. Returns false rather
+   * than throwing on failure, since this is a best-effort side effect —
+   * callers should still treat the ATG import itself as successful.
+   */
+  addToMyProduct(pid: string): Promise<boolean>;
 }
 
 interface CjApiEnvelope<T> {
@@ -122,6 +130,23 @@ class LiveCjDropshippingService implements CjDropshippingService {
     );
     const res = await fetch(`${BASE_URL}${path}?${query.toString()}`, {
       headers: { "CJ-Access-Token": token },
+    });
+    const json = (await res.json()) as CjApiEnvelope<T>;
+    if (!res.ok || !json.result) {
+      throw new Error(`CJdropshipping API error (${path}): ${json.message || res.statusText}`);
+    }
+    return json.data;
+  }
+
+  private async authedPost<T>(path: string, body: Record<string, unknown>): Promise<T> {
+    this.requireConfigured();
+    const token = await this.getAccessToken();
+    await this.throttle();
+
+    const res = await fetch(`${BASE_URL}${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "CJ-Access-Token": token },
+      body: JSON.stringify(body),
     });
     const json = (await res.json()) as CjApiEnvelope<T>;
     if (!res.ok || !json.result) {
@@ -208,6 +233,15 @@ class LiveCjDropshippingService implements CjDropshippingService {
         attributes: (v.variantKey ? { variant: v.variantKey } : {}) as Record<string, string>,
       })),
     };
+  }
+
+  async addToMyProduct(pid: string): Promise<boolean> {
+    try {
+      const data = await this.authedPost<boolean>("/product/addToMyProduct", { productId: pid });
+      return data === true;
+    } catch {
+      return false;
+    }
   }
 }
 
