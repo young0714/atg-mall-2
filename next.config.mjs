@@ -5,6 +5,8 @@ const nextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "**.apexterraglobal.com" },
+      // CJdropshipping's product image CDNs — used by imported CJDROPSHIPPING products.
+      { protocol: "https", hostname: "**.cjdropshipping.com" },
     ],
   },
   experimental: {
