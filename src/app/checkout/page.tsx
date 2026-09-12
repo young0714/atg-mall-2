@@ -32,13 +32,17 @@ export default async function CheckoutPage({
   const wallet = await db.wallet.findUnique({ where: { userId: user.id } });
 
   const totalWeightGrams = cart.items.reduce((sum, i) => sum + i.product.weightGrams * i.quantity, 0);
-  const subtotalCny = cart.items.reduce(
-    (sum, i) => sum + i.product.basePriceMinor * i.quantity,
-    0,
-  );
   const destinationCountry = profile?.country ?? addresses[0]?.country ?? "NIGERIA";
   const orderCurrency = profile?.preferredCurrency ?? (destinationCountry === "NIGERIA" ? "NGN" : "GMD");
-  const subtotalMinor = currencyConversionService.convert(subtotalCny, "CNY", orderCurrency);
+  // Convert each item from its OWN base currency (CNY, USD, etc.) — not
+  // hardcoded as if every product were CNY-priced, which undercounts/
+  // overcounts the subtotal for USD-priced products (CJ imports, some ATG
+  // stock). This is a display-only estimate; orderService.createOrderFromCart
+  // already does this correctly for the actual charge.
+  const subtotalMinor = cart.items.reduce(
+    (sum, i) => sum + currencyConversionService.convert(i.product.basePriceMinor, i.product.baseCurrency, orderCurrency) * i.quantity,
+    0,
+  );
   const serviceFeeMinor = Math.round(subtotalMinor * 0.05);
 
   const methods: ShippingMethod[] = ["AIR_FREIGHT", "SEA_FREIGHT", "COURIER"];

@@ -50,16 +50,25 @@ export async function placeOrderAction(formData: FormData) {
     weightGrams: totalWeightGrams,
   });
 
+  // No rate configured for this lane/method: never fall back to $0 shipping
+  // and place the order anyway — block checkout with a clear message instead.
+  if (!quote) {
+    redirect(
+      "/checkout?error=" +
+        encodeURIComponent(
+          "Shipping isn't available for this destination/method combination yet. Please choose a different shipping method or contact support.",
+        ),
+    );
+  }
+
   const profile = await db.customerProfile.findUnique({ where: { userId: user.id } });
   const currency = profile?.preferredCurrency ?? (address!.country === "NIGERIA" ? "NGN" : "GMD");
 
-  const intlShippingMinor = quote
-    ? currencyConversionService.convert(quote.estimatedCostMinor, quote.currency, currency)
-    : 0;
+  const intlShippingMinor = currencyConversionService.convert(quote!.estimatedCostMinor, quote!.currency, currency);
 
-  // Cart items are priced in CNY (China supplier price); convert the subtotal
-  // basis into the order currency by letting OrderService read the cart
-  // directly — here we only need to pass shipping already converted.
+  // Cart items are priced in each product's own base currency (CNY, USD,
+  // etc.); OrderService converts per-item into the order currency itself —
+  // here we only need to pass shipping already converted.
   const { orderNumber } = await orderService.createOrderFromCart({
     userId: user.id,
     addressId: address!.id,
