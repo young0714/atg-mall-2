@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+// z.coerce.number() on an empty string ("" from a blank "optional, leave
+// blank to inherit/open-ended" form field) coerces to 0, not undefined — so
+// a plain `.optional()` still fails `.min()` on a blank field instead of
+// treating it as absent. This preprocesses blank/missing values to
+// undefined first so "leave blank" forms actually work.
+const optionalCoercedInt = (min = 0) =>
+  z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : v),
+    z.coerce.number().int().min(min).optional(),
+  );
+
 export const registerSchema = z.object({
   fullName: z.string().min(2, "Enter your full name"),
   email: z.string().email("Enter a valid email address"),
@@ -104,9 +115,9 @@ export const productSchema = z.object({
   // products, per "make weight and dimensions mandatory for products that
   // require shipping."
   shippingOriginId: z.string().optional().or(z.literal("")),
-  packageLengthCm: z.coerce.number().int().min(1).optional(),
-  packageWidthCm: z.coerce.number().int().min(1).optional(),
-  packageHeightCm: z.coerce.number().int().min(1).optional(),
+  packageLengthCm: optionalCoercedInt(1),
+  packageWidthCm: optionalCoercedInt(1),
+  packageHeightCm: optionalCoercedInt(1),
   shippingCategory: z.string().optional().or(z.literal("")),
   internationalShippingAllowed: z.coerce.boolean().default(true),
   customsRequired: z.coerce.boolean().default(false),
@@ -284,9 +295,9 @@ export type ShippingGlobalSettingsInput = z.infer<typeof shippingGlobalSettingsS
 
 export const customsSettingSchema = z.object({
   destinationCountryId: z.string().min(1),
-  estimatedDutyPercent: z.coerce.number().int().min(0).optional(),
-  importTaxPercent: z.coerce.number().int().min(0).optional(),
-  customsProcessingFeeMinor: z.coerce.number().int().min(0).optional(),
+  estimatedDutyPercent: optionalCoercedInt(0),
+  importTaxPercent: optionalCoercedInt(0),
+  customsProcessingFeeMinor: optionalCoercedInt(0),
   currency: z.string().trim().toUpperCase().optional(),
   notes: z.string().optional(),
   isConfigured: z.coerce.boolean().default(false),
@@ -317,16 +328,16 @@ export const shippingRateCardSchema = z.object({
   deliveryDaysMax: z.coerce.number().int().min(0),
   trackingAvailable: z.coerce.boolean().default(true),
   markupOverride: markupOverrideSchema,
-  markupPercent: z.coerce.number().int().min(0).optional(),
-  markupFixedMinor: z.coerce.number().int().min(0).optional(),
-  handlingFeeMinor: z.coerce.number().int().min(0).optional(),
+  markupPercent: optionalCoercedInt(0),
+  markupFixedMinor: optionalCoercedInt(0),
+  handlingFeeMinor: optionalCoercedInt(0),
   notes: z.string().optional(),
 });
 export type ShippingRateCardInput = z.infer<typeof shippingRateCardSchema>;
 
 export const shippingRateBracketSchema = z.object({
   minGrams: z.coerce.number().int().min(0),
-  maxGrams: z.coerce.number().int().min(1).optional(),
+  maxGrams: optionalCoercedInt(1),
   basePriceMinor: z.coerce.number().int().min(0).default(0),
   pricePerKgMinor: z.coerce.number().int().min(0).default(0),
   minChargeMinor: z.coerce.number().int().min(0).default(0),
