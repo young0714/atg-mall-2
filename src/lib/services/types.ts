@@ -1,10 +1,14 @@
-// Shared types for the external-integration service layer. Every service in
-// this directory is an interface + a Mock implementation. NONE of them call
-// a real 1688/Taobao/payment/courier API — that would require credentials
-// and legal/commercial agreements ATG Mall does not yet have. When those are
-// in place, implement a `Live*` class satisfying the same interface and swap
-// it in at the bottom of each file. Nothing in the UI should ever need to
-// change when that happens.
+// Shared types for the external-integration service layer. Most services in
+// this directory are an interface + a Mock implementation, since ATG Mall
+// doesn't yet have credentials/agreements for 1688, Taobao, payment or
+// courier APIs. `cjDropshippingService.ts` is the exception — CJdropshipping
+// has a real self-serve API, so that one is a genuine `Live*` implementation
+// once `CJ_API_KEY` is configured (see that file's own doc comment and its
+// own types, which intentionally don't reuse these — CJ's real response
+// shape differs enough from this mock-oriented one to not force-fit it).
+// When other integrations go live, implement a `Live*` class satisfying the
+// same interface and swap it in at the bottom of each file — nothing in the
+// UI should need to change.
 
 export interface RemoteProductSummary {
   externalId: string;

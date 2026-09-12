@@ -82,7 +82,20 @@ export const productSchema = z.object({
   isWholesale: z.coerce.boolean().default(false),
   isFeatured: z.coerce.boolean().default(false),
   imageUrl: z.string().url().optional().or(z.literal("")),
-  sourcePlatform: z.enum(["ATG", "MOCK_1688", "MOCK_TAOBAO", "ALIBABA", "SELLER", "AFFILIATE"]).default("ATG"),
+  sourcePlatform: z
+    .enum([
+      "ATG",
+      "MOCK_1688",
+      "MOCK_TAOBAO",
+      "ALIBABA",
+      "SELLER",
+      "AFFILIATE",
+      "USA_STORE",
+      "UK_STORE",
+      "INTERNATIONAL_STORE",
+      "CJDROPSHIPPING",
+    ])
+    .default("ATG"),
   affiliateUrl: z.string().url().optional().or(z.literal("")),
   affiliateProvider: z.string().optional().or(z.literal("")),
 });

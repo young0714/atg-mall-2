@@ -14,6 +14,7 @@ export const SOURCE_PLATFORM_LABELS: Record<SourcePlatform, string> = {
   USA_STORE: "USA Store",
   UK_STORE: "UK Store",
   INTERNATIONAL_STORE: "International Store",
+  CJDROPSHIPPING: "CJdropshipping",
 };
 
 export const FULFILLMENT_TYPE_LABELS: Record<FulfillmentType, string> = {

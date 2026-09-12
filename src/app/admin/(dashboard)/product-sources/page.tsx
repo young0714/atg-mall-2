@@ -20,6 +20,7 @@ const SOURCE_ORDER: SourcePlatform[] = [
   "USA_STORE",
   "UK_STORE",
   "INTERNATIONAL_STORE",
+  "CJDROPSHIPPING",
   "AFFILIATE",
 ];
 
@@ -32,7 +33,7 @@ export default async function AdminProductSourcesPage() {
   });
 
   const isStoreSource = (s: SourcePlatform) =>
-    s === "USA_STORE" || s === "UK_STORE" || s === "INTERNATIONAL_STORE";
+    s === "USA_STORE" || s === "UK_STORE" || s === "INTERNATIONAL_STORE" || s === "CJDROPSHIPPING";
 
   const bySource: Record<SourcePlatform, typeof products> = {
     ATG: [],
@@ -43,6 +44,7 @@ export default async function AdminProductSourcesPage() {
     USA_STORE: [],
     UK_STORE: [],
     INTERNATIONAL_STORE: [],
+    CJDROPSHIPPING: [],
     AFFILIATE: [],
   };
   for (const p of products) bySource[p.sourcePlatform].push(p);

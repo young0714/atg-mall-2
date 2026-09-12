@@ -132,6 +132,7 @@ enum SourcePlatform {
   USA_STORE
   UK_STORE
   INTERNATIONAL_STORE
+  CJDROPSHIPPING
 }
 
 // Sourcing/origin country for a Store or a PricingPolicy row — distinct from
