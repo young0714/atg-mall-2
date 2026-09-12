@@ -986,3 +986,93 @@ model AuditLog {
 
   @@index([entityType, entityId])
 }
+
+// ---------------------------------------------------------------------------
+// Shipping Calculation Engine (Phase 1 — foundational reference data)
+//
+// This is a separate system from the legacy `ShippingRate`/`shippingService`
+// (kept fully intact — checkout still depends on it until the engine is
+// wired in). `Country` (NIGERIA|GAMBIA) is NOT touched by this subsystem —
+// it stays the real, operational customer-facing destination set (addresses,
+// orders, wallets). `DestinationCountry` below is a separate, open-ended
+// reference list for the RATE/QUOTE layer only (admin can add any country
+// for rate cards and the Test-Quote tool), bridged to `Country` via ISO code
+// ("NIGERIA"<->"NG", "GAMBIA"<->"GM") — see src/lib/services/shipping/.
+// ---------------------------------------------------------------------------
+
+model DestinationCountry {
+  id        String   @id @default(cuid())
+  name      String
+  isoCode   String   @unique // e.g. "NG", "GM", "US", "GB"
+  region    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// A physical sourcing/warehouse origin a product ships from — e.g. "China
+// Warehouse (Guangzhou)", "USA Warehouse (New Jersey)". Distinct from the
+// existing `Warehouse` model (China consolidation/receiving, post-purchase)
+// and `Store` (a retail storefront ATG sources from) — this is specifically
+// "where does the shipping-cost calculation start from."
+model ShippingOrigin {
+  id         String   @id @default(cuid())
+  name       String
+  countryIso String   // e.g. "CN", "US", "GB" — matches DestinationCountry.isoCode convention
+  city       String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Product.shippingOriginId back-relation added in Phase 2, alongside the
+  // rest of Product's new shipping-data fields.
+
+  @@index([isActive])
+}
+
+model Carrier {
+  id               String   @id @default(cuid())
+  name             String
+  code             String   @unique // e.g. "MANUAL", "DHL", "FEDEX" — "MANUAL" is always present
+  isLiveApiEnabled Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// Customer-facing checkout pricing tier (Economy/Standard/Express) — NOT the
+// same concept as the existing `ShippingMethod` enum, which is the physical
+// freight mode warehouse staff pick later (air/sea/courier/LCL/FCL) when
+// actually shipping a consolidated package. A service level is just a named
+// tier; its actual price/carrier/delivery-estimate/tracking-flag live on the
+// `ShippingRateCard` for a specific origin+destination lane, since e.g.
+// "Express" from the USA and "Express" from China legitimately use
+// different carriers and prices.
+model ShippingServiceLevel {
+  id        String   @id @default(cuid())
+  name      String   @unique // "Economy" | "Standard" | "Express" | admin-added
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ShippingRateCard back-relation added in Phase 2, alongside the rate-card
+  // schema itself.
+}
+
+// Singleton row (exactly one) for engine-wide defaults. Seeded with
+// volumetricDivisor=5000 to match the value shippingService.ts already
+// hardcodes today — zero behavior change until an admin changes it.
+model ShippingGlobalSettings {
+  id                       String   @id @default(cuid())
+  volumetricDivisor        Int      @default(5000)
+  markupEnabled            Boolean  @default(true)
+  defaultMarkupPercent     Int      @default(0)
+  defaultMarkupFixedMinor  Int      @default(0)
+  defaultHandlingFeeMinor  Int      @default(0)
+  updatedAt                DateTime @updatedAt
+}
