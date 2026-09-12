@@ -21,3 +21,19 @@ export { notificationService, NOTIFICATION_EVENTS } from "./notificationService"
 export type { NotificationService } from "./notificationService";
 export { walletService } from "./walletService";
 export type { WalletService } from "./walletService";
+export { manualRateProvider } from "./shipping/manualRateProvider";
+export { customsService } from "./shipping/customsService";
+export type { CustomsService } from "./shipping/customsService";
+export { currencyRateService } from "./shipping/currencyRateService";
+export type { CurrencyRateService, CurrencyRateResult } from "./shipping/currencyRateService";
+export { shippingCalculationService, DefaultShippingCalculationService } from "./shipping/shippingCalculationService";
+export type { ShippingCalculationService, ShippingLaneQuote, ConvertedShippingOption } from "./shipping/shippingCalculationService";
+export type { RateProvider } from "./shipping/rateProvider";
+export type {
+  PackageDetails,
+  ShippingRateRequest,
+  ShippingRateOption,
+  ShippingRateQuoteResult,
+  CustomsDisclosure,
+} from "./shipping/types";
+export { CUSTOMS_DISCLAIMER } from "./shipping/types";
