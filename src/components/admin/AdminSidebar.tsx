@@ -53,6 +53,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/admin/destination-countries", label: "Destination Countries", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
       { href: "/admin/carriers", label: "Carriers", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
       { href: "/admin/service-levels", label: "Service Levels", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
+      { href: "/admin/shipping-rate-cards", label: "Rate Cards", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
       { href: "/admin/customs-settings", label: "Customs Settings", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
       { href: "/admin/currency-rates", label: "Currency Rates", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
       { href: "/admin/shipping-settings", label: "Global Settings", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },

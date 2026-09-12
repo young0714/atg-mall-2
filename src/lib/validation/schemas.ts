@@ -299,4 +299,37 @@ export const currencyRateSchema = z.object({
   rate: z.coerce.number().positive("Rate must be greater than 0"),
 });
 export type CurrencyRateInput = z.infer<typeof currencyRateSchema>;
+
+// ---------------------------------------------------------------------------
+// Shipping Calculation Engine — rate cards + brackets (Phase 7)
+// ---------------------------------------------------------------------------
+
+const markupOverrideSchema = z.enum(["INHERIT", "ENABLED", "DISABLED"]).default("INHERIT");
+
+export const shippingRateCardSchema = z.object({
+  shippingOriginId: z.string().min(1, "Select an origin"),
+  destinationCountryId: z.string().min(1, "Select a destination"),
+  destinationRegion: z.string().optional(),
+  serviceLevelId: z.string().min(1, "Select a service level"),
+  carrierId: z.string().min(1, "Select a carrier"),
+  currency: z.string().trim().toUpperCase().length(3, "Use a 3-letter ISO currency code, e.g. USD"),
+  deliveryDaysMin: z.coerce.number().int().min(0),
+  deliveryDaysMax: z.coerce.number().int().min(0),
+  trackingAvailable: z.coerce.boolean().default(true),
+  markupOverride: markupOverrideSchema,
+  markupPercent: z.coerce.number().int().min(0).optional(),
+  markupFixedMinor: z.coerce.number().int().min(0).optional(),
+  handlingFeeMinor: z.coerce.number().int().min(0).optional(),
+  notes: z.string().optional(),
+});
+export type ShippingRateCardInput = z.infer<typeof shippingRateCardSchema>;
+
+export const shippingRateBracketSchema = z.object({
+  minGrams: z.coerce.number().int().min(0),
+  maxGrams: z.coerce.number().int().min(1).optional(),
+  basePriceMinor: z.coerce.number().int().min(0).default(0),
+  pricePerKgMinor: z.coerce.number().int().min(0).default(0),
+  minChargeMinor: z.coerce.number().int().min(0).default(0),
+});
+export type ShippingRateBracketInput = z.infer<typeof shippingRateBracketSchema>;
 export type DeliveryZoneInput = z.infer<typeof deliveryZoneSchema>;
