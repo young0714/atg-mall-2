@@ -1,15 +1,15 @@
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
-import { shippingService } from "@/lib/services/shippingService";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
+import { groupCartForShipping } from "@/lib/services/shipping/cartShipmentGrouping";
+import { customsService } from "@/lib/services/shipping/customsService";
+import { destinationCountryToIsoCode } from "@/lib/services/storeOrigin";
 import { formatMoney } from "@/lib/money";
-import { SHIPPING_METHOD_LABELS } from "@/lib/constants";
 import { Container, Section } from "@/components/ui/Section";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { addAddressAction, placeOrderAction } from "./actions";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import type { ShippingMethod } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Checkout" };
 export const dynamic = "force-dynamic";
@@ -31,27 +31,51 @@ export default async function CheckoutPage({
 
   const wallet = await db.wallet.findUnique({ where: { userId: user.id } });
 
-  const totalWeightGrams = cart.items.reduce((sum, i) => sum + i.product.weightGrams * i.quantity, 0);
   const destinationCountry = profile?.country ?? addresses[0]?.country ?? "NIGERIA";
   const orderCurrency = profile?.preferredCurrency ?? (destinationCountry === "NIGERIA" ? "NGN" : "GMD");
+  const destinationIso = destinationCountryToIsoCode(destinationCountry);
+
   // Convert each item from its OWN base currency (CNY, USD, etc.) — not
-  // hardcoded as if every product were CNY-priced, which undercounts/
-  // overcounts the subtotal for USD-priced products (CJ imports, some ATG
-  // stock). This is a display-only estimate; orderService.createOrderFromCart
-  // already does this correctly for the actual charge.
+  // hardcoded as if every product were CNY-priced.
   const subtotalMinor = cart.items.reduce(
     (sum, i) => sum + currencyConversionService.convert(i.product.basePriceMinor, i.product.baseCurrency, orderCurrency) * i.quantity,
     0,
   );
   const serviceFeeMinor = Math.round(subtotalMinor * 0.05);
 
-  const methods: ShippingMethod[] = ["AIR_FREIGHT", "SEA_FREIGHT", "COURIER"];
-  const quotes = await Promise.all(
-    methods.map(async (method) => ({
-      method,
-      quote: await shippingService.getQuote({ destinationCountry, method, weightGrams: totalWeightGrams }),
+  const { groups, unresolvedLines } = await groupCartForShipping(
+    cart.items.map((i) => ({
+      productId: i.productId,
+      variantId: i.variantId,
+      quantity: i.quantity,
+      weightGrams: i.product.weightGrams,
+      shippingOriginId: i.product.shippingOriginId,
+      sourcePlatform: i.product.sourcePlatform,
     })),
+    destinationIso,
+    orderCurrency,
   );
+
+  const customs = await customsService.getDisclosure(destinationIso);
+
+  const blockedGroups = groups.filter((g) => g.quote.options.length === 0);
+  const canCheckout = unresolvedLines.length === 0 && blockedGroups.length === 0 && addresses.length > 0;
+
+  const cheapestByOrigin = new Map(
+    groups.map((g) => [
+      g.shippingOriginId,
+      g.quote.options.reduce<(typeof g.quote.options)[number] | null>(
+        (best, o) => (!best || o.displayCustomerPriceMinor < best.displayCustomerPriceMinor ? o : best),
+        null,
+      ),
+    ]),
+  );
+  const estimatedShippingMinor = groups.reduce(
+    (sum, g) => sum + (cheapestByOrigin.get(g.shippingOriginId)?.displayCustomerPriceMinor ?? 0),
+    0,
+  );
+
+  const itemsByKey = new Map(cart.items.map((i) => [`${i.productId}_${i.variantId ?? ""}`, i]));
 
   return (
     <Section className="!py-10">
@@ -60,6 +84,12 @@ export default async function CheckoutPage({
 
         {searchParams.error && (
           <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>
+        )}
+        {unresolvedLines.length > 0 && (
+          <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            Some items in your cart don&apos;t have shipping information configured yet. Please contact support before
+            checking out.
+          </div>
         )}
 
         <div className="mt-8 space-y-8">
@@ -117,24 +147,60 @@ export default async function CheckoutPage({
               </section>
             )}
 
-            <section className="card p-5">
-              <h2 className="mb-3 font-semibold text-navy-900">Shipping Method</h2>
-              <div className="space-y-2">
-                {quotes.map(({ method, quote }) => (
-                  <label key={method} className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
-                    <span className="flex items-center gap-3 text-sm">
-                      <input type="radio" name="shippingMethod" value={method} defaultChecked={method === "AIR_FREIGHT"} required />
-                      <span>
-                        <span className="font-medium text-navy-800">{SHIPPING_METHOD_LABELS[method]}</span>
-                        {quote && <span className="block text-xs text-navy-400">{quote.estimatedDaysMin}–{quote.estimatedDaysMax} days</span>}
-                      </span>
-                    </span>
-                    <span className="text-sm font-semibold text-navy-800">
-                      {quote ? formatMoney(quote.estimatedCostMinor, quote.currency) : "Not available"}
-                    </span>
-                  </label>
-                ))}
-              </div>
+            <section className="space-y-4">
+              <h2 className="font-semibold text-navy-900">
+                Shipping ({groups.length} shipment{groups.length === 1 ? "" : "s"})
+              </h2>
+              {groups.map((g, idx) => {
+                const groupItems = g.lines.map((l) => itemsByKey.get(`${l.productId}_${l.variantId ?? ""}`)!);
+                return (
+                  <div key={g.shippingOriginId} className="card p-5">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="font-medium text-navy-800">
+                        Shipment {idx + 1}: from {g.originName}
+                      </h3>
+                      <span className="text-xs text-navy-400">{(g.totalWeightGrams / 1000).toFixed(2)} kg</span>
+                    </div>
+                    <p className="mb-3 text-xs text-navy-500">
+                      {groupItems.map((i) => `${i.product.name} × ${i.quantity}`).join(", ")}
+                    </p>
+
+                    {g.quote.unavailableReason ? (
+                      <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{g.quote.unavailableReason}</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {g.quote.options.map((o) => (
+                          <label
+                            key={o.serviceLevelId}
+                            className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50"
+                          >
+                            <span className="flex items-center gap-3 text-sm">
+                              <input
+                                type="radio"
+                                name={`shippingChoice_${g.shippingOriginId}`}
+                                value={o.serviceLevelId}
+                                defaultChecked={o.serviceLevelId === cheapestByOrigin.get(g.shippingOriginId)?.serviceLevelId}
+                                required
+                              />
+                              <span>
+                                <span className="font-medium text-navy-800">{o.serviceLevelName}</span>
+                                <span className="block text-xs text-navy-400">
+                                  {o.carrierName} · {o.estimatedDeliveryDaysMin}–{o.estimatedDeliveryDaysMax} days
+                                  {!o.trackingAvailable && " · no tracking"}
+                                </span>
+                              </span>
+                            </span>
+                            <span className="text-sm font-semibold text-navy-800">
+                              {formatMoney(o.displayCustomerPriceMinor, o.displayCurrency)}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <p className="rounded-lg bg-navy-50 p-3 text-xs text-navy-600">{customs.disclaimer}</p>
             </section>
 
             <section className="card p-5">
@@ -160,13 +226,16 @@ export default async function CheckoutPage({
               <dl className="space-y-1.5 text-sm">
                 <div className="flex justify-between"><dt className="text-navy-500">Subtotal</dt><dd>{formatMoney(subtotalMinor, orderCurrency)}</dd></div>
                 <div className="flex justify-between"><dt className="text-navy-500">Service fee (5%)</dt><dd>{formatMoney(serviceFeeMinor, orderCurrency)}</dd></div>
-                <div className="flex justify-between"><dt className="text-navy-500">Shipping</dt><dd>Selected above</dd></div>
+                <div className="flex justify-between"><dt className="text-navy-500">Shipping (est., as selected above)</dt><dd>{formatMoney(estimatedShippingMinor, orderCurrency)}</dd></div>
+                <div className="flex justify-between border-t border-navy-100 pt-1.5 font-semibold text-navy-900">
+                  <dt>Estimated total</dt><dd>{formatMoney(subtotalMinor + serviceFeeMinor + estimatedShippingMinor, orderCurrency)}</dd>
+                </div>
               </dl>
               <p className="mt-3 text-xs text-navy-400">
-                Final total is calculated when your order is placed, based on the shipping method you select.
+                Final total is recalculated from your actual shipping selections when the order is placed.
               </p>
-              <button type="submit" className="btn-primary mt-4 w-full" disabled={addresses.length === 0}>
-                Place Order
+              <button type="submit" className="btn-primary mt-4 w-full" disabled={!canCheckout}>
+                {canCheckout ? "Place Order" : "Shipping unavailable — see above"}
               </button>
             </section>
           </form>

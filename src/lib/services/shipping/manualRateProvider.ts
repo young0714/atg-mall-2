@@ -109,6 +109,7 @@ class ManualRateProvider implements RateProvider {
       const handlingFeeMinor = card.handlingFeeMinor ?? globalHandlingFeeMinor;
 
       options.push({
+        serviceLevelId: card.serviceLevelId,
         serviceLevelName: card.serviceLevel.name,
         serviceLevelSortOrder: card.serviceLevel.sortOrder,
         carrierName: card.carrier.name,

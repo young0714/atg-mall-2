@@ -29,6 +29,7 @@ export default async function OrderDetailPage({
       payments: true,
       trackingEvents: { orderBy: { occurredAt: "desc" } },
       packages: true,
+      shipments: true,
     },
   });
 
@@ -73,6 +74,30 @@ export default async function OrderDetailPage({
               ))}
             </div>
           </div>
+
+          {order.shipments.length > 0 && (
+            <div className="card p-5">
+              <h2 className="mb-3 font-semibold text-navy-900">
+                Shipments ({order.shipments.length})
+              </h2>
+              <div className="space-y-3">
+                {order.shipments.map((s, idx) => (
+                  <div key={s.id} className="rounded-lg border border-navy-100 p-3 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-navy-800">
+                        Shipment {idx + 1}: from {s.originNameSnapshot}
+                      </span>
+                      <span className="font-semibold text-navy-800">{formatMoney(s.customerPriceMinor, s.currency)}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-navy-500">
+                      {s.serviceLevelNameSnapshot} via {s.carrierNameSnapshot} · {(s.chargeableWeightGrams / 1000).toFixed(2)} kg ·{" "}
+                      {s.estimatedDeliveryDaysMin}–{s.estimatedDeliveryDaysMax} days
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="card p-5">
             <h2 className="mb-4 font-semibold text-navy-900">Order Timeline</h2>

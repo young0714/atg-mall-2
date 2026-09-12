@@ -63,9 +63,12 @@ export const addressSchema = z.object({
 });
 export type AddressInput = z.infer<typeof addressSchema>;
 
+// Per-shipment service level choices are dynamic (one per cart shipping-
+// origin group, field name `shippingChoice_<shippingOriginId>`) so they
+// can't be named in a static schema — placeOrderAction reads and validates
+// those directly against the server-recomputed groups instead.
 export const checkoutSchema = z.object({
   addressId: z.string().min(1, "Select a delivery address"),
-  shippingMethod: z.enum(["AIR_FREIGHT", "SEA_FREIGHT", "COURIER", "LCL", "FCL"]),
   paymentMethod: z.enum(["CARD", "BANK_TRANSFER", "WALLET", "CASH_ON_DELIVERY"]),
 });
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

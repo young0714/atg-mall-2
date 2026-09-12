@@ -21,6 +21,7 @@ export interface ShippingRateRequest {
 
 // One priced service-level option for a single origin -> destination lane.
 export interface ShippingRateOption {
+  serviceLevelId: string;
   serviceLevelName: string;
   serviceLevelSortOrder: number;
   carrierName: string;
