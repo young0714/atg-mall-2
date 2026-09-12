@@ -2,8 +2,8 @@ import "server-only";
 import { cache } from "react";
 import type { Country, Currency, StoreCountry } from "@prisma/client";
 import { currencyConversionService } from "./currencyConversionService";
-import { shippingService } from "./shippingService";
-import { storeCountryToShippingOrigin } from "./storeOrigin";
+import { shippingCalculationService } from "./shipping/shippingCalculationService";
+import { storeCountryToIsoCode, destinationCountryToIsoCode } from "./storeOrigin";
 import { db } from "@/lib/db";
 
 /**
@@ -13,13 +13,14 @@ import { db } from "@/lib/db";
  * = total estimated landed cost, converted into the customer's destination
  * currency.
  *
- * International shipping is calculated from the product's real weight
- * against the admin-configured `ShippingRate` table (see
- * shippingService.ts), using Air Freight as the display basis — the same
- * per-kg rates checkout itself uses. If no rate is configured for that
- * origin/destination lane yet (or the product's weight is unknown), this
- * falls back to a rough cost-based formula rather than showing nothing, but
- * always prefers the real weight-based figure when one is available.
+ * International shipping is calculated via the shipping calculation engine
+ * (see shipping/shippingCalculationService.ts) against the product's real
+ * weight/dimensions and its assigned shipping origin — the same rate cards
+ * checkout itself uses. The cheapest available service level is shown as
+ * the display basis. If no rate is configured for that origin/destination
+ * lane yet (or the product's weight/origin is unknown), this falls back to
+ * a rough cost-based formula rather than showing nothing, but always
+ * prefers the real weight-based figure when one is available.
  *
  * The service-fee policy and domestic-shipping/warehouse-handling estimates
  * come from the admin-editable `PricingPolicy` table (see /admin/settings)
@@ -108,24 +109,26 @@ class DefaultPricingService implements PricingService {
     const policyToDest = (amountInPolicyCurrency: number) =>
       currencyConversionService.convert(amountInPolicyCurrency, policy.currency, destinationCurrency);
 
-    // Prefer a real weight × admin-per-kg-rate quote (same rates checkout
-    // uses) over the rough cost-based formula, when we have a weight and an
-    // explicit override wasn't already supplied.
+    // Prefer a real weight × admin-configured rate-card quote (the same
+    // shipping calculation engine checkout uses) over the rough cost-based
+    // formula, when we have a weight and an explicit override wasn't
+    // already supplied. Shows the cheapest available service level as the
+    // display basis.
     let intlShippingMinorDest: number;
     let intlShippingIsWeightBased = false;
     if (intlShippingMinorInProductCurrency === undefined && weightGrams) {
-      const quote = await shippingService.getQuote({
-        destinationCountry: destination,
-        method: "AIR_FREIGHT",
-        weightGrams,
-        originCountry: storeCountryToShippingOrigin(originCountry),
+      const laneQuote = await shippingCalculationService.getLaneQuote({
+        originIso: storeCountryToIsoCode(originCountry),
+        destinationIso: destinationCountryToIsoCode(destination),
+        package: { weightGrams },
+        displayCurrency: destinationCurrency,
       });
-      if (quote) {
-        intlShippingMinorDest = currencyConversionService.convert(
-          quote.estimatedCostMinor,
-          quote.currency,
-          destinationCurrency,
-        );
+      const cheapest = laneQuote.options.reduce<(typeof laneQuote.options)[number] | null>(
+        (best, option) => (!best || option.displayCustomerPriceMinor < best.displayCustomerPriceMinor ? option : best),
+        null,
+      );
+      if (cheapest) {
+        intlShippingMinorDest = cheapest.displayCustomerPriceMinor;
         intlShippingIsWeightBased = true;
       } else {
         intlShippingMinorDest = toDest(Math.round(productCostMinor * 0.35 + 2500));
