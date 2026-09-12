@@ -3,14 +3,14 @@
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
-import { productSchema } from "@/lib/validation/schemas";
+import { productCreateSchema } from "@/lib/validation/schemas";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 export async function createProductAction(formData: FormData) {
   const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
   const raw = Object.fromEntries(formData);
-  const parsed = productSchema.safeParse(raw);
+  const parsed = productCreateSchema.safeParse(raw);
   if (!parsed.success) {
     redirect(`/admin/products?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid product")}`);
   }
@@ -31,6 +31,15 @@ export async function createProductAction(formData: FormData) {
       sourcePlatform: data.sourcePlatform,
       affiliateUrl: data.affiliateUrl || null,
       affiliateProvider: data.affiliateProvider || null,
+      shippingOriginId: data.shippingOriginId || null,
+      packageLengthCm: data.packageLengthCm,
+      packageWidthCm: data.packageWidthCm,
+      packageHeightCm: data.packageHeightCm,
+      shippingCategory: data.shippingCategory || null,
+      internationalShippingAllowed: data.internationalShippingAllowed,
+      customsRequired: data.customsRequired,
+      isFragile: data.isFragile,
+      isHazardous: data.isHazardous,
       images: data.imageUrl ? { create: [{ url: data.imageUrl, sortOrder: 0 }] } : undefined,
     },
   });

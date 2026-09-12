@@ -98,6 +98,31 @@ export const productSchema = z.object({
     .default("ATG"),
   affiliateUrl: z.string().url().optional().or(z.literal("")),
   affiliateProvider: z.string().optional().or(z.literal("")),
+  // Shipping-engine fields (Phase 3). Optional here so existing products
+  // can still be edited/saved without a forced dimensions backfill —
+  // productCreateSchema below makes them mandatory for genuinely NEW
+  // products, per "make weight and dimensions mandatory for products that
+  // require shipping."
+  shippingOriginId: z.string().optional().or(z.literal("")),
+  packageLengthCm: z.coerce.number().int().min(1).optional(),
+  packageWidthCm: z.coerce.number().int().min(1).optional(),
+  packageHeightCm: z.coerce.number().int().min(1).optional(),
+  shippingCategory: z.string().optional().or(z.literal("")),
+  internationalShippingAllowed: z.coerce.boolean().default(true),
+  customsRequired: z.coerce.boolean().default(false),
+  isFragile: z.coerce.boolean().default(false),
+  isHazardous: z.coerce.boolean().default(false),
+});
+
+// Stricter variant used only when creating a brand-new product: shipping
+// origin and package dimensions become required, since every new product
+// should be shippable-ready from day one — existing products (edited via
+// the base productSchema above) are never retroactively forced to backfill.
+export const productCreateSchema = productSchema.extend({
+  shippingOriginId: z.string().min(1, "Select a shipping origin"),
+  packageLengthCm: z.coerce.number().int().min(1, "Length is required"),
+  packageWidthCm: z.coerce.number().int().min(1, "Width is required"),
+  packageHeightCm: z.coerce.number().int().min(1, "Height is required"),
 });
 export type ProductInput = z.infer<typeof productSchema>;
 

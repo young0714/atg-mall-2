@@ -29,3 +29,20 @@ export function sourcePlatformToStoreCountry(sourcePlatform: SourcePlatform): St
   if (sourcePlatform === "UK_STORE") return "UK";
   return "CHINA";
 }
+
+/**
+ * StoreCountry -> the ISO code used by the new shipping engine's
+ * `ShippingOrigin.countryIso` / `DestinationCountry.isoCode` (seeded in
+ * Phase 1 as CN/US/GB for the China/USA/UK warehouses). Used to backfill
+ * `Product.shippingOriginId` and by the shipping calculation service.
+ */
+export function storeCountryToIsoCode(country: StoreCountry): string {
+  switch (country) {
+    case "CHINA":
+      return "CN";
+    case "USA":
+      return "US";
+    case "UK":
+      return "GB";
+  }
+}

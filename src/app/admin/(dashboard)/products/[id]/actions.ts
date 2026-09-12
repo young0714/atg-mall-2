@@ -33,6 +33,15 @@ export async function updateProductAction(formData: FormData) {
       sourcePlatform: data.sourcePlatform,
       affiliateUrl: data.affiliateUrl || null,
       affiliateProvider: data.affiliateProvider || null,
+      shippingOriginId: data.shippingOriginId || null,
+      packageLengthCm: data.packageLengthCm ?? null,
+      packageWidthCm: data.packageWidthCm ?? null,
+      packageHeightCm: data.packageHeightCm ?? null,
+      shippingCategory: data.shippingCategory || null,
+      internationalShippingAllowed: data.internationalShippingAllowed,
+      customsRequired: data.customsRequired,
+      isFragile: data.isFragile,
+      isHazardous: data.isHazardous,
     },
   });
 

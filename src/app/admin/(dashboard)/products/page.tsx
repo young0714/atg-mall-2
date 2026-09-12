@@ -19,9 +19,10 @@ export default async function AdminProductsPage({
 }) {
   await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
 
-  const [products, categories] = await Promise.all([
+  const [products, categories, shippingOrigins] = await Promise.all([
     db.product.findMany({ orderBy: { createdAt: "desc" }, include: { category: true, images: { take: 1 } } }),
     db.category.findMany({ orderBy: { name: "asc" } }),
+    db.shippingOrigin.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
   ]);
 
   return (
@@ -74,6 +75,35 @@ export default async function AdminProductsPage({
           <Field label="Description" htmlFor="description" required>
             <Textarea id="description" name="description" required />
           </Field>
+
+          <div className="sm:col-span-2">
+            <h3 className="mb-3 mt-2 text-sm font-semibold text-navy-800">Shipping</h3>
+          </div>
+          <Field label="Shipping origin" htmlFor="shippingOriginId" required>
+            <Select id="shippingOriginId" name="shippingOriginId" required>
+              <option value="">— Select —</option>
+              {shippingOrigins.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </Select>
+          </Field>
+          <Field label="Shipping category" htmlFor="shippingCategory" hint="Optional, e.g. Electronics">
+            <Input id="shippingCategory" name="shippingCategory" />
+          </Field>
+          <Field label="Length (cm)" htmlFor="packageLengthCm" required>
+            <Input id="packageLengthCm" name="packageLengthCm" type="number" required />
+          </Field>
+          <Field label="Width (cm)" htmlFor="packageWidthCm" required>
+            <Input id="packageWidthCm" name="packageWidthCm" type="number" required />
+          </Field>
+          <Field label="Height (cm)" htmlFor="packageHeightCm" required>
+            <Input id="packageHeightCm" name="packageHeightCm" type="number" required />
+          </Field>
+          <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="internationalShippingAllowed" value="true" defaultChecked /> International shipping allowed</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="customsRequired" value="true" /> Customs required</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isFragile" value="true" /> Fragile</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isHazardous" value="true" /> Hazardous</label>
+          </div>
+
           <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Create Product</button>
         </form>
       </details>

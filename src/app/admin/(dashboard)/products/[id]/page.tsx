@@ -27,7 +27,7 @@ export default async function AdminProductDetailPage({
 }) {
   await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
 
-  const [product, categories] = await Promise.all([
+  const [product, categories, shippingOrigins] = await Promise.all([
     db.product.findUnique({
       where: { id: params.id },
       include: {
@@ -37,8 +37,11 @@ export default async function AdminProductDetailPage({
       },
     }),
     db.category.findMany({ orderBy: { name: "asc" } }),
+    db.shippingOrigin.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
   ]);
   if (!product) notFound();
+
+  const missingShippingData = !product.shippingOriginId || !product.packageLengthCm || !product.packageWidthCm || !product.packageHeightCm;
 
   return (
     <div className="space-y-6">
@@ -105,6 +108,49 @@ export default async function AdminProductDetailPage({
           <Field label="Description" htmlFor="description" required>
             <Textarea id="description" name="description" defaultValue={product.description} required />
           </Field>
+
+          <div className="sm:col-span-2">
+            <h3 className="mb-1 mt-2 text-sm font-semibold text-navy-800">Shipping</h3>
+            {missingShippingData && (
+              <p className="mb-2 text-xs text-gold-700">
+                Missing shipping origin or dimensions — the new shipping calculator can&apos;t quote this product
+                accurately until these are filled in.
+              </p>
+            )}
+          </div>
+          <Field label="Shipping origin" htmlFor="shippingOriginId">
+            <Select id="shippingOriginId" name="shippingOriginId" defaultValue={product.shippingOriginId ?? ""}>
+              <option value="">— Not set —</option>
+              {shippingOrigins.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            </Select>
+          </Field>
+          <Field label="Shipping category" htmlFor="shippingCategory" hint="Optional, e.g. Electronics">
+            <Input id="shippingCategory" name="shippingCategory" defaultValue={product.shippingCategory ?? ""} />
+          </Field>
+          <Field label="Length (cm)" htmlFor="packageLengthCm">
+            <Input id="packageLengthCm" name="packageLengthCm" type="number" defaultValue={product.packageLengthCm ?? ""} />
+          </Field>
+          <Field label="Width (cm)" htmlFor="packageWidthCm">
+            <Input id="packageWidthCm" name="packageWidthCm" type="number" defaultValue={product.packageWidthCm ?? ""} />
+          </Field>
+          <Field label="Height (cm)" htmlFor="packageHeightCm">
+            <Input id="packageHeightCm" name="packageHeightCm" type="number" defaultValue={product.packageHeightCm ?? ""} />
+          </Field>
+          <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="internationalShippingAllowed" value="true" defaultChecked={product.internationalShippingAllowed} /> International shipping allowed
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="customsRequired" value="true" defaultChecked={product.customsRequired} /> Customs required
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="isFragile" value="true" defaultChecked={product.isFragile} /> Fragile
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="isHazardous" value="true" defaultChecked={product.isHazardous} /> Hazardous
+            </label>
+          </div>
+
           <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Save changes</button>
         </form>
       </section>
