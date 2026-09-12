@@ -43,7 +43,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/admin/warehouse", label: "Warehouse", permission: PERMISSIONS.MANAGE_WAREHOUSE },
       { href: "/admin/consolidation", label: "Consolidation", permission: PERMISSIONS.MANAGE_CONSOLIDATION },
       { href: "/admin/shipments", label: "Shipments", permission: PERMISSIONS.MANAGE_SHIPMENTS },
-      { href: "/admin/shipping-rates", label: "Shipping Rates", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
+      { href: "/admin/shipping-rates", label: "Shipping Rates (Legacy)", permission: PERMISSIONS.MANAGE_SHIPPING_RATES },
     ],
   },
   {

@@ -5,7 +5,16 @@ import { currencyConversionService } from "./currencyConversionService";
 import type { Currency } from "@prisma/client";
 
 /**
- * ShippingService — the international shipping calculator.
+ * ShippingService — LEGACY international shipping calculator.
+ *
+ * Superseded by the shipping calculation engine in `./shipping/` (rate
+ * cards with weight brackets, multi-origin cart splitting, markup/handling,
+ * live-carrier fallback) — see `shippingCalculationService.ts`. Checkout
+ * and the landed-cost estimate no longer call this. Kept in place,
+ * unmodified, only because the public `POST /api/v1/shipping/quote` API
+ * route and the legacy `/admin/shipping-rates` admin page still read from
+ * it — removing it would be a breaking API change, not a cleanup. Do not
+ * add new callers; use `shippingCalculationService` instead.
  *
  * Rates are read from the admin-managed `ShippingRate` table (per origin
  * country + destination country + method), never hardcoded here as "real"

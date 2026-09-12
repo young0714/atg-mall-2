@@ -9,6 +9,15 @@ import { destinationCountryToIsoCode } from "@/lib/services/storeOrigin";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Server-side price integrity (shipping-engine spec requirement): the only
+ * client input `placeOrderAction` reads for shipping is a `serviceLevelId`
+ * per shipment group — never a price. Every `*Minor` amount charged comes
+ * from re-running `groupCartForShipping`/`shippingCalculationService`
+ * inside this action against server-derived data (the DB cart, the
+ * looked-up address's country, the profile's currency), so a tampered
+ * hidden price field has nothing to tamper — there isn't one.
+ */
 export async function addAddressAction(formData: FormData) {
   const user = await requireUser();
   const parsed = addressSchema.safeParse(Object.fromEntries(formData));

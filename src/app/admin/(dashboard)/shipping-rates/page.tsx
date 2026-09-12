@@ -7,7 +7,12 @@ import { formatMoney } from "@/lib/money";
 import { upsertShippingRateAction, toggleShippingRateActiveAction } from "./actions";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Admin — Shipping Rates" };
+// LEGACY: this page manages the old flat per-kg ShippingRate table, which
+// checkout and the landed-cost estimate no longer read from (see the new
+// "Shipping Management" sidebar section, backed by ShippingRateCard).
+// Kept working and unmodified because the public v1 shipping-quote API
+// still serves from this table — do not remove.
+export const metadata: Metadata = { title: "Admin — Shipping Rates (Legacy)" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminShippingRatesPage({
@@ -21,10 +26,11 @@ export default async function AdminShippingRatesPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold text-navy-900">Shipping Rates</h1>
+        <h1 className="text-2xl font-display font-bold text-navy-900">Shipping Rates (Legacy)</h1>
         <p className="text-sm text-navy-500">
-          Admin-managed per-kg rates used by the shipping calculator. These are not live carrier rates — set and update
-          them here as ATG's actual freight agreements change.
+          This is the old flat per-kg rate table. Checkout and product-page shipping estimates now use{" "}
+          <strong>Rate Cards</strong> under Shipping Management instead — configure new rates there. This page is kept
+          working only because the public v1 API still serves quotes from it.
         </p>
       </div>
 
