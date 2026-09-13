@@ -43,7 +43,7 @@ export default async function CheckoutPage({
     (sum, i) => sum + currencyConversionService.convert(i.product.basePriceMinor, i.product.baseCurrency, orderCurrency) * i.quantity,
     0,
   );
-  const serviceFeeMinor = Math.round(subtotalMinor * 0.05);
+  const serviceFeeMinor = Math.round(subtotalMinor * 0.01);
 
   const { groups, unresolvedLines } = await groupCartForShipping(
     cart.items.map((i) => ({
@@ -235,7 +235,7 @@ export default async function CheckoutPage({
               <h2 className="mb-3 font-semibold text-navy-900">Order Summary</h2>
               <dl className="space-y-1.5 text-sm">
                 <div className="flex justify-between"><dt className="text-navy-500">Subtotal</dt><dd>{formatMoney(subtotalMinor, orderCurrency)}</dd></div>
-                <div className="flex justify-between"><dt className="text-navy-500">Service fee (5%)</dt><dd>{formatMoney(serviceFeeMinor, orderCurrency)}</dd></div>
+                <div className="flex justify-between"><dt className="text-navy-500">Service fee (1%)</dt><dd>{formatMoney(serviceFeeMinor, orderCurrency)}</dd></div>
                 <div className="flex justify-between"><dt className="text-navy-500">Shipping (est., as selected above)</dt><dd>{formatMoney(estimatedShippingMinor, orderCurrency)}</dd></div>
                 <div className="flex justify-between border-t border-navy-100 pt-1.5 font-semibold text-navy-900">
                   <dt>Estimated total</dt><dd>{formatMoney(subtotalMinor + serviceFeeMinor + estimatedShippingMinor, orderCurrency)}</dd>

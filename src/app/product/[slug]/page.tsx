@@ -1,12 +1,12 @@
 import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { getDestination } from "@/lib/destination";
 import { customerFacingSourceLabel } from "@/lib/sourcePlatform";
 import { StarRating } from "@/components/shop/StarRating";
 import { Badge } from "@/components/ui/Badge";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
+import { ProductImageGallery } from "@/components/shop/ProductImageGallery";
 import { Container, Section } from "@/components/ui/Section";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
@@ -52,20 +52,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
         <div className="grid gap-10 lg:grid-cols-2">
           <div>
-            <div className="relative aspect-square w-full overflow-hidden rounded-xl2 border border-navy-100 bg-sand-50">
-              {product.images[0] && (
-                <Image src={product.images[0].url} alt={product.name} fill sizes="600px" className="object-cover" priority />
-              )}
-            </div>
-            {product.images.length > 1 && (
-              <div className="mt-3 grid grid-cols-4 gap-3">
-                {product.images.slice(1, 5).map((img) => (
-                  <div key={img.id} className="relative aspect-square overflow-hidden rounded-lg border border-navy-100">
-                    <Image src={img.url} alt={product.name} fill sizes="150px" className="object-cover" />
-                  </div>
-                ))}
-              </div>
-            )}
+            <ProductImageGallery images={product.images} productName={product.name} />
           </div>
 
           <div>

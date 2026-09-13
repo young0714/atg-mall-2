@@ -105,7 +105,7 @@ class DefaultOrderService implements OrderService {
     }
 
     const domesticShippingMinor = params.domesticShippingMinor ?? 0;
-    const serviceFeeMinor = params.serviceFeeMinor ?? Math.round(subtotalMinor * 0.05);
+    const serviceFeeMinor = params.serviceFeeMinor ?? Math.round(subtotalMinor * 0.01);
     // Order.intlShippingMinor stays a derived sum of every shipment's
     // customerPriceMinor — kept for backward-compat with anything still
     // reading it directly (admin margin math, etc.); the per-shipment
