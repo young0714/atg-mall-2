@@ -15,7 +15,7 @@ export function HowItWorks() {
         <SectionHeading
           eyebrow="How it works"
           title="Shop → Source → Buy → Consolidate → Ship → Deliver"
-          description="One platform handles every step between a product listing in China and a delivery at your door."
+          description="From sourcing to international delivery, ATG Mall handles the journey from supplier to your destination."
           align="center"
         />
         <div className="mt-12 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">

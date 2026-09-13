@@ -2,11 +2,11 @@ import { Section, SectionHeading, Container } from "@/components/ui/Section";
 
 const points = [
   { title: "Transparent landed costs", desc: "See product cost, shipping and fees broken down before you buy — no surprises at delivery.", icon: "🧮" },
-  { title: "Ships worldwide", desc: "Local currencies where we operate, and destinations you actually ship to — anywhere we support.", icon: "🌍" },
+  { title: "Worldwide Shopping", desc: "Shop products from multiple international markets with shipping options calculated for your destination.", icon: "🌍" },
   { title: "Sourcing expertise", desc: "Can't find it online? Our sourcing team finds verified suppliers and quotes on your behalf.", icon: "🤝" },
   { title: "Consolidated shipping", desc: "Combine multiple purchases into one shipment to save on international freight.", icon: "📦" },
   { title: "Real order tracking", desc: "Follow your order from warehouse receipt to final delivery with a single ATG tracking number.", icon: "📍" },
-  { title: "Backed by Apex Terra Global", desc: "ATG Mall is operated by Apex Terra Global Limited — a Nigeria-based logistics and sourcing company.", icon: "🏢" },
+  { title: "Backed by Apex Terra Global", desc: "ATG Mall is operated by Apex Terra Global Limited, a logistics and sourcing company with roots in Nigeria and Gambia now serving customers worldwide.", icon: "🏢" },
 ];
 
 export function WhyChooseUs() {
@@ -16,7 +16,7 @@ export function WhyChooseUs() {
         <SectionHeading
           eyebrow="Why ATG Mall"
           title="Cross-border shopping, done properly"
-          description="ATG Mall was built on deep experience serving buyers in Nigeria and Gambia, and now brings that same trustworthy way to shop and import from China worldwide."
+          description="ATG Mall makes cross-border shopping easier by connecting customers with products and stores from around the world."
         />
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {points.map((p) => (

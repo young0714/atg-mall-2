@@ -13,39 +13,39 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "ATG Mall — Shop Global. Delivered Local.",
+    default: "ATG Mall — Shop The World. Delivered To You.",
     template: "%s | ATG Mall",
   },
   description:
-    "ATG Mall helps customers worldwide shop, source and buy products from China — 1688, Taobao and trusted suppliers — with sourcing, warehousing, consolidation and international shipping handled end to end.",
+    "ATG Mall is a worldwide shopping marketplace — shop products from China, the USA and the UK, with sourcing, warehousing, consolidation and international shipping handled end to end. Delivery available to supported destinations worldwide, including Nigeria and Gambia.",
   keywords: [
+    "worldwide shopping marketplace",
+    "international shopping marketplace",
+    "cross-border shopping worldwide",
     "buy from China worldwide",
     "shop from China worldwide",
+    "shop from USA worldwide",
+    "shop from UK worldwide",
     "China shipping worldwide",
     "China sourcing worldwide",
-    "buy from China Nigeria",
-    "1688 Nigeria",
+    "1688 worldwide",
     "shop from China Nigeria",
-    "China shipping Nigeria",
-    "China sourcing Nigeria",
-    "buy from China Gambia",
-    "China shipping Gambia",
-    "1688 Gambia",
-    "product sourcing Nigeria",
-    "product sourcing Gambia",
+    "shop from China Gambia",
+    "buy from USA Nigeria",
+    "buy from UK Nigeria",
   ],
   openGraph: {
-    title: "ATG Mall — Shop Global. Delivered Local.",
+    title: "ATG Mall — Shop The World. Delivered To You.",
     description:
-      "Shop products from China and get them delivered worldwide. Sourcing, purchasing, warehousing, consolidation and shipping — handled by ATG Mall.",
+      "Shop products from China, the USA and the UK, delivered to supported destinations worldwide. Sourcing, purchasing, warehousing, consolidation and shipping — handled by ATG Mall.",
     url: appUrl,
     siteName: "ATG Mall",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ATG Mall — Shop Global. Delivered Local.",
-    description: "Shop from China. We handle the rest. Cross-border shopping, worldwide.",
+    title: "ATG Mall — Shop The World. Delivered To You.",
+    description: "Shop from China, USA and UK. We handle the rest. Cross-border shopping, worldwide.",
   },
   alternates: { canonical: appUrl },
 };
@@ -56,13 +56,13 @@ const organizationJsonLd = {
   name: "ATG Mall",
   url: appUrl,
   description:
-    "ATG Mall is a cross-border shopping and logistics platform connecting customers worldwide to suppliers in China.",
+    "ATG Mall is a worldwide cross-border shopping and logistics platform connecting customers to suppliers and stores in China, the USA and the UK.",
   parentOrganization: {
     "@type": "Organization",
     name: "Apex Terra Global Limited",
     url: "https://apexterraglobal.com",
   },
-  areaServed: ["NG", "GM"],
+  areaServed: "Worldwide",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

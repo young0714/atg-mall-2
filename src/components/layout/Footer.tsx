@@ -20,6 +20,8 @@ const columns = [
       { href: "/source-a-product", label: "Source a Product" },
       { href: "/account/ship-package", label: "Ship my package" },
       { href: "/track", label: "Track a shipment" },
+      { href: "/legal/shipping-policy", label: "Worldwide Shipping" },
+      { href: "/countries", label: "Supported Countries" },
     ],
   },
   {
@@ -52,8 +54,9 @@ export function Footer() {
         <div className="col-span-2 lg:col-span-2">
           <Logo />
           <p className="mt-4 max-w-xs text-sm text-navy-300">
-            Shop products from China and get them delivered worldwide. We handle
-            sourcing, purchasing, receiving, consolidation and international shipping.
+            Shop products from China, the USA, the UK and beyond, delivered to supported
+            destinations worldwide. We handle sourcing, purchasing, receiving, consolidation
+            and international shipping.
           </p>
           <div className="mt-5 space-y-1 text-sm text-navy-300">
             <p>WhatsApp/Call: <a href="tel:+2347043945345" className="hover:text-white">+234 704 394 5345</a></p>

@@ -19,24 +19,24 @@ export function Hero({
       <div className="container-atg relative flex flex-col gap-10 py-16 sm:py-24 lg:flex-row lg:items-center">
         <div className="max-w-xl">
           <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gold-300">
-            Worldwide cross-border shopping, built on Nigeria &amp; Gambia expertise
+            Your Worldwide Shopping Marketplace
           </p>
           <h1 className="text-4xl font-display font-extrabold leading-tight sm:text-5xl">
-            Shop Global.<br />
-            <span className="text-atgblue-300">Delivered Local.</span>
+            Shop The World.<br />
+            <span className="text-atgblue-300">Delivered To You.</span>
           </h1>
           <p className="mt-5 max-w-lg text-navy-100">
-            Shop products from China, the USA, the UK and beyond, delivered anywhere we ship to
-            worldwide. We handle sourcing, purchasing, receiving, consolidation and international
-            shipping — so you don&apos;t have to.
+            Shop products from the USA, China and UK, with worldwide delivery options. We handle
+            sourcing, purchasing, receiving, consolidation and international shipping — so you
+            don&apos;t have to.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link href="/shop-from-china" className="btn-gold">
-              Shop From China
+            <Link href="/shop" className="btn-gold">
+              Shop Worldwide
             </Link>
-            <Link href="/source-a-product" className="btn bg-white/10 text-white hover:bg-white/20">
-              Source A Product
+            <Link href="/shop/international" className="btn bg-white/10 text-white hover:bg-white/20">
+              Explore Stores
             </Link>
           </div>
 

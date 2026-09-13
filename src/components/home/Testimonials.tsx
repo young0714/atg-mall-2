@@ -14,8 +14,8 @@ const reviews = [
     text: "Sourcing a product I couldn't find locally was straightforward — the team came back with three supplier options and I picked one that fit my budget.",
   },
   {
-    name: "Reseller, Abuja",
-    text: "Tracking my shipment with one ATG number from the warehouse all the way to delivery made it easy to plan my restocking.",
+    name: "Independent seller, London",
+    text: "Tracking my shipment with one ATG number from the warehouse all the way to delivery made it easy to plan my restocking, even shipping to the UK.",
   },
 ];
 
