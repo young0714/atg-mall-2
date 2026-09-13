@@ -12,6 +12,7 @@ import { paymentService } from "@/lib/services/paymentService";
 import { addAddressAction, placeOrderAction } from "./actions";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { CheckoutShippingSummary } from "@/components/checkout/CheckoutShippingSummary";
 
 export const metadata: Metadata = { title: "Checkout" };
 export const dynamic = "force-dynamic";
@@ -79,12 +80,33 @@ export default async function CheckoutPage({
       ),
     ]),
   );
-  const estimatedShippingMinor = groups.reduce(
-    (sum, g) => sum + (cheapestByOrigin.get(g.shippingOriginId)?.displayCustomerPriceMinor ?? 0),
-    0,
-  );
 
   const itemsByKey = new Map(cart.items.map((i) => [`${i.productId}_${i.variantId ?? ""}`, i]));
+
+  // Plain-serializable shape for the client component — Prisma line-item
+  // objects (Dates, Decimal, etc.) can't cross the server/client boundary.
+  const shippingGroupsForClient = groups.map((g) => ({
+    shippingOriginId: g.shippingOriginId,
+    originName: g.originName,
+    totalWeightGrams: g.totalWeightGrams,
+    itemsLabel: g.lines
+      .map((l) => itemsByKey.get(`${l.productId}_${l.variantId ?? ""}`))
+      .filter((i): i is NonNullable<typeof i> => Boolean(i))
+      .map((i) => `${i.product.name} × ${i.quantity}`)
+      .join(", "),
+    unavailableReason: g.quote.unavailableReason ?? null,
+    options: g.quote.options.map((o) => ({
+      serviceLevelId: o.serviceLevelId,
+      serviceLevelName: o.serviceLevelName,
+      carrierName: o.carrierName,
+      estimatedDeliveryDaysMin: o.estimatedDeliveryDaysMin,
+      estimatedDeliveryDaysMax: o.estimatedDeliveryDaysMax,
+      trackingAvailable: o.trackingAvailable,
+      displayCustomerPriceMinor: o.displayCustomerPriceMinor,
+      displayCurrency: o.displayCurrency,
+    })),
+    defaultServiceLevelId: cheapestByOrigin.get(g.shippingOriginId)?.serviceLevelId ?? null,
+  }));
 
   return (
     <Section className="!py-10">
@@ -157,97 +179,32 @@ export default async function CheckoutPage({
               </section>
             )}
 
-            <section className="space-y-4">
-              <h2 className="font-semibold text-navy-900">
-                Shipping ({groups.length} shipment{groups.length === 1 ? "" : "s"})
-              </h2>
-              {groups.map((g, idx) => {
-                const groupItems = g.lines.map((l) => itemsByKey.get(`${l.productId}_${l.variantId ?? ""}`)!);
-                return (
-                  <div key={g.shippingOriginId} className="card p-5">
-                    <div className="mb-2 flex items-center justify-between">
-                      <h3 className="font-medium text-navy-800">
-                        Shipment {idx + 1}: from {g.originName}
-                      </h3>
-                      <span className="text-xs text-navy-400">{(g.totalWeightGrams / 1000).toFixed(2)} kg</span>
-                    </div>
-                    <p className="mb-3 text-xs text-navy-500">
-                      {groupItems.map((i) => `${i.product.name} × ${i.quantity}`).join(", ")}
-                    </p>
-
-                    {g.quote.unavailableReason ? (
-                      <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{g.quote.unavailableReason}</div>
-                    ) : (
-                      <div className="space-y-2">
-                        {g.quote.options.map((o) => (
-                          <label
-                            key={o.serviceLevelId}
-                            className="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50"
-                          >
-                            <span className="flex items-center gap-3 text-sm">
-                              <input
-                                type="radio"
-                                name={`shippingChoice_${g.shippingOriginId}`}
-                                value={o.serviceLevelId}
-                                defaultChecked={o.serviceLevelId === cheapestByOrigin.get(g.shippingOriginId)?.serviceLevelId}
-                                required
-                              />
-                              <span>
-                                <span className="font-medium text-navy-800">{o.serviceLevelName}</span>
-                                <span className="block text-xs text-navy-400">
-                                  {o.carrierName} · {o.estimatedDeliveryDaysMin}–{o.estimatedDeliveryDaysMax} days
-                                  {!o.trackingAvailable && " · no tracking"}
-                                </span>
-                              </span>
-                            </span>
-                            <span className="text-sm font-semibold text-navy-800">
-                              {formatMoney(o.displayCustomerPriceMinor, o.displayCurrency)}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              <p className="rounded-lg bg-navy-50 p-3 text-xs text-navy-600">{customs.disclaimer}</p>
-            </section>
-
-            <section className="card p-5">
-              <h2 className="mb-3 font-semibold text-navy-900">Payment Method</h2>
-              <div className="space-y-2 text-sm">
-                <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
-                  <input type="radio" name="paymentMethod" value="WALLET" defaultChecked required />
-                  ATG Wallet {wallet && <span className="text-navy-400">— balance {formatMoney(wallet.balanceMinor, wallet.currency)}</span>}
-                </label>
-                <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
-                  <input type="radio" name="paymentMethod" value="CARD" />
-                  Debit/Credit Card {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment — no real gateway connected yet)"}
-                </label>
-                <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
-                  <input type="radio" name="paymentMethod" value="BANK_TRANSFER" />
-                  Bank Transfer {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment — no real gateway connected yet)"}
-                </label>
-              </div>
-            </section>
-
-            <section className="card p-5">
-              <h2 className="mb-3 font-semibold text-navy-900">Order Summary</h2>
-              <dl className="space-y-1.5 text-sm">
-                <div className="flex justify-between"><dt className="text-navy-500">Subtotal</dt><dd>{formatMoney(subtotalMinor, orderCurrency)}</dd></div>
-                <div className="flex justify-between"><dt className="text-navy-500">Service fee (1%)</dt><dd>{formatMoney(serviceFeeMinor, orderCurrency)}</dd></div>
-                <div className="flex justify-between"><dt className="text-navy-500">Shipping (est., as selected above)</dt><dd>{formatMoney(estimatedShippingMinor, orderCurrency)}</dd></div>
-                <div className="flex justify-between border-t border-navy-100 pt-1.5 font-semibold text-navy-900">
-                  <dt>Estimated total</dt><dd>{formatMoney(subtotalMinor + serviceFeeMinor + estimatedShippingMinor, orderCurrency)}</dd>
+            <CheckoutShippingSummary
+              groups={shippingGroupsForClient}
+              subtotalMinor={subtotalMinor}
+              serviceFeeMinor={serviceFeeMinor}
+              orderCurrency={orderCurrency}
+              customsDisclaimer={customs.disclaimer}
+              canCheckout={canCheckout}
+            >
+              <section className="card p-5">
+                <h2 className="mb-3 font-semibold text-navy-900">Payment Method</h2>
+                <div className="space-y-2 text-sm">
+                  <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
+                    <input type="radio" name="paymentMethod" value="WALLET" defaultChecked required />
+                    ATG Wallet {wallet && <span className="text-navy-400">— balance {formatMoney(wallet.balanceMinor, wallet.currency)}</span>}
+                  </label>
+                  <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
+                    <input type="radio" name="paymentMethod" value="CARD" />
+                    Debit/Credit Card {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment — no real gateway connected yet)"}
+                  </label>
+                  <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
+                    <input type="radio" name="paymentMethod" value="BANK_TRANSFER" />
+                    Bank Transfer {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment — no real gateway connected yet)"}
+                  </label>
                 </div>
-              </dl>
-              <p className="mt-3 text-xs text-navy-400">
-                Final total is recalculated from your actual shipping selections when the order is placed.
-              </p>
-              <button type="submit" className="btn-primary mt-4 w-full" disabled={!canCheckout}>
-                {canCheckout ? "Place Order" : "Shipping unavailable — see above"}
-              </button>
-            </section>
+              </section>
+            </CheckoutShippingSummary>
           </form>
         </div>
       </Container>
