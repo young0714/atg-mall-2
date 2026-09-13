@@ -81,13 +81,13 @@ export function ProductPurchasePanel({
         </p>
       </div>
 
-      {variants.length > 0 && (
+      {variants.length > 1 && (
         <div>
           <label className="label" htmlFor="variant">Variant</label>
           <Select id="variant" value={variantId} onChange={(e) => setVariantId(e.target.value)}>
             {variants.map((v) => (
               <option key={v.id} value={v.id}>
-                {v.name}
+                {v.name || "Standard"}
               </option>
             ))}
           </Select>
