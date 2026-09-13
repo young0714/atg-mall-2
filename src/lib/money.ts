@@ -4,8 +4,10 @@ import type { Currency } from "@prisma/client";
 // cents, fen). These helpers are the only place that should ever multiply or
 // divide a money value by 100 — never scatter that math through the UI.
 
+// NGN uses the "NGN" code, not the ₦ symbol — see the comment in
+// formatMoney below for why.
 export const CURRENCY_SYMBOLS: Record<Currency, string> = {
-  NGN: "₦",
+  NGN: "NGN",
   GMD: "D",
   USD: "$",
   EUR: "€",
@@ -45,7 +47,9 @@ export function formatMoney(amountMinor: number, currency: Currency): string {
       maximumFractionDigits: 2,
     }).format(major);
   } catch {
-    return `${CURRENCY_SYMBOLS[currency]}${major.toLocaleString()}`;
+    const symbol = CURRENCY_SYMBOLS[currency];
+    const spacer = symbol.length > 1 ? " " : "";
+    return `${symbol}${spacer}${major.toLocaleString()}`;
   }
 }
 

@@ -79,7 +79,7 @@ export default async function AdminSettingsPage({
                 <option value="CNY">CNY</option>
               </Select>
             </Field>
-            <Field label="Local delivery fee (minor units)" htmlFor="localFeeMinor" required hint="e.g. 150000 = ₦1,500.00">
+            <Field label="Local delivery fee (minor units)" htmlFor="localFeeMinor" required hint="e.g. 150000 = NGN 1,500.00">
               <Input id="localFeeMinor" name="localFeeMinor" type="number" defaultValue={0} required />
             </Field>
             <Field label="Min ETA (days)" htmlFor="etaDaysMin" required>
