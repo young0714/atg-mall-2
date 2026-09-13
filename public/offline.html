@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>You're offline — ATG Mall</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background: #ffffff;
+    color: #0f2038;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+    padding: 24px;
+    box-sizing: border-box;
+  }
+  img { width: 96px; height: 96px; }
+  h1 { font-size: 1.25rem; margin: 0; }
+  p { margin: 0; color: #305582; max-width: 320px; line-height: 1.5; }
+  button {
+    margin-top: 8px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    background: #1f6ce0;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: #1554b3; }
+</style>
+</head>
+<body>
+  <img src="/icons/icon-192.png" alt="ATG Mall" />
+  <h1>You're offline</h1>
+  <p>Check your internet connection and try again — your cart and orders are saved and will be right here.</p>
+  <button onclick="location.reload()">Try again</button>
+</body>
+</html>

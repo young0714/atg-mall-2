@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MobileNav } from "@/components/layout/MobileNav";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
@@ -50,6 +51,18 @@ export const metadata: Metadata = {
     images: ["/logo.png"],
   },
   alternates: { canonical: appUrl },
+  appleWebApp: {
+    capable: true,
+    title: "ATG Mall",
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f2038",
 };
 
 const organizationJsonLd = {
@@ -75,6 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
+        <ServiceWorkerRegister />
         <Header />
         <main className="flex-1 pb-16 lg:pb-0">{children}</main>
         <Footer />
