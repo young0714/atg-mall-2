@@ -29,6 +29,18 @@ export function sourcePlatformLabel(platform: SourcePlatform): string {
   return SOURCE_PLATFORM_LABELS[platform] ?? platform;
 }
 
+// Customer-facing variant of sourcePlatformLabel. Most platforms (1688,
+// Taobao, USA/UK Store, etc.) are already part of ATG's own "Shop from
+// China/USA/UK" marketing story, so naming them is fine — CJdropshipping
+// is purely an internal fulfillment detail, not something ATG markets
+// itself around, so showing it by name would just point customers at a
+// specific competing supplier. Admin pages should keep using
+// sourcePlatformLabel directly; this is only for customer-visible pages.
+export function customerFacingSourceLabel(platform: SourcePlatform): string {
+  if (platform === "CJDROPSHIPPING") return "ATG Sourced";
+  return sourcePlatformLabel(platform);
+}
+
 export function fulfillmentTypeLabel(type: FulfillmentType): string {
   return FULFILLMENT_TYPE_LABELS[type] ?? type;
 }
