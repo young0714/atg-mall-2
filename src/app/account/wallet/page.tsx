@@ -48,12 +48,12 @@ export default async function WalletPage({
           ) : (
             <div className="divide-y divide-navy-100">
               {transactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between p-4">
-                  <div>
-                    <p className="text-sm font-medium text-navy-800">{tx.description}</p>
+                <div key={tx.id} className="flex items-center justify-between gap-3 p-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-navy-800">{tx.description}</p>
                     <p className="text-xs text-navy-400">{formatDateTime(tx.createdAt)} · {tx.type}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="shrink-0 text-right">
                     <p className={`text-sm font-semibold ${tx.amountMinor >= 0 ? "text-atggreen-600" : "text-red-600"}`}>
                       {tx.amountMinor >= 0 ? "+" : ""}{formatMoney(tx.amountMinor, tx.currency)}
                     </p>

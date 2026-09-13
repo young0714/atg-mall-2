@@ -107,12 +107,12 @@ export default async function AdminDashboardPage() {
         </div>
         <div className="divide-y divide-navy-100">
           {recentOrders.map((order) => (
-            <Link key={order.id} href={`/admin/orders/${order.id}`} className="flex items-center justify-between p-4 hover:bg-sand-50">
-              <div>
-                <p className="text-sm font-semibold text-navy-800">{order.orderNumber}</p>
-                <p className="text-xs text-navy-400">{order.user.fullName} · {formatDateTime(order.createdAt)}</p>
+            <Link key={order.id} href={`/admin/orders/${order.id}`} className="flex items-center justify-between gap-3 p-4 hover:bg-sand-50">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-navy-800">{order.orderNumber}</p>
+                <p className="truncate text-xs text-navy-400">{order.user.fullName} · {formatDateTime(order.createdAt)}</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center gap-3">
                 <span className="text-sm font-medium text-navy-700">{formatMoney(order.totalMinor, order.currency)}</span>
                 <StatusBadge status={order.status} />
               </div>

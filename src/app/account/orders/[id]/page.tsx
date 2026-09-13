@@ -80,9 +80,9 @@ export default async function OrderDetailPage({
             <h2 className="mb-3 font-semibold text-navy-900">Items</h2>
             <div className="divide-y divide-navy-100">
               {order.items.map((item) => (
-                <div key={item.id} className="flex justify-between py-2 text-sm">
-                  <span className="text-navy-700">{item.nameSnapshot} × {item.quantity}</span>
-                  <span className="font-medium text-navy-800">{formatMoney(item.unitPriceMinor * item.quantity, item.currency)}</span>
+                <div key={item.id} className="flex justify-between gap-3 py-2 text-sm">
+                  <span className="min-w-0 text-navy-700">{item.nameSnapshot} × {item.quantity}</span>
+                  <span className="shrink-0 font-medium text-navy-800">{formatMoney(item.unitPriceMinor * item.quantity, item.currency)}</span>
                 </div>
               ))}
             </div>
@@ -96,11 +96,11 @@ export default async function OrderDetailPage({
               <div className="space-y-3">
                 {order.shipments.map((s, idx) => (
                   <div key={s.id} className="rounded-lg border border-navy-100 p-3 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-navy-800">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 font-medium text-navy-800">
                         Shipment {idx + 1}: from {s.originNameSnapshot}
                       </span>
-                      <span className="font-semibold text-navy-800">{formatMoney(s.customerPriceMinor, s.currency)}</span>
+                      <span className="shrink-0 font-semibold text-navy-800">{formatMoney(s.customerPriceMinor, s.currency)}</span>
                     </div>
                     <p className="mt-1 text-xs text-navy-500">
                       {s.serviceLevelNameSnapshot} via {s.carrierNameSnapshot} · {(s.chargeableWeightGrams / 1000).toFixed(2)} kg ·{" "}

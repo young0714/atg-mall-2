@@ -46,13 +46,13 @@ export default async function OrdersPage({
         <div className="mt-6 space-y-3">
           {orders.map((order) => (
             <Link key={order.id} href={`/account/orders/${order.id}`} className="card flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-semibold text-navy-800">{order.orderNumber}</p>
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-navy-800">{order.orderNumber}</p>
                 <p className="text-xs text-navy-400">
                   {formatDate(order.createdAt)} · {order.items.length} item{order.items.length === 1 ? "" : "s"} · {order.source.replaceAll("_", " ")}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 items-center gap-3">
                 <span className="font-medium text-navy-700">{formatMoney(order.totalMinor, order.currency)}</span>
                 <StatusBadge status={order.status} />
               </div>

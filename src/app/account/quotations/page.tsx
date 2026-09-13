@@ -50,9 +50,9 @@ export default async function QuotationsPage({
 
                 <div className="mt-4 grid gap-1.5 text-sm sm:max-w-sm">
                   {q.lineItems.map((li) => (
-                    <div key={li.id} className="flex justify-between">
-                      <span className="text-navy-500">{li.label}</span>
-                      <span className="font-medium text-navy-700">{formatMoney(li.amountMinor, q.currency)}</span>
+                    <div key={li.id} className="flex justify-between gap-3">
+                      <span className="min-w-0 text-navy-500">{li.label}</span>
+                      <span className="shrink-0 font-medium text-navy-700">{formatMoney(li.amountMinor, q.currency)}</span>
                     </div>
                   ))}
                   <div className="flex justify-between border-t border-navy-100 pt-1.5">

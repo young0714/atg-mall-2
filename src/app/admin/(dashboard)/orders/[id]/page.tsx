@@ -75,16 +75,16 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
           <div className="card p-5">
             <h2 className="mb-3 font-semibold text-navy-900">Items</h2>
             {order.items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between border-b border-navy-50 py-2 text-sm last:border-0">
-                <span>
+              <div key={item.id} className="flex items-center justify-between gap-3 border-b border-navy-50 py-2 text-sm last:border-0">
+                <span className="min-w-0">
                   {item.nameSnapshot} × {item.quantity}
                   {item.fulfillmentType && (
-                    <span className="ml-2 rounded bg-navy-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-navy-400">
+                    <span className="ml-2 inline-block rounded bg-navy-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-navy-400">
                       {fulfillmentTypeLabel(item.fulfillmentType)}
                     </span>
                   )}
                 </span>
-                <span className="font-medium">{formatMoney(item.unitPriceMinor * item.quantity, item.currency)}</span>
+                <span className="shrink-0 font-medium">{formatMoney(item.unitPriceMinor * item.quantity, item.currency)}</span>
               </div>
             ))}
           </div>
