@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { href: "/shop-for-me", label: "Shop For Me" },
   { href: "/source-a-product", label: "Source A Product" },
   { href: "/track", label: "Track Shipment" },
+  { href: "/why-atg-mall", label: "Why ATG Mall" },
 ];
 
 export async function Header() {

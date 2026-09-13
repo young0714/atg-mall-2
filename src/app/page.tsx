@@ -6,7 +6,6 @@ import { Hero } from "@/components/home/Hero";
 import { ServicesPromo } from "@/components/home/ServicesPromo";
 import { ShopTheWorld } from "@/components/home/ShopTheWorld";
 import { HowItWorks } from "@/components/home/HowItWorks";
-import { WhyChooseUs } from "@/components/home/WhyChooseUs";
 import { ShippingOptionsSection } from "@/components/home/ShippingOptionsSection";
 import { Testimonials } from "@/components/home/Testimonials";
 import { FAQSection } from "@/components/home/FAQSection";
@@ -88,7 +87,6 @@ export default async function HomePage() {
       )}
 
       <HowItWorks />
-      <WhyChooseUs />
       <ShippingOptionsSection />
       <Testimonials />
       <FAQSection />
