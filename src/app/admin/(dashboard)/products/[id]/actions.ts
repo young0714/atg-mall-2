@@ -133,3 +133,43 @@ export async function deleteProductVariantAction(formData: FormData) {
   }
   redirect(`/admin/products/${productId}?updated=1`);
 }
+
+export async function deleteProductVariantsAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const productId = String(formData.get("productId"));
+  const variantIds = formData.getAll("variantIds").map(String);
+
+  if (variantIds.length === 0) {
+    redirect(`/admin/products/${productId}`);
+  }
+
+  let deletedCount = 0;
+  let skippedCount = 0;
+  for (const variantId of variantIds) {
+    try {
+      await db.productVariant.delete({ where: { id: variantId, productId } });
+      deletedCount++;
+    } catch {
+      // Has existing order history (FK constraint) — skip it, keep going
+      // with the rest of the batch rather than failing the whole selection.
+      skippedCount++;
+    }
+  }
+
+  await db.auditLog.create({
+    data: {
+      actorId: staff.id,
+      action: "PRODUCT_VARIANT_DELETED",
+      entityType: "Product",
+      entityId: productId,
+      summary: `Removed ${deletedCount} variant(s) in bulk${skippedCount > 0 ? ` (${skippedCount} skipped — existing order history)` : ""}`,
+    },
+  });
+
+  revalidatePath(`/admin/products/${productId}`);
+  const suffix =
+    skippedCount > 0
+      ? `&error=${encodeURIComponent(`Deleted ${deletedCount}, skipped ${skippedCount} (existing order history).`)}`
+      : "";
+  redirect(`/admin/products/${productId}?updated=1${suffix}`);
+}

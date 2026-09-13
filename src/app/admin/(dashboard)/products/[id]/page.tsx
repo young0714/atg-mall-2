@@ -12,8 +12,8 @@ import {
   addProductImageAction,
   deleteProductImageAction,
   addProductVariantAction,
-  deleteProductVariantAction,
 } from "./actions";
+import { VariantsTable } from "./VariantsTable";
 
 export const metadata: Metadata = { title: "Admin — Edit Product" };
 export const dynamic = "force-dynamic";
@@ -190,41 +190,7 @@ export default async function AdminProductDetailPage({
       <section className="card space-y-4 p-5">
         <h2 className="font-semibold text-navy-900">Variants ({product.variants.length})</h2>
         {product.variants.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm">
-              <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
-                <tr>
-                  <th className="p-2">Name</th>
-                  <th className="p-2">SKU</th>
-                  <th className="p-2">Price delta</th>
-                  <th className="p-2">Stock</th>
-                  <th className="p-2">Attributes</th>
-                  <th className="p-2"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-navy-100">
-                {product.variants.map((v) => (
-                  <tr key={v.id}>
-                    <td className="p-2 font-medium text-navy-800">{v.name}</td>
-                    <td className="p-2 text-navy-500">{v.sku ?? "—"}</td>
-                    <td className="p-2 text-navy-500">
-                      {v.priceDeltaMinor >= 0 ? "+" : ""}
-                      {formatMoney(v.priceDeltaMinor, product.baseCurrency)}
-                    </td>
-                    <td className="p-2 text-navy-500">{v.stock}</td>
-                    <td className="p-2 text-navy-400">{JSON.stringify(v.attributes)}</td>
-                    <td className="p-2 text-right">
-                      <form action={deleteProductVariantAction}>
-                        <input type="hidden" name="productId" value={product.id} />
-                        <input type="hidden" name="variantId" value={v.id} />
-                        <button className="text-xs font-medium text-red-600 hover:underline">Delete</button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <VariantsTable productId={product.id} variants={product.variants} baseCurrency={product.baseCurrency} />
         )}
         <details>
           <summary className="cursor-pointer text-sm font-medium text-atgblue-600">+ Add variant</summary>

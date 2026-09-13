@@ -20,18 +20,6 @@ import "server-only";
 const BASE_URL = "https://developers.cjdropshipping.com/api2.0/v1";
 const MIN_REQUEST_INTERVAL_MS = 1100;
 
-/**
- * Default retail margin applied on top of CJ's own price when suggesting a
- * price during import — a straight multiplier (1.5 = 50% margin) so the
- * import form's pre-filled price is already profitable rather than a
- * break-even sell-at-cost number. Still just a suggestion: the admin can
- * edit the price field before submitting. Applied identically to both the
- * base price suggestion (cj-import/[pid]/page.tsx) and each variant's price
- * delta (cj-import/actions.ts) so every variant stays marked up too, not
- * just whichever one happens to match the base.
- */
-export const CJ_IMPORT_MARGIN_MULTIPLIER = 1.5;
-
 export interface CjProductSummary {
   pid: string;
   name: string;
