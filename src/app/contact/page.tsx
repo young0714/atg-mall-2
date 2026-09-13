@@ -8,11 +8,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Contact Us",
     description: "Get in touch with ATG Mall — support for orders, packages, shipments and general enquiries.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Contact Us",
     description: "Get in touch with ATG Mall — support for orders, packages, shipments and general enquiries.",
+    images: ["/logo.png"],
   },
 };
 

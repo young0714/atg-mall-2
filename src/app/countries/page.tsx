@@ -11,11 +11,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Supported Countries — Worldwide Shipping",
     description: "See every destination country ATG Mall currently supports for checkout and delivery. Pick your country at checkout to see live shipping options and pricing.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Supported Countries — Worldwide Shipping",
     description: "See every destination country ATG Mall currently supports for checkout and delivery. Pick your country at checkout to see live shipping options and pricing.",
+    images: ["/logo.png"],
   },
 };
 

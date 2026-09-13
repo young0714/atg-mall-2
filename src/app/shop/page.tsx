@@ -14,11 +14,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Shop — Buy from China, delivered worldwide",
     description: "Browse ATG Mall's catalog of products sourced from China, with worldwide delivery.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Shop — Buy from China, delivered worldwide",
     description: "Browse ATG Mall's catalog of products sourced from China, with worldwide delivery.",
+    images: ["/logo.png"],
   },
 };
 

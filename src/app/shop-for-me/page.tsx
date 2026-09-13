@@ -14,11 +14,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Shop For Me — We buy it, you receive it",
     description: "Send us a product link from any store — China, USA, UK or anywhere else — and ATG Mall will purchase, inspect, warehouse and ship it worldwide.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Shop For Me — We buy it, you receive it",
     description: "Send us a product link from any store — China, USA, UK or anywhere else — and ATG Mall will purchase, inspect, warehouse and ship it worldwide.",
+    images: ["/logo.png"],
   },
 };
 

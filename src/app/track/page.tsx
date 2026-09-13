@@ -8,11 +8,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Track Your Shipment",
     description: "Track your ATG Mall shipment with your ATG tracking number.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Track Your Shipment",
     description: "Track your ATG Mall shipment with your ATG tracking number.",
+    images: ["/logo.png"],
   },
 };
 

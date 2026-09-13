@@ -11,11 +11,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Shop from USA — Amazon, Walmart, Best Buy & More",
     description: "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG — send us a product link from any American store and we'll source, consolidate and ship it worldwide.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Shop from USA — Amazon, Walmart, Best Buy & More",
     description: "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG — send us a product link from any American store and we'll source, consolidate and ship it worldwide.",
+    images: ["/logo.png"],
   },
   keywords: [
     "Shop from USA",

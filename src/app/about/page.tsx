@@ -9,11 +9,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "About ATG Mall",
     description: "ATG Mall connects shoppers worldwide to Chinese suppliers on 1688, Taobao and Alibaba — we source, buy, consolidate, ship and deliver.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "About ATG Mall",
     description: "ATG Mall connects shoppers worldwide to Chinese suppliers on 1688, Taobao and Alibaba — we source, buy, consolidate, ship and deliver.",
+    images: ["/logo.png"],
   },
 };
 

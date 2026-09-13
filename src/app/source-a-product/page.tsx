@@ -12,11 +12,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Source A Product — Let our team find it for you",
     description: "Can't find a supplier? Tell ATG Mall what you need and our sourcing team will find verified options and quotes.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Source A Product — Let our team find it for you",
     description: "Can't find a supplier? Tell ATG Mall what you need and our sourcing team will find verified options and quotes.",
+    images: ["/logo.png"],
   },
 };
 

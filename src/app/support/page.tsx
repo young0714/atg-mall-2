@@ -13,11 +13,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Support",
     description: "Get help with your ATG Mall orders, packages and shipments.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Support",
     description: "Get help with your ATG Mall orders, packages and shipments.",
+    images: ["/logo.png"],
   },
 };
 export const dynamic = "force-dynamic";

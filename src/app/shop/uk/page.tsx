@@ -11,11 +11,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Shop from UK — Amazon UK, Argos, Currys & More",
     description: "UK shopping through ATG — Amazon UK, Argos, Currys, Tesco, ASOS and more. Send us a product link from any UK store and we'll source, consolidate and ship it worldwide.",
+    images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Shop from UK — Amazon UK, Argos, Currys & More",
     description: "UK shopping through ATG — Amazon UK, Argos, Currys, Tesco, ASOS and more. Send us a product link from any UK store and we'll source, consolidate and ship it worldwide.",
+    images: ["/logo.png"],
   },
   keywords: [
     "Shop from UK",
