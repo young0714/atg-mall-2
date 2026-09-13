@@ -5,6 +5,7 @@ import type { Currency } from "@prisma/client";
 import { formatMoney } from "@/lib/money";
 import { addToCartAction, requestSourcingForProductAction } from "@/app/product/[slug]/actions";
 import { LandedCostBreakdown } from "./LandedCostBreakdown";
+import { Select } from "@/components/ui/Form";
 import type { LandedCostBreakdown as Breakdown } from "@/lib/services/pricingService";
 
 interface Variant {
@@ -82,23 +83,14 @@ export function ProductPurchasePanel({
 
       {variants.length > 0 && (
         <div>
-          <label className="label">Variant</label>
-          <div className="flex flex-wrap gap-2">
+          <label className="label" htmlFor="variant">Variant</label>
+          <Select id="variant" value={variantId} onChange={(e) => setVariantId(e.target.value)}>
             {variants.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                onClick={() => setVariantId(v.id)}
-                className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${
-                  variantId === v.id
-                    ? "border-atgblue-500 bg-atgblue-50 text-atgblue-700"
-                    : "border-navy-200 text-navy-600 hover:bg-sand-100"
-                }`}
-              >
+              <option key={v.id} value={v.id}>
                 {v.name}
-              </button>
+              </option>
             ))}
-          </div>
+          </Select>
         </div>
       )}
 
