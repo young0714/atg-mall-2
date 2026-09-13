@@ -261,6 +261,7 @@ class DefaultOrderService implements OrderService {
       event: NOTIFICATION_EVENTS.ORDER_CREATED,
       title: "Order placed",
       body: `Your ATG Mall order ${orderNumber} has been created.`,
+      channels: ["IN_APP", "EMAIL"],
     });
 
     return { orderId: order.id, orderNumber, paymentStatus };
@@ -394,6 +395,16 @@ class DefaultOrderService implements OrderService {
       });
     }
     await db.quotation.update({ where: { id: quotationId }, data: { status: "ACCEPTED" } });
+
+    const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
+    await notificationService.notify({
+      userId,
+      userContact: user.email,
+      event: NOTIFICATION_EVENTS.ORDER_CREATED,
+      title: "Order placed",
+      body: `Your ATG Mall order ${orderNumber} has been created from quotation ${quotation.quotationNumber}.`,
+      channels: ["IN_APP", "EMAIL"],
+    });
 
     return { orderId: order.id, orderNumber };
   }
