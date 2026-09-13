@@ -33,7 +33,7 @@ export default async function AdminCjImportDetailPage({
         ← Back to search
       </Link>
 
-      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
         <div className="space-y-3">
           {/* eslint-disable-next-line @next/next/no-img-element -- external CJ CDN, not in next/image's allowlist */}
           <img src={product.imageUrl} alt={product.name} className="aspect-square w-full rounded-xl2 object-cover" />
@@ -62,7 +62,7 @@ export default async function AdminCjImportDetailPage({
 
           {searchParams.error && <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
-          <form action={importCjProductAction} className="grid gap-4 sm:grid-cols-2">
+          <form action={importCjProductAction} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <input type="hidden" name="pid" value={product.pid} />
             <div className="sm:col-span-2">
               <Field label="Name" htmlFor="name" required>

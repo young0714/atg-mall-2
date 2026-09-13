@@ -49,7 +49,7 @@ const columns = [
 
 export function Footer() {
   return (
-    <footer className="bg-navy-900 text-navy-200">
+    <footer className="bg-navy-900 pb-16 text-navy-200 lg:pb-0">
       <div className="container-atg grid grid-cols-2 gap-10 py-14 sm:grid-cols-3 lg:grid-cols-6">
         <div className="col-span-2 lg:col-span-2">
           <Logo />

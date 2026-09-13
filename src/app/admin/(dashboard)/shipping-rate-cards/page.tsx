@@ -43,7 +43,7 @@ export default async function AdminShippingRateCardsPage({
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add Rate Card</summary>
-        <form action={createRateCardAction} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form action={createRateCardAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Origin" htmlFor="shippingOriginId" required>
             <Select id="shippingOriginId" name="shippingOriginId" required>
               <option value="">— Select —</option>

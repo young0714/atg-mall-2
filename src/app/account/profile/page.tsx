@@ -33,7 +33,7 @@ export default async function ProfilePage({
       {searchParams.saved && <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">Saved!</div>}
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
-      <form action={updateProfileAction} className="card grid gap-4 p-6 sm:grid-cols-2">
+      <form action={updateProfileAction} className="card grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
         <h2 className="font-semibold text-navy-900 sm:col-span-2">Personal Information</h2>
         <Field label="Full name" htmlFor="fullName" required>
           <Input id="fullName" name="fullName" defaultValue={user.fullName} required />
@@ -87,7 +87,7 @@ export default async function ProfilePage({
           ))}
         </div>
 
-        <form action={addProfileAddressAction} className="mt-5 grid gap-3 rounded-xl2 border border-dashed border-navy-200 p-4 sm:grid-cols-2">
+        <form action={addProfileAddressAction} className="mt-5 grid grid-cols-1 gap-3 rounded-xl2 border border-dashed border-navy-200 p-4 sm:grid-cols-2">
           <input type="hidden" name="label" value="Other" />
           <Field label="Full name" htmlFor="a-fullName" required><Input id="a-fullName" name="fullName" required /></Field>
           <Field label="Phone" htmlFor="a-phone" required><Input id="a-phone" name="phone" required /></Field>

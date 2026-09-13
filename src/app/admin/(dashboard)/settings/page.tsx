@@ -58,7 +58,7 @@ export default async function AdminSettingsPage({
 
         <details className="rounded-lg border border-navy-100 p-4">
           <summary className="cursor-pointer text-sm font-semibold text-navy-900">+ Add / Update Zone</summary>
-          <form action={upsertDeliveryZoneAction} className="mt-4 grid gap-4 sm:grid-cols-3">
+          <form action={upsertDeliveryZoneAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="Country" htmlFor="countryIso" required>
               <Select id="countryIso" name="countryIso" required>
                 {countries.map((c) => (
@@ -92,7 +92,7 @@ export default async function AdminSettingsPage({
           </form>
         </details>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {[...byCountry.keys()].map((countryIso) => (
             <div key={countryIso}>
               <h3 className="mb-2 text-sm font-semibold text-navy-800">
@@ -153,7 +153,7 @@ export default async function AdminSettingsPage({
               <h3 className="mb-3 text-sm font-semibold text-navy-800">
                 {STORE_COUNTRY_FLAGS[origin]} {STORE_COUNTRY_LABELS[origin]}
               </h3>
-              <form action={updatePricingPolicyAction} className="grid gap-4 sm:grid-cols-3">
+              <form action={updatePricingPolicyAction} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <input type="hidden" name="originCountry" value={origin} />
                 <Field label="Currency" htmlFor={`currency-${origin}`} required>
                   <Select id={`currency-${origin}`} name="currency" defaultValue={policy?.currency ?? defaultCurrency} required>

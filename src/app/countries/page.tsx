@@ -34,7 +34,7 @@ export default async function SupportedCountriesPage() {
           {[...byRegion.entries()].map(([region, list]) => (
             <div key={region}>
               <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-navy-400">{region}</h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map((c) => (
                   <div
                     key={c.id}

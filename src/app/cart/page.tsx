@@ -44,7 +44,7 @@ export default async function CartPage() {
             <Link href="/shop" className="btn-primary mt-4 inline-flex">Continue shopping</Link>
           </div>
         ) : (
-          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
+          <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
             <div className="space-y-4">
               {itemsInUsd.map(({ item, unitPriceUsdMinor }) => {
                 return (

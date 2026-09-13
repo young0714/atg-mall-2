@@ -32,7 +32,7 @@ export default async function AdminServiceLevelsPage({
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add Service Level</summary>
-        <form action={createServiceLevelAction} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form action={createServiceLevelAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Name" htmlFor="name" required hint='e.g. "Express"'><Input id="name" name="name" required /></Field>
           <Field label="Sort order" htmlFor="sortOrder" required hint="Lower shows first at checkout">
             <Input id="sortOrder" name="sortOrder" type="number" defaultValue={0} required />

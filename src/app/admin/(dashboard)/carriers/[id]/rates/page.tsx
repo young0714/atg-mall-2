@@ -54,7 +54,7 @@ export default async function AdminCarrierRatesPage({
           {cards.length} of {carrier.name}&apos;s lanes at once. Need one lane to be different? Edit it individually
           from the table below instead.
         </p>
-        <form action={bulkUpdateCarrierRatesAction} className="grid gap-4 sm:grid-cols-3">
+        <form action={bulkUpdateCarrierRatesAction} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <input type="hidden" name="carrierId" value={carrier.id} />
           <Field label="Currency" htmlFor="currency" required>
             <Input id="currency" name="currency" maxLength={3} defaultValue={cards[0]?.currency ?? "USD"} required />

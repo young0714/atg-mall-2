@@ -24,7 +24,7 @@ export default async function AdminSuppliersPage({
       {searchParams.created && <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">Supplier added.</div>}
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
-      <form action={createSupplierAction} className="card grid gap-4 p-5 sm:grid-cols-2">
+      <form action={createSupplierAction} className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
         <Field label="Supplier name" htmlFor="name" required><Input id="name" name="name" required /></Field>
         <Field label="Platform" htmlFor="platform" required>
           <Select id="platform" name="platform" defaultValue="MOCK_1688">
@@ -41,7 +41,7 @@ export default async function AdminSuppliersPage({
         <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Add Supplier</button>
       </form>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {suppliers.map((s) => (
           <div key={s.id} className="card p-4">
             <div className="flex items-start justify-between">

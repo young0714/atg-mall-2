@@ -39,7 +39,7 @@ export default async function AdminWarehousePage({
       )}
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
-      <form action={receivePackageAction} className="card grid gap-4 p-5 sm:grid-cols-2">
+      <form action={receivePackageAction} className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
         <h2 className="font-semibold text-navy-900 sm:col-span-2">Receive New Package</h2>
         <Field label="Customer" htmlFor="userId" required>
           <Select id="userId" name="userId" required>

@@ -130,7 +130,7 @@ export default async function CheckoutPage({
               <p className="mt-2 text-sm text-navy-500">Add a delivery address to continue.</p>
             ) : null}
 
-            <form action={addAddressAction} className="mt-4 grid gap-3 rounded-xl2 border border-dashed border-navy-200 p-4 sm:grid-cols-2">
+            <form action={addAddressAction} className="mt-4 grid grid-cols-1 gap-3 rounded-xl2 border border-dashed border-navy-200 p-4 sm:grid-cols-2">
               <input type="hidden" name="label" value="Home" />
               <Field label="Full name" htmlFor="fullName" required>
                 <Input id="fullName" name="fullName" required />

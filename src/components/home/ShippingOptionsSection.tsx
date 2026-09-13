@@ -19,7 +19,7 @@ export function ShippingOptionsSection() {
             Get a shipping quote
           </Link>
         </div>
-        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {methods.map((m) => (
             <div key={m} className="rounded-xl2 border border-navy-100 bg-white p-5">
               <p className="font-semibold text-navy-900">{SHIPPING_METHOD_LABELS[m]}</p>

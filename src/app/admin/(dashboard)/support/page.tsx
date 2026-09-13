@@ -72,7 +72,7 @@ export default async function AdminSupportPage() {
               </div>
 
               {t.status !== "RESOLVED" && t.status !== "CLOSED" && (
-                <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
                   <form action={replyToTicketAction} className="flex gap-2">
                     <input type="hidden" name="ticketId" value={t.id} />
                     <Textarea name="body" placeholder="Type a reply…" rows={2} className="flex-1" required />

@@ -21,7 +21,7 @@ export function Hero({
           <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gold-300">
             Your Worldwide Shopping Marketplace
           </p>
-          <h1 className="text-4xl font-display font-extrabold leading-tight sm:text-5xl">
+          <h1 className="text-4xl font-display font-extrabold leading-tight text-white sm:text-5xl">
             Shop The World.<br />
             <span className="text-atgblue-300">Delivered To You.</span>
           </h1>

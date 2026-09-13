@@ -39,7 +39,7 @@ export default async function AdminShippingRatesPage({
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add / Update Rate</summary>
-        <form action={upsertShippingRateAction} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form action={upsertShippingRateAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Origin" htmlFor="originCountry" required>
             <Select id="originCountry" name="originCountry" defaultValue="China" required>
               <option value="China">🇨🇳 China</option>

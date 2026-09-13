@@ -74,7 +74,7 @@ export default async function OrderDetailPage({
         </div>
       )}
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
+      <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
           <div className="card p-5">
             <h2 className="mb-3 font-semibold text-navy-900">Items</h2>

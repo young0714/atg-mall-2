@@ -58,7 +58,7 @@ export default async function AdminCjImportPage({
       </form>
 
       {searchParams.q && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {results.map((p) => (
             <div key={p.pid} className="card flex flex-col overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element -- external CJ CDN, not in next/image's allowlist */}

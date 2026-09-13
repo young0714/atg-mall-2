@@ -31,7 +31,7 @@ export default async function AdminShipmentDetailPage({ params }: { params: { id
         <StatusBadge status={shipment.status} className="text-sm" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
           <div className="card p-5">
             <h2 className="mb-3 font-semibold text-navy-900">Packages in this shipment</h2>

@@ -41,7 +41,7 @@ export default async function SourceAProductPage({
           <Field label="Upload a reference image" htmlFor="productImageFile" hint="Optional — JPEG/PNG/WEBP, up to 8MB">
             <input id="productImageFile" name="productImageFile" type="file" accept="image/*" className="input" />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Quantity" htmlFor="quantity" required>
               <Input id="quantity" name="quantity" type="number" min={1} defaultValue={1} required />
             </Field>

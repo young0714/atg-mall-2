@@ -68,7 +68,7 @@ export default async function ShopPage({
           </p>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr]">
           <aside className="space-y-6">
             <form method="GET" className="space-y-3">
               <Input type="search" name="q" placeholder="Search products..." defaultValue={q} />
@@ -78,20 +78,20 @@ export default async function ShopPage({
 
             <div>
               <p className="label mb-2">Categories</p>
-              <ul className="space-y-1 text-sm">
-                <li>
+              <ul className="flex gap-2 overflow-x-auto pb-1 text-sm lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+                <li className="shrink-0 lg:shrink">
                   <a
                     href="/shop"
-                    className={`block rounded-lg px-3 py-1.5 ${!category ? "bg-navy-900 text-white" : "text-navy-600 hover:bg-sand-100"}`}
+                    className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 lg:rounded-lg lg:px-3 ${!category ? "bg-navy-900 text-white" : "bg-sand-100 text-navy-600 hover:bg-sand-200 lg:bg-transparent lg:hover:bg-sand-100"}`}
                   >
                     All categories
                   </a>
                 </li>
                 {categories.map((c) => (
-                  <li key={c.id}>
+                  <li key={c.id} className="shrink-0 lg:shrink">
                     <a
                       href={`/shop?category=${c.slug}`}
-                      className={`block rounded-lg px-3 py-1.5 ${category === c.slug ? "bg-navy-900 text-white" : "text-navy-600 hover:bg-sand-100"}`}
+                      className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 lg:rounded-lg lg:px-3 ${category === c.slug ? "bg-navy-900 text-white" : "bg-sand-100 text-navy-600 hover:bg-sand-200 lg:bg-transparent lg:hover:bg-sand-100"}`}
                     >
                       {c.name}
                     </a>

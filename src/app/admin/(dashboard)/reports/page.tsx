@@ -66,7 +66,7 @@ export default async function AdminReportsPage() {
 
       <section>
         <h2 className="mb-3 font-semibold text-navy-900">Orders &amp; Revenue by Destination</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {ordersByDestination.length === 0 && (
             <p className="text-sm text-navy-400">No non-cancelled orders yet.</p>
           )}
@@ -121,7 +121,7 @@ export default async function AdminReportsPage() {
         </div>
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section>
           <h2 className="mb-3 font-semibold text-navy-900">Shop-for-Me Funnel</h2>
           <div className="card divide-y divide-navy-100">
@@ -151,7 +151,7 @@ export default async function AdminReportsPage() {
 
       <section>
         <h2 className="mb-3 font-semibold text-navy-900">Wallet Balances Held (by currency)</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {walletsByCurrency.map((row) => (
             <Stat
               key={row.currency}

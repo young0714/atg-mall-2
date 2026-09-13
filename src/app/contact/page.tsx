@@ -17,7 +17,7 @@ export default function ContactPage() {
           description="For order, package or shipment help, opening a support ticket from your account gets the fastest response since it's linked to your order history."
         />
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Card>
             <CardBody>
               <p className="text-sm font-semibold text-navy-800">Call / WhatsApp</p>

@@ -66,7 +66,7 @@ export default function AboutPage() {
       </Section>
 
       <Section tone="sand" className="!py-14">
-        <Container className="grid gap-4 sm:grid-cols-3">
+        <Container className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card><CardBody><p className="text-sm font-semibold text-navy-800">Company</p><p className="mt-1 text-sm text-navy-500">Apex Terra Global Limited</p></CardBody></Card>
           <Card><CardBody><p className="text-sm font-semibold text-navy-800">Director</p><p className="mt-1 text-sm text-navy-500">Alabi Olasesan</p></CardBody></Card>
           <Card><CardBody><p className="text-sm font-semibold text-navy-800">Serving</p><p className="mt-1 text-sm text-navy-500">🌍 Worldwide · rooted in 🇳🇬 Nigeria &amp; 🇬🇲 Gambia</p></CardBody></Card>

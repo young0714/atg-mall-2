@@ -74,7 +74,7 @@ export default async function AdminShippingTestQuotePage({
         </p>
       </div>
 
-      <form method="GET" className="card grid gap-4 p-5 sm:grid-cols-2">
+      <form method="GET" className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
         <Field label="Origin" htmlFor="originIso" required>
           <Select id="originIso" name="originIso" defaultValue={searchParams.originIso ?? ""} required>
             <option value="">— Select —</option>

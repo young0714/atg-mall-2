@@ -25,7 +25,7 @@ export default async function AdminWalletsPage({
       {searchParams.adjusted && <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">Wallet adjusted.</div>}
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
-      <form action={adjustWalletAction} className="card grid gap-4 p-5 sm:grid-cols-4">
+      <form action={adjustWalletAction} className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-4">
         <Field label="Customer" htmlFor="userId" required>
           <Select id="userId" name="userId" required>
             {wallets.map((w) => <option key={w.userId} value={w.userId}>{w.user.fullName}</option>)}

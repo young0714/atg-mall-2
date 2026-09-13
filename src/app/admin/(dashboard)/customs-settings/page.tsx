@@ -44,7 +44,7 @@ export default async function AdminCustomsSettingsPage({
                 {c.customsSetting?.isConfigured ? "Configured" : "Not configured"}
               </Badge>
             </summary>
-            <form action={upsertCustomsSettingAction} className="mt-4 grid gap-4 sm:grid-cols-2">
+            <form action={upsertCustomsSettingAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <input type="hidden" name="destinationCountryId" value={c.id} />
               <Field label="Estimated duty %" htmlFor={`duty-${c.id}`}>
                 <Input id={`duty-${c.id}`} name="estimatedDutyPercent" type="number" defaultValue={c.customsSetting?.estimatedDutyPercent ?? undefined} />

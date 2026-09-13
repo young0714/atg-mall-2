@@ -32,7 +32,7 @@ export default async function AdminDestinationCountriesPage({
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add Destination Country</summary>
-        <form action={createDestinationCountryAction} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form action={createDestinationCountryAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Name" htmlFor="name" required hint='e.g. "Ghana"'><Input id="name" name="name" required /></Field>
           <Field label="ISO code" htmlFor="isoCode" required hint='2 letters, e.g. "GH"'>
             <Input id="isoCode" name="isoCode" maxLength={2} required />

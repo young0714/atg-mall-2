@@ -24,7 +24,7 @@ export default async function AdminCouponsPage({
       {searchParams.created && <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">Coupon created.</div>}
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
-      <form action={createCouponAction} className="card grid gap-4 p-5 sm:grid-cols-4">
+      <form action={createCouponAction} className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-4">
         <Field label="Code" htmlFor="code" required><Input id="code" name="code" required placeholder="WELCOME10" /></Field>
         <Field label="Type" htmlFor="type" required>
           <Select id="type" name="type" required>

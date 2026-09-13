@@ -64,7 +64,7 @@ export default async function InternationalStoresPage() {
           description="ATG Mall sources from stores across China, the USA and the UK — send us a link from any of them and we'll buy, consolidate and ship it worldwide."
         />
 
-        <div className="mt-10 grid gap-5 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">
           {COUNTRIES.map((c) => (
             <Link key={c.code} href={c.href} className={`flex flex-col justify-between rounded-xl2 p-7 text-white ${c.tone}`}>
               <div>

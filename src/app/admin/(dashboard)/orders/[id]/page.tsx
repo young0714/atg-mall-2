@@ -70,7 +70,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
         <button type="submit" className="btn-primary btn-sm">Update</button>
       </form>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
           <div className="card p-5">
             <h2 className="mb-3 font-semibold text-navy-900">Items</h2>

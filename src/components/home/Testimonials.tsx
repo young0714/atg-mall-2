@@ -24,7 +24,7 @@ export function Testimonials() {
     <Section>
       <Container>
         <SectionHeading eyebrow="Customer stories" title="Built around real cross-border buying needs" align="center" />
-        <div className="mt-10 grid gap-5 sm:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-3">
           {reviews.map((r) => (
             <div key={r.name} className="rounded-xl2 border border-navy-100 p-6">
               <StarRating rating={5} />

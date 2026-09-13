@@ -60,7 +60,7 @@ export default async function AdminSourcingPage({
 
             <details className="mt-3">
               <summary className="cursor-pointer text-sm font-medium text-atgblue-600">+ Add Supplier Option</summary>
-              <form action={addSourcingOptionAction} className="mt-3 grid gap-3 rounded-lg border border-navy-100 p-4 sm:grid-cols-3">
+              <form action={addSourcingOptionAction} className="mt-3 grid grid-cols-1 gap-3 rounded-lg border border-navy-100 p-4 sm:grid-cols-3">
                 <input type="hidden" name="requestId" value={req.id} />
                 <Field label="Supplier" htmlFor={`sup-${req.id}`}>
                   <Select id={`sup-${req.id}`} name="supplierId" defaultValue="">
@@ -88,7 +88,7 @@ export default async function AdminSourcingPage({
             {(req.status === "SUBMITTED" || req.status === "UNDER_REVIEW") && (
               <details className="mt-3">
                 <summary className="cursor-pointer text-sm font-medium text-atgblue-600">Issue Quotation</summary>
-                <form action={issueSourcingQuotationAction} className="mt-3 grid gap-3 rounded-lg border border-navy-100 p-4 sm:grid-cols-3">
+                <form action={issueSourcingQuotationAction} className="mt-3 grid grid-cols-1 gap-3 rounded-lg border border-navy-100 p-4 sm:grid-cols-3">
                   <input type="hidden" name="requestId" value={req.id} />
                   <Field label="Product/supplier cost" htmlFor={`qpc-${req.id}`} required hint={selectedOption ? "Pre-filled from customer-selected option" : undefined}>
                     <Input id={`qpc-${req.id}`} name="productCost" type="number" step="0.01" defaultValue={selectedOption ? selectedOption.unitPriceMinor / 100 : undefined} required />

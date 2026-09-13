@@ -50,7 +50,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
           <span className="text-navy-600">{product.name}</span>
         </nav>
 
-        <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
           <div>
             <ProductImageGallery images={product.images} productName={product.name} />
           </div>

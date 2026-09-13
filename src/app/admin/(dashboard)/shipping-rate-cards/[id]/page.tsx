@@ -57,7 +57,7 @@ export default async function AdminRateCardDetailPage({
 
       <section className="card space-y-4 p-5">
         <h2 className="font-semibold text-navy-900">Lane details</h2>
-        <form action={updateRateCardAction} className="grid gap-4 sm:grid-cols-2">
+        <form action={updateRateCardAction} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <input type="hidden" name="cardId" value={card.id} />
           <Field label="Origin" htmlFor="shippingOriginId" required>
             <Select id="shippingOriginId" name="shippingOriginId" defaultValue={card.shippingOriginId} required>
@@ -175,7 +175,7 @@ export default async function AdminRateCardDetailPage({
         )}
         <details>
           <summary className="cursor-pointer text-sm font-medium text-atgblue-600">+ Add bracket</summary>
-          <form action={addRateBracketAction} className="mt-3 grid gap-4 sm:grid-cols-3">
+          <form action={addRateBracketAction} className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <input type="hidden" name="cardId" value={card.id} />
             <Field label="Min weight (g)" htmlFor="minGrams" required><Input id="minGrams" name="minGrams" type="number" defaultValue={0} required /></Field>
             <Field label="Max weight (g)" htmlFor="maxGrams" hint="Leave blank for open-ended"><Input id="maxGrams" name="maxGrams" type="number" /></Field>

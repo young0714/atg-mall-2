@@ -14,7 +14,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
             <Link href="/account/set-password" className="btn-outline btn-sm shrink-0">Set a password</Link>
           </div>
         )}
-        <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
           <AccountNav />
           <div>{children}</div>
         </div>

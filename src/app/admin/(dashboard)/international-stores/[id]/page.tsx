@@ -45,7 +45,7 @@ export default async function AdminStoreDetailPage({
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
       <section className="card p-5">
-        <form action={updateStoreAction} className="grid gap-4 sm:grid-cols-2">
+        <form action={updateStoreAction} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <input type="hidden" name="storeId" value={store.id} />
           <Field label="Name" htmlFor="name" required><Input id="name" name="name" defaultValue={store.name} required /></Field>
           <Field label="Slug" htmlFor="slug" required hint="lowercase-with-hyphens">

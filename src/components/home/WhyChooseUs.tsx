@@ -18,7 +18,7 @@ export function WhyChooseUs() {
           title="Cross-border shopping, done properly"
           description="ATG Mall makes cross-border shopping easier by connecting customers with products and stores from around the world."
         />
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {points.map((p) => (
             <div key={p.title} className="rounded-xl2 border border-navy-100 p-5">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-atgblue-50 text-lg">

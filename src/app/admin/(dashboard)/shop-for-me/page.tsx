@@ -55,7 +55,7 @@ export default async function AdminShopForMePage({
             {(req.status === "SUBMITTED" || req.status === "UNDER_REVIEW") && (
               <details className="mt-3">
                 <summary className="cursor-pointer text-sm font-medium text-atgblue-600">Issue Quotation</summary>
-                <form action={issueShopForMeQuotationAction} className="mt-3 grid gap-3 rounded-lg border border-navy-100 p-4 sm:grid-cols-3">
+                <form action={issueShopForMeQuotationAction} className="mt-3 grid grid-cols-1 gap-3 rounded-lg border border-navy-100 p-4 sm:grid-cols-3">
                   <input type="hidden" name="requestId" value={req.id} />
                   <Field label="Product cost" htmlFor={`pc-${req.id}`} required><Input id={`pc-${req.id}`} name="productCost" type="number" step="0.01" required /></Field>
                   <Field label="Domestic shipping" htmlFor={`cs-${req.id}`}><Input id={`cs-${req.id}`} name="domesticShipping" type="number" step="0.01" defaultValue={0} /></Field>

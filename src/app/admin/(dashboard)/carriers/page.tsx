@@ -37,7 +37,7 @@ export default async function AdminCarriersPage({
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add Carrier</summary>
-        <form action={createCarrierAction} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form action={createCarrierAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Name" htmlFor="name" required hint='e.g. "DHL Express"'><Input id="name" name="name" required /></Field>
           <Field label="Code" htmlFor="code" required hint='Short unique code, e.g. "DHL"'>
             <Input id="code" name="code" required />

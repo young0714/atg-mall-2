@@ -29,7 +29,7 @@ export default async function AdminShippingSettingsPage({
       {searchParams.saved && <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">Settings saved.</div>}
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
-      <form action={updateShippingGlobalSettingsAction} className="card grid gap-4 p-5 sm:grid-cols-2">
+      <form action={updateShippingGlobalSettingsAction} className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-2">
         <Field label="Volumetric divisor" htmlFor="volumetricDivisor" required hint="cm³ ÷ divisor = volumetric kg. Industry standard is 5000 for air freight.">
           <Input id="volumetricDivisor" name="volumetricDivisor" type="number" defaultValue={settings?.volumetricDivisor ?? 5000} required />
         </Field>

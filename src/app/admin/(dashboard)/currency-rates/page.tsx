@@ -35,7 +35,7 @@ export default async function AdminCurrencyRatesPage({
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add / Update Rate</summary>
-        <form action={upsertCurrencyRateAction} className="mt-4 grid gap-4 sm:grid-cols-3">
+        <form action={upsertCurrencyRateAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="From currency" htmlFor="fromCurrency" required hint='3 letters, e.g. "USD"'>
             <Input id="fromCurrency" name="fromCurrency" maxLength={3} required />
           </Field>

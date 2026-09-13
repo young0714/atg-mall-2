@@ -45,7 +45,7 @@ export default async function SellerDashboardPage() {
         <Badge tone={seller.status === "APPROVED" ? "green" : "neutral"}>{seller.status}</Badge>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="card p-5">
           <p className="text-xs uppercase tracking-wide text-navy-400">Products</p>
           <p className="mt-1 text-2xl font-display font-bold text-navy-900">{products.length}</p>

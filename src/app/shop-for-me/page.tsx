@@ -53,7 +53,7 @@ export default async function ShopForMePage({
           <Field label="Product image URL" htmlFor="productImageUrl" hint="Optional — paste an image link if you have one">
             <Input id="productImageUrl" name="productImageUrl" type="url" defaultValue={searchParams.productImageUrl} />
           </Field>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="Quantity" htmlFor="quantity" required>
               <Input id="quantity" name="quantity" type="number" min={1} defaultValue={1} required />
             </Field>

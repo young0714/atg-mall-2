@@ -32,7 +32,7 @@ export default async function AdminShippingOriginsPage({
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add Shipping Origin</summary>
-        <form action={createShippingOriginAction} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form action={createShippingOriginAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Name" htmlFor="name" required hint='e.g. "USA Warehouse"'><Input id="name" name="name" required /></Field>
           <Field label="Country ISO code" htmlFor="countryIso" required hint='2 letters, e.g. "US"'>
             <Input id="countryIso" name="countryIso" maxLength={2} required />

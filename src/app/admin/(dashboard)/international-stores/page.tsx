@@ -45,7 +45,7 @@ export default async function AdminInternationalStoresPage({
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add New Store</summary>
-        <form action={createStoreAction} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <form action={createStoreAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Name" htmlFor="name" required><Input id="name" name="name" required /></Field>
           <Field label="Slug" htmlFor="slug" required hint="lowercase-with-hyphens"><Input id="slug" name="slug" required /></Field>
           <Field label="Country" htmlFor="country" required>

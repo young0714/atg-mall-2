@@ -32,7 +32,7 @@ export default async function SupportPage({
           description="Reach our team directly, or open a support ticket if you're signed in."
         />
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <a href="tel:+2347043945345" className="card p-4 text-sm">
             <p className="font-semibold text-navy-800">Call / WhatsApp</p>
             <p className="text-navy-500">+234 704 394 5345</p>

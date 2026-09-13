@@ -60,7 +60,7 @@ export default async function AdminProductDetailPage({
 
       <section className="card space-y-4 p-5">
         <h2 className="font-semibold text-navy-900">Details</h2>
-        <form action={updateProductAction} className="grid gap-4 sm:grid-cols-2">
+        <form action={updateProductAction} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <input type="hidden" name="productId" value={product.id} />
           <Field label="Name" htmlFor="name" required><Input id="name" name="name" defaultValue={product.name} required /></Field>
           <Field label="Slug" htmlFor="slug" required hint="lowercase-with-hyphens">
@@ -175,7 +175,7 @@ export default async function AdminProductDetailPage({
         )}
         <details>
           <summary className="cursor-pointer text-sm font-medium text-atgblue-600">+ Add image</summary>
-          <form action={addProductImageAction} className="mt-3 grid gap-4 sm:grid-cols-3">
+          <form action={addProductImageAction} className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
             <input type="hidden" name="productId" value={product.id} />
             <Field label="Image URL" htmlFor="url" required><Input id="url" name="url" type="url" required /></Field>
             <Field label="Alt text" htmlFor="altText"><Input id="altText" name="altText" /></Field>
@@ -194,7 +194,7 @@ export default async function AdminProductDetailPage({
         )}
         <details>
           <summary className="cursor-pointer text-sm font-medium text-atgblue-600">+ Add variant</summary>
-          <form action={addProductVariantAction} className="mt-3 grid gap-4 sm:grid-cols-2">
+          <form action={addProductVariantAction} className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <input type="hidden" name="productId" value={product.id} />
             <Field label="Name" htmlFor="v-name" required hint='e.g. "Black / XL"'>
               <Input id="v-name" name="name" required />
