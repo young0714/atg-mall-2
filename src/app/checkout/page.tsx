@@ -8,6 +8,7 @@ import { isoToFlagEmoji } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import { Container, Section } from "@/components/ui/Section";
 import { Field, Input, Select } from "@/components/ui/Form";
+import { paymentService } from "@/lib/services/paymentService";
 import { addAddressAction, placeOrderAction } from "./actions";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
@@ -221,11 +222,11 @@ export default async function CheckoutPage({
                 </label>
                 <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
                   <input type="radio" name="paymentMethod" value="CARD" />
-                  Debit/Credit Card (mock payment — no real gateway connected yet)
+                  Debit/Credit Card {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment — no real gateway connected yet)"}
                 </label>
                 <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
                   <input type="radio" name="paymentMethod" value="BANK_TRANSFER" />
-                  Bank Transfer (mock payment — no real gateway connected yet)
+                  Bank Transfer {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment — no real gateway connected yet)"}
                 </label>
               </div>
             </section>

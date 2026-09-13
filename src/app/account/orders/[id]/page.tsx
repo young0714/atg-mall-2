@@ -8,7 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { destinationCountryNameFor } from "@/lib/services/destinationCountryService";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { payOrderWithWalletAction } from "./actions";
+import { payOrderWithWalletAction, retryPaymentAction } from "./actions";
 
 export const metadata: Metadata = { title: "Order Details" };
 export const dynamic = "force-dynamic";
@@ -55,13 +55,23 @@ export default async function OrderDetailPage({
         <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>
       )}
       {order.status === "PENDING_PAYMENT" && (
-        <form action={payOrderWithWalletAction} className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl2 border border-gold-200 bg-gold-50 p-4">
-          <input type="hidden" name="orderId" value={order.id} />
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl2 border border-gold-200 bg-gold-50 p-4">
           <p className="text-sm text-gold-800">
             This order is awaiting payment of {formatMoney(order.totalMinor, order.currency)}.
           </p>
-          <button type="submit" className="btn-gold btn-sm">Pay with Wallet</button>
-        </form>
+          <div className="flex gap-2">
+            {order.payments.some((p) => p.method !== "WALLET") && (
+              <form action={retryPaymentAction}>
+                <input type="hidden" name="orderId" value={order.id} />
+                <button type="submit" className="btn-outline btn-sm">Retry Payment</button>
+              </form>
+            )}
+            <form action={payOrderWithWalletAction}>
+              <input type="hidden" name="orderId" value={order.id} />
+              <button type="submit" className="btn-gold btn-sm">Pay with Wallet</button>
+            </form>
+          </div>
+        </div>
       )}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">

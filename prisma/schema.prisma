@@ -81,6 +81,7 @@ model User {
   packages            Package[]
   consolidations      Consolidation[]
   magicLinkTokens     MagicLinkToken[]
+  walletDepositPayments Payment[]
 
   @@index([role])
 }
@@ -512,8 +513,13 @@ enum PaymentStatus {
 
 model Payment {
   id            String        @id @default(cuid())
-  orderId       String
-  order         Order         @relation(fields: [orderId], references: [id])
+  orderId       String?
+  order         Order?        @relation(fields: [orderId], references: [id])
+  // Set instead of orderId for a wallet top-up (deposit) payment, which has
+  // no associated order — walletService.credit() is applied to this user
+  // once the payment is confirmed.
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
   method        PaymentMethod
   status        PaymentStatus @default(PENDING)
   amountMinor   Int

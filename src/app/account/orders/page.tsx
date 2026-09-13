@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: { justPlaced?: string };
+  searchParams: { justPlaced?: string; paymentError?: string };
 }) {
   const user = await requireUser();
   const orders = await db.order.findMany({
@@ -25,9 +25,15 @@ export default async function OrdersPage({
     <div>
       <h1 className="text-2xl font-display font-bold text-navy-900">My Orders</h1>
 
-      {searchParams.justPlaced && (
+      {searchParams.justPlaced && !searchParams.paymentError && (
         <div className="mt-4 rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
           Order <strong>{searchParams.justPlaced}</strong> placed successfully!
+        </div>
+      )}
+      {searchParams.justPlaced && searchParams.paymentError && (
+        <div className="mt-4 rounded-lg bg-gold-50 p-3 text-sm text-gold-700">
+          Order <strong>{searchParams.justPlaced}</strong> was created, but payment didn&apos;t go through:{" "}
+          {searchParams.paymentError} Open the order below to retry payment.
         </div>
       )}
 

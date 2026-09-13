@@ -59,7 +59,9 @@ export interface CreateOrderFromCartParams {
 }
 
 export interface OrderService {
-  createOrderFromCart(params: CreateOrderFromCartParams): Promise<{ orderId: string; orderNumber: string; paymentStatus: string }>;
+  createOrderFromCart(
+    params: CreateOrderFromCartParams,
+  ): Promise<{ orderId: string; orderNumber: string; paymentStatus: string; redirectUrl?: string; failureReason?: string }>;
   createOrderFromQuotation(params: { quotationId: string; destinationIso: string; addressId?: string }): Promise<{ orderId: string; orderNumber: string }>;
   advanceStatus(orderId: string, status: OrderStatus, description?: string): Promise<void>;
 }
@@ -204,6 +206,10 @@ class DefaultOrderService implements OrderService {
     });
 
     let paymentStatus: "SUCCESSFUL" | "PENDING" | "FAILED" = "PENDING";
+    let redirectUrl: string | undefined;
+    let failureReason: string | undefined;
+
+    const user = await db.user.findUniqueOrThrow({ where: { id: params.userId } });
 
     if (params.paymentMethod === "WALLET") {
       const result = await walletService.debit({
@@ -226,13 +232,19 @@ class DefaultOrderService implements OrderService {
         },
       });
     } else {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
       const initiation = await paymentService.charge({
         amountMinor: totalMinor,
         currency: params.currency,
         method: params.paymentMethod,
         orderNumber,
+        customerEmail: user.email,
+        customerName: user.fullName,
+        redirectUrl: `${appUrl}/checkout/callback`,
       });
       paymentStatus = initiation.status;
+      redirectUrl = initiation.redirectUrl;
+      failureReason = initiation.failureReason;
       await db.payment.create({
         data: {
           orderId: order.id,
@@ -254,7 +266,6 @@ class DefaultOrderService implements OrderService {
       await db.cart.update({ where: { id: cart.id }, data: { items: { deleteMany: {} } } });
     }
 
-    const user = await db.user.findUniqueOrThrow({ where: { id: params.userId } });
     await notificationService.notify({
       userId: params.userId,
       userContact: user.email,
@@ -264,7 +275,7 @@ class DefaultOrderService implements OrderService {
       channels: ["IN_APP", "EMAIL"],
     });
 
-    return { orderId: order.id, orderNumber, paymentStatus };
+    return { orderId: order.id, orderNumber, paymentStatus, redirectUrl, failureReason };
   }
 
   async createOrderFromQuotation({

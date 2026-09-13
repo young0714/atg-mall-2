@@ -128,7 +128,7 @@ export async function placeOrderAction(formData: FormData) {
     });
   }
 
-  const { orderNumber } = await orderService.createOrderFromCart({
+  const { orderNumber, redirectUrl, failureReason } = await orderService.createOrderFromCart({
     userId: user.id,
     addressId: address!.id,
     destinationIso,
@@ -137,5 +137,13 @@ export async function placeOrderAction(formData: FormData) {
     shipments,
   });
 
-  redirect(`/account/orders?justPlaced=${orderNumber}`);
+  // Card/Bank Transfer via a live gateway: send the browser to the hosted
+  // checkout page instead of the order-confirmation page — payment isn't
+  // actually confirmed until the webhook/callback fires.
+  if (redirectUrl) {
+    redirect(redirectUrl);
+  }
+
+  const failureSuffix = failureReason ? `&paymentError=${encodeURIComponent(failureReason)}` : "";
+  redirect(`/account/orders?justPlaced=${orderNumber}${failureSuffix}`);
 }

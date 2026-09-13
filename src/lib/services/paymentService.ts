@@ -1,51 +1,59 @@
 import "server-only";
+import { randomBytes } from "crypto";
 import type { Currency, PaymentMethod } from "@prisma/client";
+import { db } from "@/lib/db";
+import { notificationService, NOTIFICATION_EVENTS } from "./notificationService";
+import { walletService } from "./walletService";
+
+// Currencies Flutterwave accepts for card/bank-transfer charges, per their
+// own docs. GMD (Gambian Dalasi) is notably absent — Gambian customers keep
+// using ATG Wallet, which never touches this gateway.
+const FLUTTERWAVE_SUPPORTED_CURRENCIES: Currency[] = [
+  "USD",
+  "NGN",
+  // GHS, KES, ZAR, etc. aren't Currency values this app uses yet.
+];
 
 /**
  * PaymentService — provider-agnostic payment abstraction.
  *
- * NO real payment processing happens in this codebase. There is no
- * Paystack/Flutterwave/card-network integration wired up. `MockPaymentProvider`
- * simulates a successful (or, for CASH_ON_DELIVERY, pending) payment so the
+ * `MockPaymentProvider` simulates a successful (or, for CASH_ON_DELIVERY,
+ * pending) payment, used whenever FLUTTERWAVE_SECRET_KEY isn't set — so the
  * order flow can be built and demoed end-to-end without ever touching real
- * money or fabricating a "processed" transaction against a real gateway.
- *
- * To go live: implement a `PaystackPaymentProvider` / `FlutterwavePaymentProvider`
- * (etc.) satisfying `PaymentProvider`, read credentials from environment
- * variables (never hardcode them), and select the provider in
- * `resolveProvider()` below based on destination country / configured env.
- * Nothing in checkout.ts or the API routes should need to change.
+ * money. When it is set, `FlutterwavePaymentProvider` takes over: it
+ * initializes a real Flutterwave hosted-checkout payment and returns a
+ * redirectUrl; the actual confirmation of success/failure only ever happens
+ * later, via `confirmFlutterwaveTransaction`, called from the webhook route
+ * (authoritative) and the checkout callback page (UX only).
  */
+
+export interface ChargeParams {
+  amountMinor: number;
+  currency: Currency;
+  method: PaymentMethod;
+  orderNumber: string;
+  customerEmail: string;
+  customerName: string;
+  redirectUrl: string;
+}
 
 export interface PaymentInitiation {
   providerRef: string;
   providerName: string;
   status: "SUCCESSFUL" | "PENDING" | "FAILED";
   redirectUrl?: string;
+  failureReason?: string;
 }
 
 export interface PaymentProvider {
   name: string;
-  charge(params: {
-    amountMinor: number;
-    currency: Currency;
-    method: PaymentMethod;
-    orderNumber: string;
-  }): Promise<PaymentInitiation>;
+  charge(params: ChargeParams): Promise<PaymentInitiation>;
 }
 
 class MockPaymentProvider implements PaymentProvider {
   name = "MOCK";
 
-  async charge({
-    method,
-    orderNumber,
-  }: {
-    amountMinor: number;
-    currency: Currency;
-    method: PaymentMethod;
-    orderNumber: string;
-  }): Promise<PaymentInitiation> {
+  async charge({ method, orderNumber }: ChargeParams): Promise<PaymentInitiation> {
     const providerRef = `MOCK-${orderNumber}-${Date.now().toString(36).toUpperCase()}`;
 
     if (method === "CASH_ON_DELIVERY") {
@@ -59,13 +67,59 @@ class MockPaymentProvider implements PaymentProvider {
   }
 }
 
+const FLUTTERWAVE_API = "https://api.flutterwave.com/v3";
+
+class FlutterwavePaymentProvider implements PaymentProvider {
+  name = "FLUTTERWAVE";
+  constructor(private secretKey: string) {}
+
+  async charge(params: ChargeParams): Promise<PaymentInitiation> {
+    const txRef = `FLW-${params.orderNumber}-${randomBytes(6).toString("hex")}`;
+
+    if (!FLUTTERWAVE_SUPPORTED_CURRENCIES.includes(params.currency)) {
+      return {
+        providerRef: txRef,
+        providerName: this.name,
+        status: "FAILED",
+        failureReason: `${params.currency} isn't supported for card/bank transfer yet — please pay from your ATG Wallet instead.`,
+      };
+    }
+
+    const paymentOptions = params.method === "BANK_TRANSFER" ? "banktransfer" : "card";
+
+    const res = await fetch(`${FLUTTERWAVE_API}/payments`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.secretKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tx_ref: txRef,
+        amount: (params.amountMinor / 100).toFixed(2),
+        currency: params.currency,
+        redirect_url: params.redirectUrl,
+        payment_options: paymentOptions,
+        customer: { email: params.customerEmail, name: params.customerName },
+        customizations: { title: "ATG Mall", description: `Order ${params.orderNumber}` },
+      }),
+    });
+
+    const body = await res.json().catch(() => null);
+    if (!res.ok || body?.status !== "success" || !body?.data?.link) {
+      return {
+        providerRef: txRef,
+        providerName: this.name,
+        status: "FAILED",
+        failureReason: body?.message || "Could not start the payment. Please try again.",
+      };
+    }
+
+    return { providerRef: txRef, providerName: this.name, status: "PENDING", redirectUrl: body.data.link };
+  }
+}
+
 export interface PaymentService {
-  charge(params: {
-    amountMinor: number;
-    currency: Currency;
-    method: PaymentMethod;
-    orderNumber: string;
-  }): Promise<PaymentInitiation>;
+  charge(params: ChargeParams): Promise<PaymentInitiation>;
   isLive(): boolean;
 }
 
@@ -73,24 +127,90 @@ class DefaultPaymentService implements PaymentService {
   private provider: PaymentProvider;
 
   constructor() {
-    // Real credentials are intentionally not checked in as "enabling" a live
-    // path here — flip this over explicitly once a Live provider class
-    // exists and has been reviewed, not merely because an env var is set.
-    this.provider = new MockPaymentProvider();
+    this.provider = process.env.FLUTTERWAVE_SECRET_KEY
+      ? new FlutterwavePaymentProvider(process.env.FLUTTERWAVE_SECRET_KEY)
+      : new MockPaymentProvider();
   }
 
   isLive(): boolean {
     return this.provider.name !== "MOCK";
   }
 
-  async charge(params: {
-    amountMinor: number;
-    currency: Currency;
-    method: PaymentMethod;
-    orderNumber: string;
-  }): Promise<PaymentInitiation> {
+  async charge(params: ChargeParams): Promise<PaymentInitiation> {
     return this.provider.charge(params);
   }
 }
 
 export const paymentService: PaymentService = new DefaultPaymentService();
+
+/**
+ * The single source of truth for "a Flutterwave payment actually succeeded."
+ * Called from both the webhook (authoritative) and the checkout callback
+ * page (UX only, in case the webhook hasn't landed yet) — safe to call
+ * twice for the same transaction, and never trusts the caller's claimed
+ * status: always re-verifies against Flutterwave's API and cross-checks the
+ * amount/currency against what was actually charged.
+ */
+export async function confirmFlutterwaveTransaction(transactionId: string): Promise<{ ok: boolean; orderId?: string }> {
+  const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+  if (!secretKey) return { ok: false };
+
+  const res = await fetch(`${FLUTTERWAVE_API}/transactions/${transactionId}/verify`, {
+    headers: { Authorization: `Bearer ${secretKey}` },
+  });
+  const body = await res.json().catch(() => null);
+  const data = body?.data;
+  if (!res.ok || body?.status !== "success" || !data || data.status !== "successful") {
+    return { ok: false };
+  }
+
+  const payment = await db.payment.findFirst({ where: { providerRef: data.tx_ref }, include: { order: true } });
+  if (!payment) return { ok: false };
+
+  // Cross-check against what we actually charged for — never trust the
+  // verify response's amount alone without tying it back to our own record.
+  const amountMatches = Math.round(Number(data.amount) * 100) === payment.amountMinor;
+  const currencyMatches = data.currency === payment.currency;
+  if (!amountMatches || !currencyMatches) return { ok: false };
+
+  if (payment.status === "SUCCESSFUL") return { ok: true, orderId: payment.orderId ?? undefined };
+
+  await db.payment.update({ where: { id: payment.id }, data: { status: "SUCCESSFUL" } });
+
+  if (payment.order) {
+    await db.order.update({ where: { id: payment.order.id }, data: { status: "PAID" } });
+    await db.trackingEvent.create({
+      data: { orderId: payment.order.id, status: "PAID", description: "Payment confirmed via Flutterwave." },
+    });
+    await db.cart
+      .update({ where: { userId: payment.order.userId }, data: { items: { deleteMany: {} } } })
+      .catch(() => {});
+
+    const user = await db.user.findUnique({ where: { id: payment.order.userId } });
+    if (user) {
+      await notificationService.notify({
+        userId: user.id,
+        userContact: user.email,
+        event: NOTIFICATION_EVENTS.PAYMENT_RECEIVED,
+        title: "Payment received",
+        body: `We've received your payment for order ${payment.order.orderNumber}.`,
+        channels: ["IN_APP", "EMAIL"],
+      });
+    }
+
+    return { ok: true, orderId: payment.order.id };
+  }
+
+  if (payment.userId) {
+    await walletService.credit({
+      userId: payment.userId,
+      amountMinor: payment.amountMinor,
+      type: "DEPOSIT",
+      description: `Wallet top-up via ${payment.method === "CARD" ? "card" : "bank transfer"} (${payment.providerName})`,
+      referenceType: "DEPOSIT",
+      referenceId: payment.providerRef ?? payment.id,
+    });
+  }
+
+  return { ok: true };
+}

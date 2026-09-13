@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { StatusBadge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
+import { paymentService } from "@/lib/services/paymentService";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Payments" };
@@ -13,7 +14,7 @@ export default async function AdminPaymentsPage() {
   await requirePermission(PERMISSIONS.MANAGE_PAYMENTS);
   const payments = await db.payment.findMany({
     orderBy: { createdAt: "desc" },
-    include: { order: { include: { user: true } } },
+    include: { order: { include: { user: true } }, user: true },
     take: 100,
   });
 
@@ -21,7 +22,11 @@ export default async function AdminPaymentsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-display font-bold text-navy-900">Payments</h1>
-        <p className="text-sm text-navy-500">No live payment gateway is connected — all payments here are processed via the mock PaymentService.</p>
+        <p className="text-sm text-navy-500">
+          {paymentService.isLive()
+            ? "Card/Bank Transfer payments are processed live via Flutterwave. Wallet payments are ATG's own ledger."
+            : "No live payment gateway is connected — Card/Bank Transfer payments here are processed via the mock PaymentService."}
+        </p>
       </div>
 
       <div className="overflow-x-auto rounded-xl2 border border-navy-100 bg-white">
@@ -40,8 +45,8 @@ export default async function AdminPaymentsPage() {
           <tbody className="divide-y divide-navy-100">
             {payments.map((p) => (
               <tr key={p.id}>
-                <td className="p-3 font-medium text-navy-800">{p.order.orderNumber}</td>
-                <td className="p-3 text-navy-500">{p.order.user.fullName}</td>
+                <td className="p-3 font-medium text-navy-800">{p.order?.orderNumber ?? "Wallet top-up"}</td>
+                <td className="p-3 text-navy-500">{p.order?.user.fullName ?? p.user?.fullName ?? "—"}</td>
                 <td className="p-3 text-navy-500">{p.method.replaceAll("_", " ")}</td>
                 <td className="p-3 text-navy-500">{p.providerName}</td>
                 <td className="p-3 text-navy-700">{formatMoney(p.amountMinor, p.currency)}</td>

@@ -22,12 +22,34 @@ export async function depositToWalletAction(formData: FormData) {
   const wallet = await db.wallet.findUniqueOrThrow({ where: { userId: user.id } });
   const { amountMinor, method } = parsed.data;
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const initiation = await paymentService.charge({
     amountMinor,
     currency: wallet.currency,
     method,
     orderNumber: `WALLET-${user.id.slice(0, 8)}`,
+    customerEmail: user.email,
+    customerName: user.fullName,
+    redirectUrl: `${appUrl}/account/wallet/callback`,
   });
+
+  await db.payment.create({
+    data: {
+      userId: user.id,
+      method,
+      status: initiation.status,
+      amountMinor,
+      currency: wallet.currency,
+      providerName: initiation.providerName,
+      providerRef: initiation.providerRef,
+    },
+  });
+
+  // Live gateway: send the browser to the hosted checkout page — the
+  // deposit isn't credited until the webhook/callback confirms it.
+  if (initiation.redirectUrl) {
+    redirect(initiation.redirectUrl);
+  }
 
   if (initiation.status === "SUCCESSFUL") {
     await walletService.credit({
@@ -41,5 +63,5 @@ export async function depositToWalletAction(formData: FormData) {
     redirect("/account/wallet?deposited=1");
   }
 
-  redirect("/account/wallet?error=Deposit+could+not+be+completed");
+  redirect(`/account/wallet?error=${encodeURIComponent(initiation.failureReason || "Deposit could not be completed")}`);
 }
