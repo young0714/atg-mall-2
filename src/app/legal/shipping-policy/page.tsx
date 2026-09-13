@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Shipping Policy",
-  description: "How ATG Mall consolidates and ships packages to Nigeria and Gambia.",
+  description: "How ATG Mall consolidates and ships packages to supported destinations worldwide.",
 };
 
 export default function ShippingPolicyPage() {
@@ -15,10 +15,19 @@ export default function ShippingPolicyPage() {
     >
       <h2>1. Where we ship</h2>
       <p>
-        ATG Mall currently ships to <strong>🇳🇬 Nigeria</strong> (including Lagos, Abuja, Port Harcourt, Kano, Ibadan,
-        Benin City, Enugu and Kaduna) and <strong>🇬🇲 Gambia</strong> (including Banjul, Kanifing and Brikama). The
-        cities and local delivery zones we serve are configured by our operations team and may be updated over time —
-        your account will show the zones currently available for your destination.
+        ATG Mall ships worldwide to any active destination country you select at checkout — see our{" "}
+        <a href="/countries">Supported Countries</a> page for the current list. Shipping availability, cost and
+        transit time for a given order depend on the product's origin, your destination country, package
+        weight/dimensions and the shipping method selected; not every product or method is available to every
+        destination.
+      </p>
+      <p>
+        Our deepest, most established coverage remains <strong>🇳🇬 Nigeria</strong> (including Lagos, Abuja, Port
+        Harcourt, Kano, Ibadan, Benin City, Enugu and Kaduna) and <strong>🇬🇲 Gambia</strong> (including Banjul,
+        Kanifing and Brikama), with the widest range of local delivery zones and fastest transit options. Other
+        supported destinations are served as well, and more are added regularly. The cities and local delivery
+        zones we serve are configured by our operations team and may be updated over time — your account will show
+        the zones currently available for your destination.
       </p>
 
       <h2>2. Shipping methods</h2>
@@ -51,7 +60,7 @@ export default function ShippingPolicyPage() {
 
       <h2>5. Customs clearance</h2>
       <p>
-        Shipments into Nigeria and Gambia are subject to the customs laws and procedures of the destination country.
+        Every shipment is subject to the customs laws and procedures of its destination country, wherever that is.
         Any applicable duties, taxes or clearance charges are the responsibility of the customer unless we state
         otherwise for a specific shipment. Clearance timelines are set by the relevant customs authority, not ATG
         Mall.
@@ -59,9 +68,11 @@ export default function ShippingPolicyPage() {
 
       <h2>6. Tracking</h2>
       <p>
-        Every shipment and package is assigned a tracking reference (for example, in the format{" "}
-        <code>ATG-NG-2026000123</code> for orders or <code>ATG-PKG-000123</code> for packages), which you can look up
-        under <a href="/track">Track Shipment</a> or from your account to see its full status history.
+        Every shipment and package is assigned a tracking reference in the format{" "}
+        <code>ATG-[country code]-2026000123</code> for orders/shipments (for example{" "}
+        <code>ATG-NG-2026000123</code> for Nigeria or <code>ATG-GH-2026000123</code> for Ghana) or{" "}
+        <code>ATG-PKG-[country code]-2026000123</code> for packages, which you can look up under{" "}
+        <a href="/track">Track Shipment</a> or from your account to see its full status history.
       </p>
 
       <h2>7. Final delivery</h2>
