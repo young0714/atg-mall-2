@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
-import { cjDropshippingService } from "@/lib/services/cjDropshippingService";
+import { cjDropshippingService, CJ_IMPORT_MARGIN_MULTIPLIER } from "@/lib/services/cjDropshippingService";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
 import { importCjProductAction } from "../actions";
@@ -27,6 +27,8 @@ export default async function AdminCjImportDetailPage({
   ]);
   if (!product) notFound();
 
+  const suggestedBasePriceMinor = Math.round(product.sellPriceMinorUsd * CJ_IMPORT_MARGIN_MULTIPLIER);
+
   return (
     <div className="space-y-6">
       <Link href="/admin/cj-import" className="text-xs font-medium text-atgblue-600 hover:underline">
@@ -51,7 +53,10 @@ export default async function AdminCjImportDetailPage({
                   <li key={v.vid}>{v.name} · {formatMoney(v.priceMinorUsd, "USD")}</li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs text-navy-400">Imported as-is with a price delta relative to the base price below.</p>
+              <p className="mt-2 text-xs text-navy-400">
+                Each variant gets the same {Math.round((CJ_IMPORT_MARGIN_MULTIPLIER - 1) * 100)}% margin applied to its own CJ
+                price, then stored as a delta relative to the base price below.
+              </p>
             </div>
           )}
         </div>
@@ -77,8 +82,13 @@ export default async function AdminCjImportDetailPage({
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </Select>
             </Field>
-            <Field label="Base price, minor units (CJ cost, USD)" htmlFor="basePriceMinor" required hint="ATG's landed-cost fee/markup is applied automatically on top of this">
-              <Input id="basePriceMinor" name="basePriceMinor" type="number" defaultValue={product.sellPriceMinorUsd} required />
+            <Field
+              label="Your price, minor units (USD)"
+              htmlFor="basePriceMinor"
+              required
+              hint={`Pre-filled at CJ's cost (${formatMoney(product.sellPriceMinorUsd, "USD")}) + ${Math.round((CJ_IMPORT_MARGIN_MULTIPLIER - 1) * 100)}% margin — edit if you want a different price. Shipping/service fee are calculated separately on top of this at checkout.`}
+            >
+              <Input id="basePriceMinor" name="basePriceMinor" type="number" defaultValue={suggestedBasePriceMinor} required />
             </Field>
             <Field label="Weight (grams)" htmlFor="weightGrams" required>
               <Input id="weightGrams" name="weightGrams" type="number" defaultValue={product.weightGrams ?? 500} required />

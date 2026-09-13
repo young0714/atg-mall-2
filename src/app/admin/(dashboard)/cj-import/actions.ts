@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
-import { cjDropshippingService } from "@/lib/services/cjDropshippingService";
+import { cjDropshippingService, CJ_IMPORT_MARGIN_MULTIPLIER } from "@/lib/services/cjDropshippingService";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -50,7 +50,10 @@ export async function importCjProductAction(formData: FormData) {
             create: cjProduct!.variants.map((v) => ({
               name: v.name,
               sku: v.sku,
-              priceDeltaMinor: v.priceMinorUsd - basePriceMinor,
+              // Apply the same margin to this variant's own CJ price before
+              // taking the delta, so every variant stays marked up — not
+              // just whichever one happens to match the submitted base price.
+              priceDeltaMinor: Math.round(v.priceMinorUsd * CJ_IMPORT_MARGIN_MULTIPLIER) - basePriceMinor,
               attributes: v.attributes,
             })),
           }
