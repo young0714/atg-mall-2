@@ -36,7 +36,11 @@ export function formatMoney(amountMinor: number, currency: Currency): string {
     return new Intl.NumberFormat(CURRENCY_LOCALE[currency], {
       style: "currency",
       currency,
-      currencyDisplay: currency === "GMD" ? "code" : "symbol",
+      // NGN falls back to the "NGN" code rather than the ₦ symbol: the
+      // Naira sign renders with a broken/overflowing glyph in several
+      // widely-used fonts (confirmed across multiple font families here),
+      // so the code is the only rendering that's reliably correct everywhere.
+      currencyDisplay: currency === "GMD" || currency === "NGN" ? "code" : "symbol",
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(major);
