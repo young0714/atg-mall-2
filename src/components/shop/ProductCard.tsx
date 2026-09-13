@@ -15,7 +15,7 @@ export interface ProductCardData {
   isFeatured: boolean;
   isAffiliate: boolean;
   moq: number;
-  estimatedLandedMinor: number;
+  priceMinor: number;
   currency: Currency;
 }
 
@@ -45,10 +45,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         <StarRating rating={product.avgRating} reviewCount={product.reviewCount} size="sm" />
         <div className="mt-auto pt-2">
           <p className="text-[11px] uppercase tracking-wide text-navy-400">
-            {product.isAffiliate ? "Price at partner" : "Est. landed cost from"}
+            {product.isAffiliate ? "Price at partner" : "Price"}
           </p>
           <p className="text-lg font-display font-bold text-navy-900">
-            {formatMoney(product.estimatedLandedMinor, product.currency)}
+            {formatMoney(product.priceMinor, product.currency)}
           </p>
           {product.moq > 1 && <p className="text-[11px] text-navy-400">MOQ: {product.moq} pcs</p>}
         </div>

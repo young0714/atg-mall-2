@@ -73,7 +73,7 @@ export function ProductPurchasePanel({
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs uppercase tracking-wide text-navy-400">Supplier price (China)</p>
+        <p className="text-xs uppercase tracking-wide text-navy-400">Price</p>
         <p className="text-2xl font-display font-bold text-navy-900">
           {formatMoney(unitPrice, baseCurrency)}{" "}
           <span className="text-sm font-normal text-navy-400">/ unit</span>
