@@ -10,7 +10,7 @@ import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "Shop — Buy from China, delivered worldwide",
-  description: "Browse ATG Mall's catalog of products sourced from China, with transparent landed cost estimates for delivery worldwide.",
+  description: "Browse ATG Mall's catalog of products sourced from China, with worldwide delivery.",
 };
 
 export const dynamic = "force-dynamic";
@@ -63,8 +63,8 @@ export default async function ShopPage({
             {activeCategory ? activeCategory.name : "Shop All Products"}
           </h1>
           <p className="mt-1 text-sm text-navy-500">
-            {products.length} product{products.length === 1 ? "" : "s"} · Prices shown are estimated landed cost to{" "}
-            {destination.name}
+            {products.length} product{products.length === 1 ? "" : "s"} · Prices shown in{" "}
+            {destination.currency}. Shipping and fees are calculated at checkout.
           </p>
         </div>
 
