@@ -370,3 +370,10 @@ export const shippingRateBracketSchema = z.object({
 });
 export type ShippingRateBracketInput = z.infer<typeof shippingRateBracketSchema>;
 export type DeliveryZoneInput = z.infer<typeof deliveryZoneSchema>;
+
+export const reviewSchema = z.object({
+  rating: z.coerce.number().int().min(1).max(5),
+  title: z.string().trim().max(100).optional().or(z.literal("")),
+  body: z.string().trim().min(10, "Say a bit more — at least 10 characters").max(2000),
+});
+export type ReviewInput = z.infer<typeof reviewSchema>;

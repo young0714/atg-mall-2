@@ -2,13 +2,18 @@ import { db } from "@/lib/db";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getDestination } from "@/lib/destination";
+import { getCurrentUser } from "@/lib/auth/current-user";
+import { hasVerifiedPurchase } from "@/lib/services/reviewService";
 import { customerFacingSourceLabel } from "@/lib/sourcePlatform";
 import { StarRating } from "@/components/shop/StarRating";
+import { RatingInput } from "@/components/shop/RatingInput";
 import { Badge } from "@/components/ui/Badge";
+import { Field, Input, Textarea } from "@/components/ui/Form";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
 import { ProductImageGallery } from "@/components/shop/ProductImageGallery";
 import { Container, Section } from "@/components/ui/Section";
 import { formatDate } from "@/lib/utils";
+import { createReviewAction } from "./actions";
 import Link from "next/link";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
@@ -23,8 +28,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const destination = await getDestination();
+export default async function ProductPage({
+  params,
+  searchParams,
+}: {
+  params: { slug: string };
+  searchParams: { reviewError?: string; reviewSubmitted?: string };
+}) {
+  const [destination, user] = await Promise.all([getDestination(), getCurrentUser()]);
 
   const product = await db.product.findUnique({
     where: { slug: params.slug },
@@ -38,6 +49,13 @@ export default async function ProductPage({ params }: { params: { slug: string }
   });
 
   if (!product || !product.isActive) notFound();
+
+  const [verifiedPurchase, existingReview] = user
+    ? await Promise.all([
+        hasVerifiedPurchase(user.id, product.id),
+        db.review.findUnique({ where: { productId_userId: { productId: product.id, userId: user.id } } }),
+      ])
+    : [false, null];
 
   return (
     <Section className="!py-8">
@@ -101,9 +119,10 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
         </div>
 
-        {product.reviews.length > 0 && (
-          <div className="mt-16 max-w-2xl">
-            <h2 className="text-xl font-bold text-navy-900">Customer Reviews</h2>
+        <div className="mt-16 max-w-2xl">
+          <h2 className="text-xl font-bold text-navy-900">Customer Reviews</h2>
+
+          {product.reviews.length > 0 ? (
             <div className="mt-4 space-y-4">
               {product.reviews.map((r) => (
                 <div key={r.id} className="rounded-xl2 border border-navy-100 p-4">
@@ -117,8 +136,56 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 </div>
               ))}
             </div>
+          ) : (
+            <p className="mt-3 text-sm text-navy-400">No reviews yet.</p>
+          )}
+
+          <div className="mt-8 border-t border-navy-100 pt-6">
+            {searchParams.reviewSubmitted && (
+              <div className="mb-4 rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
+                Thanks — your review has been posted.
+              </div>
+            )}
+            {searchParams.reviewError && (
+              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.reviewError}</div>
+            )}
+
+            {!user && (
+              <p className="text-sm text-navy-500">
+                <Link href={`/login?next=/product/${product.slug}`} className="font-medium text-atgblue-600">
+                  Sign in
+                </Link>{" "}
+                after your order arrives to write a review.
+              </p>
+            )}
+
+            {user && existingReview && (
+              <p className="text-sm text-navy-500">You&apos;ve already reviewed this product — thanks!</p>
+            )}
+
+            {user && !existingReview && !verifiedPurchase && (
+              <p className="text-sm text-navy-500">Only customers who&apos;ve purchased this product can leave a review.</p>
+            )}
+
+            {user && !existingReview && verifiedPurchase && (
+              <form action={createReviewAction} className="space-y-4">
+                <input type="hidden" name="productId" value={product.id} />
+                <input type="hidden" name="slug" value={product.slug} />
+                <h3 className="font-semibold text-navy-900">Write a review</h3>
+                <Field label="Your rating" htmlFor="rating-star-5" required>
+                  <RatingInput />
+                </Field>
+                <Field label="Title" htmlFor="title" hint="Optional">
+                  <Input id="title" name="title" maxLength={100} />
+                </Field>
+                <Field label="Your review" htmlFor="body" required>
+                  <Textarea id="body" name="body" rows={4} minLength={10} maxLength={2000} required />
+                </Field>
+                <button type="submit" className="btn-primary">Submit Review</button>
+              </form>
+            )}
           </div>
-        )}
+        </div>
       </Container>
     </Section>
   );
