@@ -128,7 +128,7 @@ export default async function OrderDetailPage({
             <dl className="space-y-1.5 text-sm">
               <Row label="Subtotal" value={formatMoney(order.subtotalMinor, order.currency)} />
               <Row label="Service fee" value={formatMoney(order.serviceFeeMinor, order.currency)} />
-              <Row label="China domestic shipping" value={formatMoney(order.domesticShippingMinor, order.currency)} />
+              <Row label="Domestic shipping" value={formatMoney(order.domesticShippingMinor, order.currency)} />
               <Row label="International shipping" value={formatMoney(order.intlShippingMinor, order.currency)} />
               {order.otherChargesMinor > 0 && <Row label="Other charges" value={formatMoney(order.otherChargesMinor, order.currency)} />}
               <div className="border-t border-navy-100 pt-1.5">

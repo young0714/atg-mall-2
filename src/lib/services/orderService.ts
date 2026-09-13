@@ -314,7 +314,7 @@ class DefaultOrderService implements OrderService {
         currency: quotation.currency,
         subtotalMinor: quotation.productCostMinor,
         serviceFeeMinor: quotation.serviceFeeMinor,
-        domesticShippingMinor: quotation.chinaShippingMinor,
+        domesticShippingMinor: quotation.domesticShippingMinor,
         intlShippingMinor: quotation.intlShippingMinor,
         otherChargesMinor: quotation.otherChargesMinor,
         totalMinor: quotation.totalMinor,

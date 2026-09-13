@@ -647,7 +647,7 @@ model Quotation {
   sourcingRequest    SourcingRequest? @relation(fields: [sourcingRequestId], references: [id])
 
   productCostMinor      Int
-  chinaShippingMinor    Int @default(0)
+  domesticShippingMinor Int @default(0)
   serviceFeeMinor       Int @default(0)
   intlShippingMinor     Int @default(0)
   otherChargesMinor     Int @default(0)

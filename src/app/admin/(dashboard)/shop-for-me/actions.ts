@@ -15,19 +15,19 @@ export async function issueShopForMeQuotationAction(formData: FormData) {
 
   const toMinor = (key: string) => Math.round(Number(formData.get(key) || 0) * 100);
   const productCostMinor = toMinor("productCost");
-  const chinaShippingMinor = toMinor("chinaShipping");
+  const domesticShippingMinor = toMinor("domesticShipping");
   const serviceFeeMinor = toMinor("serviceFee");
   const intlShippingMinor = toMinor("intlShipping");
   const otherChargesMinor = toMinor("otherCharges");
 
-  const totalMinor = sumMinor(productCostMinor, chinaShippingMinor, serviceFeeMinor, intlShippingMinor, otherChargesMinor);
+  const totalMinor = sumMinor(productCostMinor, domesticShippingMinor, serviceFeeMinor, intlShippingMinor, otherChargesMinor);
 
   await db.quotation.create({
     data: {
       quotationNumber: `QT-${Date.now().toString(36).toUpperCase()}`,
       shopForMeRequestId: requestId,
       productCostMinor,
-      chinaShippingMinor,
+      domesticShippingMinor,
       serviceFeeMinor,
       intlShippingMinor,
       otherChargesMinor,
@@ -37,7 +37,7 @@ export async function issueShopForMeQuotationAction(formData: FormData) {
       lineItems: {
         create: [
           { label: "Product cost", amountMinor: productCostMinor },
-          { label: "China domestic shipping", amountMinor: chinaShippingMinor },
+          { label: "Domestic shipping (to warehouse)", amountMinor: domesticShippingMinor },
           { label: "ATG service fee", amountMinor: serviceFeeMinor },
           { label: "International shipping", amountMinor: intlShippingMinor },
           ...(otherChargesMinor > 0 ? [{ label: "Other charges", amountMinor: otherChargesMinor }] : []),

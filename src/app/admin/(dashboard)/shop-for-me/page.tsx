@@ -58,7 +58,7 @@ export default async function AdminShopForMePage({
                 <form action={issueShopForMeQuotationAction} className="mt-3 grid gap-3 rounded-lg border border-navy-100 p-4 sm:grid-cols-3">
                   <input type="hidden" name="requestId" value={req.id} />
                   <Field label="Product cost" htmlFor={`pc-${req.id}`} required><Input id={`pc-${req.id}`} name="productCost" type="number" step="0.01" required /></Field>
-                  <Field label="China shipping" htmlFor={`cs-${req.id}`}><Input id={`cs-${req.id}`} name="chinaShipping" type="number" step="0.01" defaultValue={0} /></Field>
+                  <Field label="Domestic shipping" htmlFor={`cs-${req.id}`}><Input id={`cs-${req.id}`} name="domesticShipping" type="number" step="0.01" defaultValue={0} /></Field>
                   <Field label="ATG service fee" htmlFor={`sf-${req.id}`} required><Input id={`sf-${req.id}`} name="serviceFee" type="number" step="0.01" required /></Field>
                   <Field label="Intl shipping" htmlFor={`is-${req.id}`} required><Input id={`is-${req.id}`} name="intlShipping" type="number" step="0.01" required /></Field>
                   <Field label="Other charges" htmlFor={`oc-${req.id}`}><Input id={`oc-${req.id}`} name="otherCharges" type="number" step="0.01" defaultValue={0} /></Field>

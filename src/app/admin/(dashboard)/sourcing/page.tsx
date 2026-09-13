@@ -93,8 +93,8 @@ export default async function AdminSourcingPage({
                   <Field label="Product/supplier cost" htmlFor={`qpc-${req.id}`} required hint={selectedOption ? "Pre-filled from customer-selected option" : undefined}>
                     <Input id={`qpc-${req.id}`} name="productCost" type="number" step="0.01" defaultValue={selectedOption ? selectedOption.unitPriceMinor / 100 : undefined} required />
                   </Field>
-                  <Field label="China/local shipping" htmlFor={`qcs-${req.id}`}>
-                    <Input id={`qcs-${req.id}`} name="chinaShipping" type="number" step="0.01" defaultValue={0} />
+                  <Field label="Domestic/local shipping" htmlFor={`qcs-${req.id}`}>
+                    <Input id={`qcs-${req.id}`} name="domesticShipping" type="number" step="0.01" defaultValue={0} />
                   </Field>
                   <Field label="ATG sourcing fee" htmlFor={`qsf-${req.id}`} required>
                     <Input id={`qsf-${req.id}`} name="serviceFee" type="number" step="0.01" defaultValue={selectedOption ? selectedOption.sourcingFeeMinor / 100 : undefined} required />

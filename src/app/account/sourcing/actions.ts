@@ -36,7 +36,7 @@ export async function approveSourcingOptionAction(formData: FormData) {
       quotationNumber: `QT-${Date.now().toString(36).toUpperCase()}`,
       sourcingRequestId: option!.sourcingRequestId,
       productCostMinor: option!.unitPriceMinor,
-      chinaShippingMinor: 0,
+      domesticShippingMinor: 0,
       serviceFeeMinor: option!.sourcingFeeMinor,
       intlShippingMinor: option!.estimatedShippingMinor,
       totalMinor,
