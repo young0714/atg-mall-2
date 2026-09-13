@@ -11,7 +11,7 @@ const faqs = [
   },
   {
     q: "How is my landed cost calculated?",
-    a: "Landed cost = product price + China domestic shipping to our warehouse + international shipping + ATG's service fee. You'll always see this breakdown before paying.",
+    a: "Landed cost = product price + domestic shipping to our consolidation warehouse (in China, the USA or the UK, depending on where you're buying from) + international shipping to your destination + ATG's service fee. You'll always see this breakdown before paying.",
   },
   {
     q: "What if I don't know exactly what shipping will cost?",
@@ -19,7 +19,7 @@ const faqs = [
   },
   {
     q: "How do I track my order?",
-    a: "Every order that ships gets an ATG tracking number (e.g. ATG-NG-2026000123). Enter it on our Track Shipment page for a full status timeline.",
+    a: "Every order that ships gets an ATG tracking number (e.g. ATG-NG-2026000123 for Nigeria, or ATG-GH-2026000123 for Ghana). Enter it on our Track Shipment page for a full status timeline.",
   },
   {
     q: "Is ATG Mall the same as Apex Terra Global's corporate website?",

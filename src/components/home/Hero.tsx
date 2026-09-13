@@ -50,7 +50,7 @@ export function Hero({
           <div className="mx-auto grid max-w-md grid-cols-2 gap-3 sm:gap-4">
             {[
               { label: "Sourcing", desc: "1688 · Taobao · suppliers", icon: "🔎" },
-              { label: "Warehousing", desc: "China consolidation hub", icon: "🏭" },
+              { label: "Warehousing", desc: "China, USA & UK hubs", icon: "🏭" },
               { label: "Shipping", desc: "Air · Sea · Courier", icon: "✈️" },
               { label: "Delivery", desc: "Worldwide", icon: "📦" },
             ].map((item) => (
