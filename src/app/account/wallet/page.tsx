@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { walletService } from "@/lib/services/walletService";
+import { paymentService } from "@/lib/services/paymentService";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { Field, Input, Select } from "@/components/ui/Form";
@@ -80,14 +81,16 @@ export default async function WalletPage({
             </Field>
             <Field label="Method" htmlFor="method" required>
               <Select id="method" name="method" required>
-                <option value="CARD">Card (mock)</option>
-                <option value="BANK_TRANSFER">Bank Transfer (mock)</option>
+                <option value="CARD">Card {paymentService.isLive() ? "(via Flutterwave)" : "(mock)"}</option>
+                <option value="BANK_TRANSFER">Bank Transfer {paymentService.isLive() ? "(via Flutterwave)" : "(mock)"}</option>
               </Select>
             </Field>
             <button type="submit" className="btn-primary w-full">Deposit</button>
-            <p className="text-center text-[11px] text-navy-400">
-              No real payment gateway is connected yet — deposits are simulated for demo purposes.
-            </p>
+            {!paymentService.isLive() && (
+              <p className="text-center text-[11px] text-navy-400">
+                No real payment gateway is connected yet — deposits are simulated for demo purposes.
+              </p>
+            )}
           </form>
         </div>
       </div>
