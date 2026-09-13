@@ -28,7 +28,7 @@ const columns = [
     title: "Company",
     links: [
       { href: "/about", label: "About ATG Mall" },
-      { href: "/contact", label: "Contact us" },
+      { href: "mailto:support@apexterraglobal.com", label: "Contact us" },
       { href: "https://apexterraglobal.com", label: "Apex Terra Global ↗" },
       { href: "/support", label: "Help & support" },
     ],
