@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Create Account" };
 export default async function RegisterPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: { error?: string; next?: string };
 }) {
   const countries = await getActiveDestinationCountries();
 
@@ -31,6 +31,7 @@ export default async function RegisterPage({
           )}
 
           <form action={registerAction} className="mt-5 space-y-4">
+            {searchParams.next && <input type="hidden" name="next" value={searchParams.next} />}
             <Field label="Full name" htmlFor="fullName" required>
               <Input id="fullName" name="fullName" required autoFocus />
             </Field>
@@ -54,7 +55,10 @@ export default async function RegisterPage({
           </form>
 
           <p className="mt-5 text-center text-sm text-navy-500">
-            Already have an account? <Link href="/login" className="font-medium text-atgblue-600">Sign in</Link>
+            Already have an account?{" "}
+            <Link href={searchParams.next ? `/login?next=${encodeURIComponent(searchParams.next)}` : "/login"} className="font-medium text-atgblue-600">
+              Sign in
+            </Link>
           </p>
         </div>
       </Container>

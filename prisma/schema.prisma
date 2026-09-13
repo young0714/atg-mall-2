@@ -377,11 +377,16 @@ model Review {
 // ---------------------------------------------------------------------------
 
 model Cart {
-  id        String     @id @default(cuid())
-  userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
-  updatedAt DateTime   @updatedAt
+  id         String     @id @default(cuid())
+  userId     String?    @unique
+  user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Anonymous carts (no account yet) are keyed by an opaque token in a
+  // cookie instead — a cart always has exactly one of userId/guestToken
+  // set. Merged into the real user's cart at login/registration/guest
+  // checkout, so browsing and adding to cart never requires an account.
+  guestToken String?    @unique
+  items      CartItem[]
+  updatedAt  DateTime   @updatedAt
 }
 
 model CartItem {

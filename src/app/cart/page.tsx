@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth/current-user";
+import { getCartId } from "@/lib/services/cartService";
 import { getDestination } from "@/lib/destination";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import { formatMoney } from "@/lib/money";
@@ -13,13 +13,15 @@ export const metadata: Metadata = { title: "Your Cart" };
 export const dynamic = "force-dynamic";
 
 export default async function CartPage() {
-  const user = await requireUser();
   const destination = await getDestination();
 
-  const cart = await db.cart.findUnique({
-    where: { userId: user.id },
-    include: { items: { include: { product: { include: { images: { take: 1 } } }, variant: true } } },
-  });
+  const cartId = await getCartId();
+  const cart = cartId
+    ? await db.cart.findUnique({
+        where: { id: cartId },
+        include: { items: { include: { product: { include: { images: { take: 1 } } }, variant: true } } },
+      })
+    : null;
 
   const items = cart?.items ?? [];
   // Each product is priced in its own baseCurrency (CNY, USD, GBP, ...) —

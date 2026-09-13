@@ -2,19 +2,15 @@
 
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { getOrCreateCartId } from "@/lib/services/cartService";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 export async function addToCartAction(formData: FormData) {
-  const user = await getCurrentUser();
   const productId = String(formData.get("productId"));
   const variantId = formData.get("variantId") ? String(formData.get("variantId")) : null;
   const quantity = Math.max(1, Number(formData.get("quantity") ?? 1));
   const redirectTo = String(formData.get("redirectTo") ?? "/cart");
-
-  if (!user) {
-    redirect(`/login?next=/product/${formData.get("slug")}`);
-  }
 
   const product = await db.product.findUniqueOrThrow({ where: { id: productId } });
   if (product.sourcePlatform === "AFFILIATE") {
@@ -25,14 +21,13 @@ export async function addToCartAction(formData: FormData) {
     redirect(`/product/${formData.get("slug")}`);
   }
 
-  const cart = await db.cart.upsert({
-    where: { userId: user.id },
-    update: {},
-    create: { userId: user.id },
-  });
+  // Adding to cart never requires an account — anonymous visitors get
+  // their own cart via a cookie, merged into their real account once
+  // they log in, register, or continue as a guest at checkout.
+  const cartId = await getOrCreateCartId();
 
   const existing = await db.cartItem.findFirst({
-    where: { cartId: cart.id, productId, variantId: variantId ?? undefined },
+    where: { cartId, productId, variantId: variantId ?? undefined },
   });
 
   if (existing) {
@@ -42,7 +37,7 @@ export async function addToCartAction(formData: FormData) {
     });
   } else {
     await db.cartItem.create({
-      data: { cartId: cart.id, productId, variantId, quantity },
+      data: { cartId, productId, variantId, quantity },
     });
   }
 

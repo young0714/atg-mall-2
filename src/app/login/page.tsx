@@ -38,7 +38,10 @@ export default function LoginPage({
           </form>
 
           <p className="mt-5 text-center text-sm text-navy-500">
-            New to ATG Mall? <Link href="/register" className="font-medium text-atgblue-600">Create an account</Link>
+            New to ATG Mall?{" "}
+            <Link href={searchParams.next ? `/register?next=${encodeURIComponent(searchParams.next)}` : "/register"} className="font-medium text-atgblue-600">
+              Create an account
+            </Link>
           </p>
         </div>
 
@@ -69,12 +72,6 @@ export default function LoginPage({
               <button type="submit" className="btn-outline w-full">Continue as Guest</button>
             </form>
           )}
-        </div>
-
-        <div className="mt-6 rounded-xl2 border border-navy-100 bg-sand-50 p-4 text-xs text-navy-500">
-          <p className="font-semibold text-navy-700">Demo accounts (seed data)</p>
-          <p className="mt-1">Customer: amaka.customer@example.com / Customer#2026</p>
-          <p>Admin: admin@atgmall.com / AtgMall#2026</p>
         </div>
       </Container>
     </Section>

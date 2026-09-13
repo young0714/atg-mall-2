@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { requireUser } from "@/lib/auth/current-user";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import { groupCartForShipping } from "@/lib/services/shipping/cartShipmentGrouping";
 import { customsService } from "@/lib/services/shipping/customsService";
@@ -22,7 +22,12 @@ export default async function CheckoutPage({
 }: {
   searchParams: { error?: string };
 }) {
-  const user = await requireUser();
+  // Browsing and adding to cart never require an account — checkout is
+  // the one point a real identity is needed (address, order history,
+  // wallet), so this is where we send anonymous visitors to sign in,
+  // register, or continue as a guest, then bring them right back here.
+  const user = await getCurrentUser();
+  if (!user) redirect("/login?next=/checkout");
 
   const [cart, addresses, profile, countries] = await Promise.all([
     db.cart.findUnique({ where: { userId: user.id }, include: { items: { include: { product: true } } } }),

@@ -6,6 +6,7 @@ import { createSession } from "@/lib/auth/session";
 import { isStaffRole } from "@/lib/rbac";
 import { getDestination, setDestinationCookie, syncDestinationToProfile } from "@/lib/destination";
 import { notificationService, NOTIFICATION_EVENTS } from "@/lib/services/notificationService";
+import { mergeGuestCartIntoUser } from "@/lib/services/cartService";
 import { redirect } from "next/navigation";
 
 // Only allow redirecting back to a same-site relative path — an
@@ -37,6 +38,7 @@ export async function continueAsGuestAction(formData: FormData) {
         email: result.user.email,
       });
       setDestinationCookie(destination.isoCode);
+      await mergeGuestCartIntoUser(result.user.id);
 
       const rawToken = await createMagicLinkToken(result.user.id);
       if (rawToken) {
@@ -91,6 +93,7 @@ export async function loginAction(formData: FormData) {
     const user = await authenticateUser(parsed.data);
     await createSession({ userId: user.id, role: user.role, fullName: user.fullName, email: user.email });
     await syncDestinationToProfile(user.id);
+    await mergeGuestCartIntoUser(user.id);
     redirect(next || (isStaffRole(user.role) ? "/admin" : "/account"));
   } catch (err) {
     if (err instanceof AuthError) {

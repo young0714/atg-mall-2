@@ -3,6 +3,7 @@
 import { consumeMagicLinkToken } from "@/lib/auth/auth-service";
 import { createSession } from "@/lib/auth/session";
 import { syncDestinationToProfile } from "@/lib/destination";
+import { mergeGuestCartIntoUser } from "@/lib/services/cartService";
 import { redirect } from "next/navigation";
 
 function safeNext(raw: string): string {
@@ -21,5 +22,6 @@ export async function confirmMagicLinkAction(formData: FormData) {
 
   await createSession({ userId: user.id, role: user.role, fullName: user.fullName, email: user.email });
   await syncDestinationToProfile(user.id);
+  await mergeGuestCartIntoUser(user.id);
   redirect(next || "/account?welcome=1");
 }
