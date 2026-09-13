@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { Badge } from "@/components/ui/Badge";
 import { Field, Input } from "@/components/ui/Form";
 import { createCarrierAction, toggleCarrierActiveAction } from "./actions";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Carriers" };
@@ -15,7 +16,10 @@ export default async function AdminCarriersPage({
   searchParams: { saved?: string; error?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_SHIPPING_RATES);
-  const carriers = await db.carrier.findMany({ orderBy: { name: "asc" } });
+  const carriers = await db.carrier.findMany({
+    orderBy: { name: "asc" },
+    include: { _count: { select: { rateCards: true } } },
+  });
 
   return (
     <div className="space-y-6">
@@ -53,6 +57,7 @@ export default async function AdminCarriersPage({
               <th className="p-3">Code</th>
               <th className="p-3">Live API</th>
               <th className="p-3">Status</th>
+              <th className="p-3">Lanes</th>
               <th className="p-3"></th>
             </tr>
           </thead>
@@ -63,11 +68,17 @@ export default async function AdminCarriersPage({
                 <td className="p-3 text-navy-500">{c.code}</td>
                 <td className="p-3"><Badge tone={c.isLiveApiEnabled ? "blue" : "neutral"}>{c.isLiveApiEnabled ? "Enabled" : "Manual only"}</Badge></td>
                 <td className="p-3"><Badge tone={c.isActive ? "green" : "neutral"}>{c.isActive ? "Active" : "Inactive"}</Badge></td>
+                <td className="p-3 text-navy-500">{c._count.rateCards}</td>
                 <td className="p-3">
-                  <form action={toggleCarrierActiveAction}>
-                    <input type="hidden" name="carrierId" value={c.id} />
-                    <button className="text-xs font-medium text-atgblue-600 hover:underline">{c.isActive ? "Deactivate" : "Activate"}</button>
-                  </form>
+                  <div className="flex items-center justify-end gap-3">
+                    <Link href={`/admin/carriers/${c.id}/rates`} className="text-xs font-medium text-atgblue-600 hover:underline">
+                      Edit rates
+                    </Link>
+                    <form action={toggleCarrierActiveAction}>
+                      <input type="hidden" name="carrierId" value={c.id} />
+                      <button className="text-xs font-medium text-atgblue-600 hover:underline">{c.isActive ? "Deactivate" : "Activate"}</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             ))}

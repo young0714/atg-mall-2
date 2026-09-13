@@ -62,6 +62,37 @@ export async function addRateBracketAction(formData: FormData) {
   redirect(`/admin/shipping-rate-cards/${cardId}?saved=1`);
 }
 
+export async function updateRateBracketAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_SHIPPING_RATES);
+  const cardId = String(formData.get("cardId"));
+  const bracketId = String(formData.get("bracketId"));
+  const parsed = shippingRateBracketSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    redirect(`/admin/shipping-rate-cards/${cardId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid bracket")}`);
+  }
+  const data = parsed.data!;
+  if (data.maxGrams !== undefined && data.maxGrams <= data.minGrams) {
+    redirect(`/admin/shipping-rate-cards/${cardId}?error=${encodeURIComponent("Max weight must be greater than min weight.")}`);
+  }
+
+  await db.shippingRateBracket.update({
+    where: { id: bracketId },
+    data: {
+      minGrams: data.minGrams,
+      maxGrams: data.maxGrams ?? null,
+      basePriceMinor: data.basePriceMinor,
+      pricePerKgMinor: data.pricePerKgMinor,
+      minChargeMinor: data.minChargeMinor,
+    },
+  });
+  await db.auditLog.create({
+    data: { actorId: staff.id, action: "RATE_BRACKET_UPDATED", entityType: "ShippingRateCard", entityId: cardId, summary: "Updated a weight bracket's pricing" },
+  });
+
+  revalidatePath(`/admin/shipping-rate-cards/${cardId}`);
+  redirect(`/admin/shipping-rate-cards/${cardId}?saved=1`);
+}
+
 export async function deleteRateBracketAction(formData: FormData) {
   const staff = await requirePermission(PERMISSIONS.MANAGE_SHIPPING_RATES);
   const cardId = String(formData.get("cardId"));

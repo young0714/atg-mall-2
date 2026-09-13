@@ -6,7 +6,7 @@ import { Field, Input, Select } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { updateRateCardAction, addRateBracketAction, deleteRateBracketAction } from "./actions";
+import { updateRateCardAction, addRateBracketAction, updateRateBracketAction, deleteRateBracketAction } from "./actions";
 
 export const metadata: Metadata = { title: "Admin — Edit Rate Card" };
 export const dynamic = "force-dynamic";
@@ -123,7 +123,7 @@ export default async function AdminRateCardDetailPage({
         </p>
         {card.brackets.length > 0 && (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-sm">
+            <table className="w-full min-w-[760px] text-sm">
               <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
                 <tr>
                   <th className="p-2">Min (g)</th>
@@ -137,16 +137,34 @@ export default async function AdminRateCardDetailPage({
               <tbody className="divide-y divide-navy-100">
                 {card.brackets.map((b) => (
                   <tr key={b.id}>
-                    <td className="p-2 text-navy-500">{b.minGrams}</td>
-                    <td className="p-2 text-navy-500">{b.maxGrams ?? "∞"}</td>
-                    <td className="p-2 text-navy-500">{formatMoney(b.basePriceMinor, card.currency as never)}</td>
-                    <td className="p-2 text-navy-500">{formatMoney(b.pricePerKgMinor, card.currency as never)}/kg</td>
-                    <td className="p-2 text-navy-500">{formatMoney(b.minChargeMinor, card.currency as never)}</td>
-                    <td className="p-2 text-right">
-                      <form action={deleteRateBracketAction}>
+                    <td colSpan={6} className="p-2">
+                      <form action={updateRateBracketAction} className="flex flex-wrap items-end gap-2">
                         <input type="hidden" name="cardId" value={card.id} />
                         <input type="hidden" name="bracketId" value={b.id} />
-                        <button className="text-xs font-medium text-red-600 hover:underline">Delete</button>
+                        <Field label="Min (g)" htmlFor={`minGrams-${b.id}`}>
+                          <Input id={`minGrams-${b.id}`} name="minGrams" type="number" defaultValue={b.minGrams} className="w-20" required />
+                        </Field>
+                        <Field label="Max (g)" htmlFor={`maxGrams-${b.id}`} hint="Blank = ∞">
+                          <Input id={`maxGrams-${b.id}`} name="maxGrams" type="number" defaultValue={b.maxGrams ?? ""} className="w-20" />
+                        </Field>
+                        <Field label={`Base (minor, ${card.currency})`} htmlFor={`basePriceMinor-${b.id}`}>
+                          <Input id={`basePriceMinor-${b.id}`} name="basePriceMinor" type="number" defaultValue={b.basePriceMinor} className="w-24" required />
+                        </Field>
+                        <Field label="Per kg (minor)" htmlFor={`pricePerKgMinor-${b.id}`}>
+                          <Input id={`pricePerKgMinor-${b.id}`} name="pricePerKgMinor" type="number" defaultValue={b.pricePerKgMinor} className="w-24" required />
+                        </Field>
+                        <Field label="Min charge (minor)" htmlFor={`minChargeMinor-${b.id}`}>
+                          <Input id={`minChargeMinor-${b.id}`} name="minChargeMinor" type="number" defaultValue={b.minChargeMinor} className="w-24" required />
+                        </Field>
+                        <button type="submit" className="btn-primary btn-sm">Save</button>
+                        <span className="text-xs text-navy-400">
+                          (currently {formatMoney(b.basePriceMinor, card.currency as never)} + {formatMoney(b.pricePerKgMinor, card.currency as never)}/kg, min {formatMoney(b.minChargeMinor, card.currency as never)})
+                        </span>
+                      </form>
+                      <form action={deleteRateBracketAction} className="mt-1">
+                        <input type="hidden" name="cardId" value={card.id} />
+                        <input type="hidden" name="bracketId" value={b.id} />
+                        <button className="text-xs font-medium text-red-600 hover:underline">Delete this bracket</button>
                       </form>
                     </td>
                   </tr>
