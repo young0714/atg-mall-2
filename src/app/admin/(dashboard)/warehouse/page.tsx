@@ -4,6 +4,8 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { receivePackageAction } from "./actions";
 import { formatDate } from "@/lib/utils";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Warehouse" };
@@ -16,10 +18,11 @@ export default async function AdminWarehousePage({
 }) {
   await requirePermission(PERMISSIONS.MANAGE_WAREHOUSE);
 
-  const [customers, recentReceipts, warehouses] = await Promise.all([
+  const [customers, recentReceipts, warehouses, countries] = await Promise.all([
     db.user.findMany({ where: { role: "CUSTOMER" }, orderBy: { fullName: "asc" } }),
     db.warehouseReceipt.findMany({ orderBy: { receivedAt: "desc" }, take: 10, include: { package: true } }),
     db.warehouse.findMany(),
+    getActiveDestinationCountries(),
   ]);
 
   return (
@@ -49,10 +52,11 @@ export default async function AdminWarehousePage({
         <Field label="Supplier name" htmlFor="supplierName"><Input id="supplierName" name="supplierName" /></Field>
         <Field label="Inbound tracking number" htmlFor="trackingNumberIn"><Input id="trackingNumberIn" name="trackingNumberIn" /></Field>
         <Field label="Weight (grams)" htmlFor="weightGrams" required><Input id="weightGrams" name="weightGrams" type="number" required /></Field>
-        <Field label="Destination" htmlFor="destination" required>
-          <Select id="destination" name="destination" required>
-            <option value="NIGERIA">Nigeria</option>
-            <option value="GAMBIA">Gambia</option>
+        <Field label="Destination" htmlFor="destinationIso" required>
+          <Select id="destinationIso" name="destinationIso" required>
+            {countries.map((c) => (
+              <option key={c.isoCode} value={c.isoCode}>{isoToFlagEmoji(c.isoCode)} {c.name}</option>
+            ))}
           </Select>
         </Field>
         <Field label="Length (cm)" htmlFor="lengthCm"><Input id="lengthCm" name="lengthCm" type="number" /></Field>

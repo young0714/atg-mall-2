@@ -21,7 +21,7 @@ export async function toProductCard(product: ProductWithImages, destination: Des
           await pricingService.estimateLandedCost({
             productCostMinor: product.basePriceMinor,
             productCostCurrency: product.baseCurrency,
-            destination: destination.country,
+            destinationIso: destination.isoCode,
             destinationCurrency: destination.currency,
             originCountry: sourcePlatformToStoreCountry(product.sourcePlatform),
             weightGrams: product.weightGrams,

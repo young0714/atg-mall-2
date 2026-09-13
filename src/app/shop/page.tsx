@@ -9,8 +9,8 @@ import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
-  title: "Shop — Buy from China, delivered to Nigeria & Gambia",
-  description: "Browse ATG Mall's catalog of products sourced from China, with transparent landed cost estimates for Nigeria and Gambia delivery.",
+  title: "Shop — Buy from China, delivered worldwide",
+  description: "Browse ATG Mall's catalog of products sourced from China, with transparent landed cost estimates for delivery worldwide.",
 };
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export default async function ShopPage({
 }: {
   searchParams: { q?: string; category?: string; wholesale?: string; sort?: string };
 }) {
-  const destination = getDestination();
+  const destination = await getDestination();
   const { q, category, wholesale, sort } = searchParams;
 
   const where: Prisma.ProductWhereInput = { isActive: true };
@@ -64,7 +64,7 @@ export default async function ShopPage({
           </h1>
           <p className="mt-1 text-sm text-navy-500">
             {products.length} product{products.length === 1 ? "" : "s"} · Prices shown are estimated landed cost to{" "}
-            {destination.label}
+            {destination.name}
           </p>
         </div>
 

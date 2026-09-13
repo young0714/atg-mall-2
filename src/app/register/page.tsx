@@ -2,16 +2,20 @@ import { Container, Section } from "@/components/ui/Section";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { Logo } from "@/components/ui/Logo";
 import { registerAction } from "./actions";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Create Account" };
 
-export default function RegisterPage({
+export default async function RegisterPage({
   searchParams,
 }: {
   searchParams: { error?: string };
 }) {
+  const countries = await getActiveDestinationCountries();
+
   return (
     <Section className="!py-16">
       <Container className="max-w-md">
@@ -36,10 +40,11 @@ export default function RegisterPage({
             <Field label="Phone number" htmlFor="phone" required>
               <Input id="phone" name="phone" required placeholder="+234..." />
             </Field>
-            <Field label="Country" htmlFor="country" required>
-              <Select id="country" name="country" required>
-                <option value="NIGERIA">🇳🇬 Nigeria</option>
-                <option value="GAMBIA">🇬🇲 Gambia</option>
+            <Field label="Country" htmlFor="countryIso" required>
+              <Select id="countryIso" name="countryIso" required>
+                {countries.map((c) => (
+                  <option key={c.isoCode} value={c.isoCode}>{isoToFlagEmoji(c.isoCode)} {c.name}</option>
+                ))}
               </Select>
             </Field>
             <Field label="Password" htmlFor="password" required hint="At least 8 characters">

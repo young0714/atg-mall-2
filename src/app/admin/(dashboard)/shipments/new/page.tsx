@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { Field, Input, Select } from "@/components/ui/Form";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import { createShipmentAction } from "../actions";
 import type { Metadata } from "next";
 
@@ -15,11 +17,14 @@ export default async function NewShipmentPage({
 }) {
   await requirePermission(PERMISSIONS.MANAGE_SHIPMENTS);
 
-  const readyPackages = await db.package.findMany({
-    where: { status: "READY_TO_SHIP" },
-    include: { user: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const [readyPackages, countries] = await Promise.all([
+    db.package.findMany({
+      where: { status: "READY_TO_SHIP" },
+      include: { user: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    getActiveDestinationCountries(),
+  ]);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -38,7 +43,7 @@ export default async function NewShipmentPage({
               {readyPackages.map((pkg) => (
                 <label key={pkg.id} className="flex items-center gap-2 rounded-lg p-2 text-sm hover:bg-sand-50">
                   <input type="checkbox" name="packageIds" value={pkg.id} />
-                  {pkg.packageCode} — {pkg.user.fullName} — {pkg.weightGrams ? `${(pkg.weightGrams / 1000).toFixed(2)}kg` : "weight pending"} — {pkg.destination}
+                  {pkg.packageCode} — {pkg.user.fullName} — {pkg.weightGrams ? `${(pkg.weightGrams / 1000).toFixed(2)}kg` : "weight pending"} — {pkg.destinationIso}
                 </label>
               ))}
             </div>
@@ -53,10 +58,11 @@ export default async function NewShipmentPage({
                 <option value="FCL">FCL</option>
               </Select>
             </Field>
-            <Field label="Destination country" htmlFor="destinationCountry" required>
-              <Select id="destinationCountry" name="destinationCountry" required>
-                <option value="NIGERIA">Nigeria</option>
-                <option value="GAMBIA">Gambia</option>
+            <Field label="Destination country" htmlFor="destinationCountryIso" required>
+              <Select id="destinationCountryIso" name="destinationCountryIso" required>
+                {countries.map((c) => (
+                  <option key={c.isoCode} value={c.isoCode}>{isoToFlagEmoji(c.isoCode)} {c.name}</option>
+                ))}
               </Select>
             </Field>
             <Field label="Destination city" htmlFor="destinationCity">

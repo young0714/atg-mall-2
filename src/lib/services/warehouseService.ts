@@ -1,6 +1,5 @@
 import "server-only";
 import { db } from "@/lib/db";
-import type { Country } from "@prisma/client";
 import { generateAtgNumber } from "./trackingService";
 
 /**
@@ -25,7 +24,7 @@ export interface WarehouseService {
     trackingNumberIn?: string;
     photos?: string[];
     notes?: string;
-    destination: Country;
+    destinationIso: string;
   }): Promise<{ packageId: string; packageCode: string }>;
 
   createConsolidation(params: { userId: string; packageIds: string[] }): Promise<{ consolidationId: string; code: string }>;
@@ -48,9 +47,9 @@ class DefaultWarehouseService implements WarehouseService {
     trackingNumberIn?: string;
     photos?: string[];
     notes?: string;
-    destination: Country;
+    destinationIso: string;
   }) {
-    const packageCode = generateAtgNumber("ATG-PKG", params.destination);
+    const packageCode = generateAtgNumber("ATG-PKG", params.destinationIso);
 
     const pkg = await db.package.create({
       data: {
@@ -65,7 +64,7 @@ class DefaultWarehouseService implements WarehouseService {
         widthCm: params.widthCm,
         heightCm: params.heightCm,
         photos: params.photos ?? [],
-        destination: params.destination,
+        destinationIso: params.destinationIso,
       },
     });
 
@@ -106,7 +105,7 @@ class DefaultWarehouseService implements WarehouseService {
   }
 
   async createConsolidation({ userId, packageIds }: { userId: string; packageIds: string[] }) {
-    const code = generateAtgNumber("ATG-CONS", "NIGERIA").replace("ATG-PKG", "ATG-CONS");
+    const code = generateAtgNumber("ATG-CONS", "NG").replace("ATG-PKG", "ATG-CONS");
     const consolidation = await db.consolidation.create({
       data: {
         code: `ATG-CONS-${Math.floor(100000 + Math.random() * 900000)}`,

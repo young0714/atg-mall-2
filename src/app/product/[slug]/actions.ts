@@ -68,7 +68,7 @@ export async function requestSourcingForProductAction(formData: FormData) {
       productName,
       productImageUrl,
       quantity,
-      destination: profile?.country ?? "NIGERIA",
+      destinationIso: profile?.countryIso ?? "NG",
       notes: `Requested from product page: ${productName}`,
     },
   });

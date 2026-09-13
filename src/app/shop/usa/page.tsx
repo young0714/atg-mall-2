@@ -7,12 +7,13 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Shop from USA — Amazon, Walmart, Best Buy & More",
   description:
-    "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG — send us a product link from any American store and we'll source, consolidate and ship it to Nigeria or Gambia.",
+    "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG — send us a product link from any American store and we'll source, consolidate and ship it worldwide.",
   keywords: [
     "Shop from USA",
     "Amazon USA shopping through ATG",
     "Walmart USA shopping through ATG",
     "Best Buy USA shopping through ATG",
+    "international shopping worldwide",
     "international shopping from Nigeria",
     "international shopping from Gambia",
   ],

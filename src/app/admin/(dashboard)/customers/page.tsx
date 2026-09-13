@@ -3,6 +3,8 @@ import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { Badge } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/utils";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Customers" };
@@ -11,11 +13,15 @@ export const dynamic = "force-dynamic";
 export default async function AdminCustomersPage() {
   await requirePermission(PERMISSIONS.MANAGE_CUSTOMERS);
 
-  const customers = await db.user.findMany({
-    where: { role: "CUSTOMER" },
-    orderBy: { createdAt: "desc" },
-    include: { customerProfile: true, orders: true, wallet: true },
-  });
+  const [customers, countries] = await Promise.all([
+    db.user.findMany({
+      where: { role: "CUSTOMER" },
+      orderBy: { createdAt: "desc" },
+      include: { customerProfile: true, orders: true, wallet: true },
+    }),
+    getActiveDestinationCountries(),
+  ]);
+  const countryNameByIso = new Map(countries.map((c) => [c.isoCode, c.name]));
 
   return (
     <div className="space-y-6">
@@ -41,7 +47,11 @@ export default async function AdminCustomersPage() {
               <tr key={c.id}>
                 <td className="p-3 font-medium text-navy-800">{c.fullName}</td>
                 <td className="p-3 text-navy-500">{c.email}</td>
-                <td className="p-3 text-navy-500">{c.customerProfile?.country === "GAMBIA" ? "🇬🇲 Gambia" : "🇳🇬 Nigeria"}</td>
+                <td className="p-3 text-navy-500">
+                  {c.customerProfile
+                    ? `${isoToFlagEmoji(c.customerProfile.countryIso)} ${countryNameByIso.get(c.customerProfile.countryIso) ?? c.customerProfile.countryIso}`
+                    : "—"}
+                </td>
                 <td className="p-3 text-navy-500">{c.orders.length}</td>
                 <td className="p-3"><Badge tone={c.isActive ? "green" : "red"}>{c.isActive ? "Active" : "Disabled"}</Badge></td>
                 <td className="p-3 text-navy-400">{formatDate(c.createdAt)}</td>

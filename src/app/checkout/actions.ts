@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { addressSchema, checkoutSchema } from "@/lib/validation/schemas";
 import { orderService, type OrderShipmentSpec } from "@/lib/services/orderService";
 import { groupCartForShipping } from "@/lib/services/shipping/cartShipmentGrouping";
-import { destinationCountryToIsoCode } from "@/lib/services/storeOrigin";
+import { isActiveDestinationIso, currencyForDestinationIso } from "@/lib/services/destinationCountryService";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -23,6 +23,9 @@ export async function addAddressAction(formData: FormData) {
   const parsed = addressSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
     redirect("/checkout?error=" + encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid address"));
+  }
+  if (!(await isActiveDestinationIso(parsed.data!.countryIso))) {
+    redirect("/checkout?error=" + encodeURIComponent("Select a valid country."));
   }
 
   const existingCount = await db.address.count({ where: { userId: user.id } });
@@ -52,8 +55,8 @@ export async function placeOrderAction(formData: FormData) {
   if (!cart || cart.items.length === 0) redirect("/cart");
 
   const profile = await db.customerProfile.findUnique({ where: { userId: user.id } });
-  const currency = profile?.preferredCurrency ?? (address!.country === "NIGERIA" ? "NGN" : "GMD");
-  const destinationIso = destinationCountryToIsoCode(address!.country);
+  const destinationIso = address!.countryIso;
+  const currency = profile?.preferredCurrency ?? currencyForDestinationIso(destinationIso);
 
   // Re-derive shipping groups and quotes SERVER-SIDE from the cart and the
   // selected address — never trust a client-submitted price. The only
@@ -128,7 +131,7 @@ export async function placeOrderAction(formData: FormData) {
   const { orderNumber } = await orderService.createOrderFromCart({
     userId: user.id,
     addressId: address!.id,
-    destination: address!.country,
+    destinationIso,
     currency,
     paymentMethod,
     shipments,

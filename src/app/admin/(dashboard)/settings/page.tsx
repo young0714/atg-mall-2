@@ -4,7 +4,8 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { Badge } from "@/components/ui/Badge";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
-import { COUNTRY_LABELS, COUNTRY_FLAGS } from "@/lib/constants";
+import { isoToFlagEmoji } from "@/lib/constants";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { STORE_COUNTRY_LABELS, STORE_COUNTRY_FLAGS } from "@/lib/store";
 import {
   upsertDeliveryZoneAction,
@@ -13,7 +14,7 @@ import {
   updatePricingPolicyAction,
 } from "./actions";
 import type { Metadata } from "next";
-import type { Country, StoreCountry } from "@prisma/client";
+import type { StoreCountry } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Admin — Settings" };
 export const dynamic = "force-dynamic";
@@ -24,15 +25,21 @@ export default async function AdminSettingsPage({
   searchParams: { saved?: string; error?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_SETTINGS);
-  const [zones, pricingPolicies] = await Promise.all([
-    db.deliveryZone.findMany({ orderBy: [{ country: "asc" }, { city: "asc" }] }),
+  const [zones, pricingPolicies, countries] = await Promise.all([
+    db.deliveryZone.findMany({ orderBy: [{ countryIso: "asc" }, { city: "asc" }] }),
     db.pricingPolicy.findMany(),
+    getActiveDestinationCountries(),
   ]);
   const pricingByOrigin: Partial<Record<StoreCountry, (typeof pricingPolicies)[number]>> = {};
   for (const p of pricingPolicies) pricingByOrigin[p.originCountry] = p;
 
-  const byCountry: Record<Country, typeof zones> = { NIGERIA: [], GAMBIA: [] };
-  for (const z of zones) byCountry[z.country].push(z);
+  const countryNameByIso = new Map(countries.map((c) => [c.isoCode, c.name]));
+  const byCountry = new Map<string, typeof zones>();
+  for (const z of zones) {
+    const arr = byCountry.get(z.countryIso) ?? [];
+    arr.push(z);
+    byCountry.set(z.countryIso, arr);
+  }
 
   return (
     <div className="space-y-8">
@@ -52,10 +59,11 @@ export default async function AdminSettingsPage({
         <details className="rounded-lg border border-navy-100 p-4">
           <summary className="cursor-pointer text-sm font-semibold text-navy-900">+ Add / Update Zone</summary>
           <form action={upsertDeliveryZoneAction} className="mt-4 grid gap-4 sm:grid-cols-3">
-            <Field label="Country" htmlFor="country" required>
-              <Select id="country" name="country" required>
-                <option value="NIGERIA">Nigeria</option>
-                <option value="GAMBIA">Gambia</option>
+            <Field label="Country" htmlFor="countryIso" required>
+              <Select id="countryIso" name="countryIso" required>
+                {countries.map((c) => (
+                  <option key={c.isoCode} value={c.isoCode}>{isoToFlagEmoji(c.isoCode)} {c.name}</option>
+                ))}
               </Select>
             </Field>
             <Field label="City" htmlFor="city" required hint="Matches an existing zone if the country+city already exist">
@@ -65,6 +73,10 @@ export default async function AdminSettingsPage({
               <Select id="currency" name="currency" required>
                 <option value="NGN">NGN</option>
                 <option value="GMD">GMD</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="CNY">CNY</option>
               </Select>
             </Field>
             <Field label="Local delivery fee (minor units)" htmlFor="localFeeMinor" required hint="e.g. 150000 = ₦1,500.00">
@@ -81,18 +93,18 @@ export default async function AdminSettingsPage({
         </details>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          {(["NIGERIA", "GAMBIA"] as Country[]).map((country) => (
-            <div key={country}>
+          {[...byCountry.keys()].map((countryIso) => (
+            <div key={countryIso}>
               <h3 className="mb-2 text-sm font-semibold text-navy-800">
-                {COUNTRY_FLAGS[country]} {COUNTRY_LABELS[country]}
+                {isoToFlagEmoji(countryIso)} {countryNameByIso.get(countryIso) ?? countryIso}
               </h3>
-              {byCountry[country].length === 0 ? (
+              {(byCountry.get(countryIso) ?? []).length === 0 ? (
                 <p className="rounded-lg border border-dashed border-navy-200 p-4 text-sm text-navy-400">
                   No zones configured yet.
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {byCountry[country].map((z) => (
+                  {(byCountry.get(countryIso) ?? []).map((z) => (
                     <div key={z.id} className="flex items-center justify-between rounded-lg border border-navy-100 p-3 text-sm">
                       <div>
                         <p className="font-medium text-navy-800">{z.city}</p>

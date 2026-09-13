@@ -3,7 +3,7 @@ import { Section, SectionHeading, Container } from "@/components/ui/Section";
 const faqs = [
   {
     q: "Which countries does ATG Mall deliver to?",
-    a: "ATG Mall currently serves Nigeria and Gambia, with delivery zones covering major cities including Lagos, Abuja, Port Harcourt, Kano and Ibadan in Nigeria, and Banjul, Kanifing and Brikama in Gambia.",
+    a: "ATG Mall ships worldwide to any destination we support — pick your country at checkout to see delivery options and pricing. Our deepest local coverage remains Nigeria and Gambia, with delivery zones spanning major cities including Lagos, Abuja, Port Harcourt, Kano and Ibadan in Nigeria, and Banjul, Kanifing and Brikama in Gambia.",
   },
   {
     q: "Can I buy directly from 1688 or Taobao through ATG Mall?",

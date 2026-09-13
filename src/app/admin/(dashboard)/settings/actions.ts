@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { deliveryZoneSchema, pricingPolicySchema } from "@/lib/validation/schemas";
+import { isActiveDestinationIso } from "@/lib/services/destinationCountryService";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -15,12 +16,16 @@ export async function upsertDeliveryZoneAction(formData: FormData) {
   }
   const data = parsed.data!;
 
+  if (!(await isActiveDestinationIso(data.countryIso))) {
+    redirect("/admin/settings?error=" + encodeURIComponent("Select a valid country."));
+  }
+
   if (data.etaDaysMax < data.etaDaysMin) {
     redirect("/admin/settings?error=Max+ETA+days+cannot+be+less+than+min");
   }
 
   await db.deliveryZone.upsert({
-    where: { country_city: { country: data.country, city: data.city } },
+    where: { countryIso_city: { countryIso: data.countryIso, city: data.city } },
     update: {
       currency: data.currency,
       localFeeMinor: data.localFeeMinor,
@@ -36,8 +41,8 @@ export async function upsertDeliveryZoneAction(formData: FormData) {
       actorId: staff.id,
       action: "DELIVERY_ZONE_SAVED",
       entityType: "DeliveryZone",
-      entityId: `${data.country}:${data.city}`,
-      summary: `Delivery zone ${data.city}, ${data.country} saved`,
+      entityId: `${data.countryIso}:${data.city}`,
+      summary: `Delivery zone ${data.city}, ${data.countryIso} saved`,
     },
   });
 

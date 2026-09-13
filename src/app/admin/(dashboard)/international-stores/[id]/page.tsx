@@ -4,6 +4,8 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { notFound } from "next/navigation";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { STORE_COUNTRY_LABELS, STORE_COUNTRY_FLAGS } from "@/lib/store";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import { updateStoreAction } from "../actions";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -23,7 +25,10 @@ export default async function AdminStoreDetailPage({
 }) {
   await requirePermission(PERMISSIONS.MANAGE_STORES);
 
-  const store = await db.store.findUnique({ where: { id: params.id } });
+  const [store, destinationCountries] = await Promise.all([
+    db.store.findUnique({ where: { id: params.id } }),
+    getActiveDestinationCountries(),
+  ]);
   if (!store) notFound();
 
   return (
@@ -85,12 +90,11 @@ export default async function AdminStoreDetailPage({
               <input type="checkbox" name="shopForMeEnabled" value="true" defaultChecked={store.shopForMeEnabled} /> Shop for Me enabled
             </label>
             <span className="text-sm text-navy-500">Ships to:</span>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="supportedDestinations" value="NIGERIA" defaultChecked={store.supportedDestinations.includes("NIGERIA")} /> Nigeria
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="supportedDestinations" value="GAMBIA" defaultChecked={store.supportedDestinations.includes("GAMBIA")} /> Gambia
-            </label>
+            {destinationCountries.map((c) => (
+              <label key={c.isoCode} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="supportedDestinations" value={c.isoCode} defaultChecked={store.supportedDestinations.includes(c.isoCode)} /> {isoToFlagEmoji(c.isoCode)} {c.name}
+              </label>
+            ))}
           </div>
           <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Save changes</button>
         </form>

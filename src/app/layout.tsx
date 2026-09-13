@@ -17,8 +17,12 @@ export const metadata: Metadata = {
     template: "%s | ATG Mall",
   },
   description:
-    "ATG Mall helps customers in Nigeria and Gambia shop, source and buy products from China — 1688, Taobao and trusted suppliers — with sourcing, warehousing, consolidation and international shipping handled end to end.",
+    "ATG Mall helps customers worldwide shop, source and buy products from China — 1688, Taobao and trusted suppliers — with sourcing, warehousing, consolidation and international shipping handled end to end.",
   keywords: [
+    "buy from China worldwide",
+    "shop from China worldwide",
+    "China shipping worldwide",
+    "China sourcing worldwide",
     "buy from China Nigeria",
     "1688 Nigeria",
     "shop from China Nigeria",
@@ -33,7 +37,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "ATG Mall — Shop Global. Delivered Local.",
     description:
-      "Shop products from China and get them delivered to Nigeria or Gambia. Sourcing, purchasing, warehousing, consolidation and shipping — handled by ATG Mall.",
+      "Shop products from China and get them delivered worldwide. Sourcing, purchasing, warehousing, consolidation and shipping — handled by ATG Mall.",
     url: appUrl,
     siteName: "ATG Mall",
     type: "website",
@@ -41,7 +45,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "ATG Mall — Shop Global. Delivered Local.",
-    description: "Shop from China. We handle the rest. Cross-border shopping for Nigeria & Gambia.",
+    description: "Shop from China. We handle the rest. Cross-border shopping, worldwide.",
   },
   alternates: { canonical: appUrl },
 };
@@ -52,7 +56,7 @@ const organizationJsonLd = {
   name: "ATG Mall",
   url: appUrl,
   description:
-    "ATG Mall is a cross-border shopping and logistics platform connecting customers in Nigeria and Gambia to suppliers in China.",
+    "ATG Mall is a cross-border shopping and logistics platform connecting customers worldwide to suppliers in China.",
   parentOrganization: {
     "@type": "Organization",
     name: "Apex Terra Global Limited",

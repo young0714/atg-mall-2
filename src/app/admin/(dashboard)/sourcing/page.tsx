@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
+import { currencyForDestinationIso } from "@/lib/services/destinationCountryService";
 import { addSourcingOptionAction, issueSourcingQuotationAction } from "./actions";
 import type { Metadata } from "next";
 
@@ -40,7 +41,7 @@ export default async function AdminSourcingPage({
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div>
                 <p className="font-semibold text-navy-800">{req.productName}</p>
-                <p className="text-xs text-navy-400">{req.user.fullName} · Qty {req.quantity} · {req.destination} · {formatDate(req.createdAt)}</p>
+                <p className="text-xs text-navy-400">{req.user.fullName} · Qty {req.quantity} · {req.destinationIso} · {formatDate(req.createdAt)}</p>
                 {req.notes && <p className="mt-1 text-sm text-navy-500">{req.notes}</p>}
               </div>
               <StatusBadge status={req.status} />
@@ -105,7 +106,7 @@ export default async function AdminSourcingPage({
                     <Input id={`qoc-${req.id}`} name="otherCharges" type="number" step="0.01" defaultValue={0} />
                   </Field>
                   <Field label="Currency" htmlFor={`qcur-${req.id}`} required>
-                    <Select id={`qcur-${req.id}`} name="currency" defaultValue={selectedOption?.currency ?? (req.destination === "NIGERIA" ? "NGN" : "GMD")} required>
+                    <Select id={`qcur-${req.id}`} name="currency" defaultValue={selectedOption?.currency ?? currencyForDestinationIso(req.destinationIso)} required>
                       <option value="NGN">NGN</option>
                       <option value="GMD">GMD</option>
                       <option value="USD">USD</option>

@@ -31,7 +31,7 @@ export async function receivePackageAction(formData: FormData) {
     heightCm: data.heightCm,
     trackingNumberIn: data.trackingNumberIn,
     notes: data.notes,
-    destination: data.destination,
+    destinationIso: data.destinationIso,
   });
 
   revalidatePath("/admin/packages");

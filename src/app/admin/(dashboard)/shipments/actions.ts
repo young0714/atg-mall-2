@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { generateAtgNumber } from "@/lib/services/trackingService";
-import type { Country, OrderStatus, PackageStatus, ShipmentStatus, ShippingMethod } from "@prisma/client";
+import type { OrderStatus, PackageStatus, ShipmentStatus, ShippingMethod } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -34,7 +34,7 @@ export async function createShipmentAction(formData: FormData) {
 
   const packageIds = formData.getAll("packageIds").map(String);
   const method = String(formData.get("method")) as ShippingMethod;
-  const destinationCountry = String(formData.get("destinationCountry")) as Country;
+  const destinationCountryIso = String(formData.get("destinationCountryIso")).trim().toUpperCase();
   const destinationCity = String(formData.get("destinationCity") || "") || undefined;
 
   if (packageIds.length === 0) {
@@ -43,13 +43,13 @@ export async function createShipmentAction(formData: FormData) {
 
   const packages = await db.package.findMany({ where: { id: { in: packageIds } } });
   const totalWeightGrams = packages.reduce((sum, p) => sum + (p.weightGrams ?? 0), 0);
-  const trackingNumber = generateAtgNumber("ATG", destinationCountry);
+  const trackingNumber = generateAtgNumber("ATG", destinationCountryIso);
 
   const shipment = await db.shipment.create({
     data: {
       trackingNumber,
       method,
-      destinationCountry,
+      destinationCountryIso,
       destinationCity,
       status: "READY_TO_SHIP",
       totalWeightGrams,

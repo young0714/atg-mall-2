@@ -1,4 +1,4 @@
-import type { Country, SourcePlatform, StoreCountry } from "@prisma/client";
+import type { SourcePlatform, StoreCountry } from "@prisma/client";
 
 /**
  * Bridges the typed `StoreCountry` enum (used by `Store`/`PricingPolicy`)
@@ -44,21 +44,5 @@ export function storeCountryToIsoCode(country: StoreCountry): string {
       return "US";
     case "UK":
       return "GB";
-  }
-}
-
-/**
- * The real, operational customer-facing `Country` enum (NIGERIA|GAMBIA) ->
- * the shipping engine's `DestinationCountry.isoCode` (seeded in Phase 1 as
- * NG/GM). See the schema.prisma note on DestinationCountry: `Country` stays
- * untouched as the account/address enum; this is just the bridge so the
- * rate/quote layer's open-ended country list can still serve real orders.
- */
-export function destinationCountryToIsoCode(country: Country): string {
-  switch (country) {
-    case "NIGERIA":
-      return "NG";
-    case "GAMBIA":
-      return "GM";
   }
 }

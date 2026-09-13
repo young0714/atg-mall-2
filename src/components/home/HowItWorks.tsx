@@ -5,7 +5,7 @@ const steps = [
   { title: "We Buy", desc: "ATG purchases from the supplier on your behalf once you approve pricing.", icon: "🧾" },
   { title: "Consolidate", desc: "Your items arrive at our China warehouse and can be combined into one shipment.", icon: "📦" },
   { title: "Ship", desc: "Choose air freight, sea freight or courier — priced and tracked transparently.", icon: "🚢" },
-  { title: "Deliver", desc: "Your package clears and is delivered locally in Nigeria or Gambia.", icon: "🏠" },
+  { title: "Deliver", desc: "Your package clears customs and is delivered to your destination, worldwide.", icon: "🏠" },
 ];
 
 export function HowItWorks() {

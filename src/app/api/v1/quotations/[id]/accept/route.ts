@@ -17,12 +17,12 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
   });
   if (!quotation) return NextResponse.json({ error: "Quotation not found or already processed" }, { status: 404 });
 
-  const destination = quotation.shopForMeRequest?.destination ?? quotation.sourcingRequest?.destination ?? "NIGERIA";
+  const destinationIso = quotation.shopForMeRequest?.destinationIso ?? quotation.sourcingRequest?.destinationIso ?? "NG";
   const address = await db.address.findFirst({ where: { userId: user.id }, orderBy: { isDefault: "desc" } });
 
   const result = await orderService.createOrderFromQuotation({
     quotationId: quotation.id,
-    destination,
+    destinationIso,
     addressId: address?.id,
   });
 

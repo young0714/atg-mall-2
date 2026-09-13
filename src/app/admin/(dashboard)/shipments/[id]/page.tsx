@@ -26,7 +26,7 @@ export default async function AdminShipmentDetailPage({ params }: { params: { id
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-display font-bold text-navy-900">{shipment.trackingNumber}</h1>
-          <p className="text-sm text-navy-500">{shipment.method.replaceAll("_", " ")} to {shipment.destinationCountry}</p>
+          <p className="text-sm text-navy-500">{shipment.method.replaceAll("_", " ")} to {shipment.destinationCountryIso}</p>
         </div>
         <StatusBadge status={shipment.status} className="text-sm" />
       </div>

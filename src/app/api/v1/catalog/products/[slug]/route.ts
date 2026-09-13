@@ -2,15 +2,19 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { pricingService } from "@/lib/services/pricingService";
 import { sourcePlatformToStoreCountry } from "@/lib/services/storeOrigin";
-import { DESTINATIONS } from "@/lib/destination";
-import type { Country } from "@prisma/client";
+import { currencyForDestinationIso } from "@/lib/services/destinationCountryService";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request, { params }: { params: { slug: string } }) {
   const { searchParams } = new URL(req.url);
-  const destinationParam = (searchParams.get("destination") as Country) || "NIGERIA";
-  const destination = DESTINATIONS[destinationParam] ?? DESTINATIONS.NIGERIA;
+  const requestedIso = searchParams.get("destination")?.toUpperCase();
+  const destinationCountry =
+    (requestedIso
+      ? await db.destinationCountry.findFirst({ where: { isoCode: requestedIso, isActive: true } })
+      : null) ?? (await db.destinationCountry.findFirst({ where: { isoCode: "NG", isActive: true } }));
+  const destinationIso = destinationCountry!.isoCode;
+  const destinationCurrency = currencyForDestinationIso(destinationIso);
 
   const product = await db.product.findUnique({
     where: { slug: params.slug },
@@ -24,8 +28,8 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
   const breakdown = await pricingService.estimateLandedCost({
     productCostMinor: product.basePriceMinor,
     productCostCurrency: product.baseCurrency,
-    destination: destination.country,
-    destinationCurrency: destination.currency,
+    destinationIso,
+    destinationCurrency,
     originCountry: sourcePlatformToStoreCountry(product.sourcePlatform),
     weightGrams: product.weightGrams,
   });

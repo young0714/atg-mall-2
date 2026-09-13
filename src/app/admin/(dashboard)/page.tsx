@@ -3,6 +3,8 @@ import { Stat } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -21,8 +23,8 @@ export default async function AdminDashboardPage() {
     packagesInWarehouse,
     packagesInTransit,
     deliveredPackages,
-    nigeriaCustomers,
-    gambiaCustomers,
+    customersByCountry,
+    countries,
     recentOrders,
     ordersForMargin,
   ] = await Promise.all([
@@ -36,8 +38,8 @@ export default async function AdminDashboardPage() {
     db.package.count({ where: { status: { in: ["RECEIVED", "INSPECTION", "AWAITING_CUSTOMER_INSTRUCTION", "CONSOLIDATION", "READY_TO_SHIP"] } } }),
     db.package.count({ where: { status: { in: ["SHIPPED", "IN_TRANSIT", "CUSTOMS", "OUT_FOR_DELIVERY"] } } }),
     db.package.count({ where: { status: "DELIVERED" } }),
-    db.customerProfile.count({ where: { country: "NIGERIA" } }),
-    db.customerProfile.count({ where: { country: "GAMBIA" } }),
+    db.customerProfile.groupBy({ by: ["countryIso"], _count: { _all: true } }),
+    getActiveDestinationCountries(),
     db.order.findMany({ orderBy: { createdAt: "desc" }, take: 8, include: { user: true } }),
     db.order.findMany({
       where: { status: { not: "CANCELLED" } },
@@ -61,11 +63,14 @@ export default async function AdminDashboardPage() {
     return total + order.totalMinor - costBasis - order.domesticShippingMinor - order.intlShippingMinor - order.otherChargesMinor;
   }, 0);
 
+  const countryNameByIso = new Map(countries.map((c) => [c.isoCode, c.name]));
+  const sortedCustomersByCountry = [...customersByCountry].sort((a, b) => (b._count._all ?? 0) - (a._count._all ?? 0));
+
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-display font-bold text-navy-900">Dashboard</h1>
-        <p className="text-sm text-navy-500">Overview of ATG Mall operations across Nigeria and Gambia.</p>
+        <p className="text-sm text-navy-500">Overview of ATG Mall operations across every destination we ship to.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -80,8 +85,19 @@ export default async function AdminDashboardPage() {
         <Stat label="Packages in Warehouse" value={packagesInWarehouse} tone="blue" />
         <Stat label="Packages in Transit" value={packagesInTransit} tone="blue" />
         <Stat label="Delivered Packages" value={deliveredPackages} tone="green" />
-        <Stat label="Nigeria Customers" value={nigeriaCustomers} />
-        <Stat label="Gambia Customers" value={gambiaCustomers} />
+      </div>
+
+      <div className="card p-5">
+        <h2 className="mb-3 font-semibold text-navy-900">Customers by Country</h2>
+        <div className="flex flex-wrap gap-3">
+          {sortedCustomersByCountry.map((row) => (
+            <div key={row.countryIso} className="rounded-lg border border-navy-100 px-3 py-2 text-sm">
+              <span className="mr-1">{isoToFlagEmoji(row.countryIso)}</span>
+              {countryNameByIso.get(row.countryIso) ?? row.countryIso}
+              <span className="ml-2 font-semibold text-navy-800">{row._count._all}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="card">

@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { StatusTimeline } from "@/components/tracking/StatusTimeline";
 import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
+import { destinationCountryNameFor } from "@/lib/services/destinationCountryService";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { payOrderWithWalletAction } from "./actions";
@@ -34,6 +35,8 @@ export default async function OrderDetailPage({
   });
 
   if (!order) notFound();
+
+  const addressCountryName = order.address ? await destinationCountryNameFor(order.address.countryIso) : null;
 
   return (
     <div>
@@ -140,7 +143,7 @@ export default async function OrderDetailPage({
               <p className="text-sm text-navy-600">
                 {order.address.fullName}<br />
                 {order.address.addressLine1}, {order.address.city}, {order.address.state}<br />
-                {order.address.country === "NIGERIA" ? "Nigeria" : "Gambia"}<br />
+                {addressCountryName}<br />
                 {order.address.phone}
               </p>
             </div>

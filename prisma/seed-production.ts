@@ -127,24 +127,24 @@ async function main() {
   // your real local delivery costs per city.
   // ---------------------------------------------------------------------
   const zoneDefs = [
-    { country: "NIGERIA" as const, city: "Lagos", fee: 150000, currency: "NGN" as const, eta: [1, 2] },
-    { country: "NIGERIA" as const, city: "Abuja", fee: 200000, currency: "NGN" as const, eta: [2, 3] },
-    { country: "NIGERIA" as const, city: "Port Harcourt", fee: 220000, currency: "NGN" as const, eta: [2, 4] },
-    { country: "NIGERIA" as const, city: "Kano", fee: 250000, currency: "NGN" as const, eta: [2, 4] },
-    { country: "NIGERIA" as const, city: "Ibadan", fee: 180000, currency: "NGN" as const, eta: [1, 3] },
-    { country: "NIGERIA" as const, city: "Benin City", fee: 200000, currency: "NGN" as const, eta: [2, 4] },
-    { country: "NIGERIA" as const, city: "Enugu", fee: 210000, currency: "NGN" as const, eta: [2, 4] },
-    { country: "NIGERIA" as const, city: "Kaduna", fee: 230000, currency: "NGN" as const, eta: [2, 4] },
-    { country: "GAMBIA" as const, city: "Banjul", fee: 15000, currency: "GMD" as const, eta: [1, 2] },
-    { country: "GAMBIA" as const, city: "Kanifing", fee: 15000, currency: "GMD" as const, eta: [1, 2] },
-    { country: "GAMBIA" as const, city: "Brikama", fee: 20000, currency: "GMD" as const, eta: [2, 3] },
+    { countryIso: "NG", city: "Lagos", fee: 150000, currency: "NGN" as const, eta: [1, 2] },
+    { countryIso: "NG", city: "Abuja", fee: 200000, currency: "NGN" as const, eta: [2, 3] },
+    { countryIso: "NG", city: "Port Harcourt", fee: 220000, currency: "NGN" as const, eta: [2, 4] },
+    { countryIso: "NG", city: "Kano", fee: 250000, currency: "NGN" as const, eta: [2, 4] },
+    { countryIso: "NG", city: "Ibadan", fee: 180000, currency: "NGN" as const, eta: [1, 3] },
+    { countryIso: "NG", city: "Benin City", fee: 200000, currency: "NGN" as const, eta: [2, 4] },
+    { countryIso: "NG", city: "Enugu", fee: 210000, currency: "NGN" as const, eta: [2, 4] },
+    { countryIso: "NG", city: "Kaduna", fee: 230000, currency: "NGN" as const, eta: [2, 4] },
+    { countryIso: "GM", city: "Banjul", fee: 15000, currency: "GMD" as const, eta: [1, 2] },
+    { countryIso: "GM", city: "Kanifing", fee: 15000, currency: "GMD" as const, eta: [1, 2] },
+    { countryIso: "GM", city: "Brikama", fee: 20000, currency: "GMD" as const, eta: [2, 3] },
   ];
   for (const z of zoneDefs) {
     await db.deliveryZone.upsert({
-      where: { country_city: { country: z.country, city: z.city } },
+      where: { countryIso_city: { countryIso: z.countryIso, city: z.city } },
       update: {},
       create: {
-        country: z.country,
+        countryIso: z.countryIso,
         city: z.city,
         localFeeMinor: z.fee,
         currency: z.currency,

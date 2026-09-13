@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function CartPage() {
   const user = await requireUser();
-  const destination = getDestination();
+  const destination = await getDestination();
 
   const cart = await db.cart.findUnique({
     where: { userId: user.id },

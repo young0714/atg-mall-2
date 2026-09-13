@@ -54,7 +54,7 @@ class DefaultTrackingService implements TrackingService {
       trackingNumber: shipment.trackingNumber,
       status: shipment.status,
       method: shipment.method,
-      destinationCountry: shipment.destinationCountry,
+      destinationCountry: shipment.destinationCountryIso,
       destinationCity: shipment.destinationCity,
       estimatedDeliveryAt: shipment.estimatedDeliveryAt,
       currentLocation: latestEvent?.location ?? shipment.origin,
@@ -76,8 +76,8 @@ class DefaultTrackingService implements TrackingService {
 export const trackingService: TrackingService = new DefaultTrackingService();
 
 /** Generates an ATG-style tracking/order number, e.g. ATG-NG-2026000123 */
-export function generateAtgNumber(prefix: "ATG" | "ATG-PKG" | "ATG-CONS", country: "NIGERIA" | "GAMBIA"): string {
-  const countryCode = country === "NIGERIA" ? "NG" : "GM";
+export function generateAtgNumber(prefix: "ATG" | "ATG-PKG" | "ATG-CONS", destinationIso: string): string {
+  const countryCode = destinationIso.trim().toUpperCase();
   const year = new Date().getFullYear();
   const random = Math.floor(100000 + Math.random() * 900000);
   return `${prefix}-${countryCode}-${year}${random}`;

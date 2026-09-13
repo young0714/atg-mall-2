@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export const dynamic = "force-dynamic";
 
 export default async function ProductPage({ params }: { params: { slug: string } }) {
-  const destination = getDestination();
+  const destination = await getDestination();
 
   const product = await db.product.findUnique({
     where: { slug: params.slug },
@@ -44,7 +44,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const breakdown = await pricingService.estimateLandedCost({
     productCostMinor: product.basePriceMinor,
     productCostCurrency: product.baseCurrency,
-    destination: destination.country,
+    destinationIso: destination.isoCode,
     destinationCurrency: destination.currency,
     originCountry: sourcePlatformToStoreCountry(product.sourcePlatform),
     weightGrams: product.weightGrams,
@@ -118,7 +118,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
             </div>
 
             <dl className="mt-6 grid grid-cols-2 gap-3 border-t border-navy-100 pt-6 text-sm">
-              <div><dt className="text-navy-400">Destination</dt><dd className="font-medium text-navy-800">{destination.label}</dd></div>
+              <div><dt className="text-navy-400">Destination</dt><dd className="font-medium text-navy-800">{destination.name}</dd></div>
               <div><dt className="text-navy-400">Est. weight</dt><dd className="font-medium text-navy-800">{(product.weightGrams / 1000).toFixed(2)} kg / unit</dd></div>
               <div><dt className="text-navy-400">MOQ</dt><dd className="font-medium text-navy-800">{product.moq} unit{product.moq > 1 ? "s" : ""}</dd></div>
               <div><dt className="text-navy-400">Est. delivery</dt><dd className="font-medium text-navy-800">14–30 days after purchase</dd></div>

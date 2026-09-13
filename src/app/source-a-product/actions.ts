@@ -41,7 +41,7 @@ export async function submitSourcingRequestAction(formData: FormData) {
       quantity: data.quantity,
       targetPriceMinor: data.targetPriceMinor,
       targetCurrency: "USD",
-      destination: data.destination,
+      destinationIso: data.destinationIso,
       notes: data.notes || undefined,
     },
   });

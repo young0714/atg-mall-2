@@ -1,9 +1,9 @@
 import "server-only";
 import { cache } from "react";
-import type { Country, Currency, StoreCountry } from "@prisma/client";
+import type { Currency, StoreCountry } from "@prisma/client";
 import { currencyConversionService } from "./currencyConversionService";
 import { shippingCalculationService } from "./shipping/shippingCalculationService";
-import { storeCountryToIsoCode, destinationCountryToIsoCode } from "./storeOrigin";
+import { storeCountryToIsoCode } from "./storeOrigin";
 import { db } from "@/lib/db";
 
 /**
@@ -67,7 +67,7 @@ export interface PricingService {
   estimateLandedCost(params: {
     productCostMinor: number;
     productCostCurrency: Currency;
-    destination: Country;
+    destinationIso: string;
     destinationCurrency: Currency;
     originCountry?: StoreCountry;
     weightGrams?: number;
@@ -79,7 +79,7 @@ class DefaultPricingService implements PricingService {
   async estimateLandedCost({
     productCostMinor,
     productCostCurrency,
-    destination,
+    destinationIso,
     destinationCurrency,
     originCountry = "CHINA",
     weightGrams,
@@ -87,7 +87,7 @@ class DefaultPricingService implements PricingService {
   }: {
     productCostMinor: number;
     productCostCurrency: Currency;
-    destination: Country;
+    destinationIso: string;
     destinationCurrency: Currency;
     originCountry?: StoreCountry;
     weightGrams?: number;
@@ -119,7 +119,7 @@ class DefaultPricingService implements PricingService {
     if (intlShippingMinorInProductCurrency === undefined && weightGrams) {
       const laneQuote = await shippingCalculationService.getLaneQuote({
         originIso: storeCountryToIsoCode(originCountry),
-        destinationIso: destinationCountryToIsoCode(destination),
+        destinationIso,
         package: { weightGrams },
         displayCurrency: destinationCurrency,
       });

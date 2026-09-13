@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "./password";
 import type { RegisterInput, LoginInput } from "@/lib/validation/schemas";
+import { isActiveDestinationIso, currencyForDestinationIso } from "@/lib/services/destinationCountryService";
 
 export class AuthError extends Error {}
 
@@ -9,7 +10,12 @@ export async function registerUser(input: RegisterInput) {
   const existing = await db.user.findUnique({ where: { email: input.email } });
   if (existing) throw new AuthError("An account with this email already exists.");
 
+  if (!(await isActiveDestinationIso(input.countryIso))) {
+    throw new AuthError("Select a valid country.");
+  }
+
   const passwordHash = await hashPassword(input.password);
+  const currency = currencyForDestinationIso(input.countryIso);
 
   const user = await db.user.create({
     data: {
@@ -20,12 +26,12 @@ export async function registerUser(input: RegisterInput) {
       role: "CUSTOMER",
       customerProfile: {
         create: {
-          country: input.country,
-          preferredCurrency: input.country === "NIGERIA" ? "NGN" : "GMD",
+          countryIso: input.countryIso,
+          preferredCurrency: currency,
         },
       },
       wallet: {
-        create: { currency: input.country === "NIGERIA" ? "NGN" : "GMD", balanceMinor: 0 },
+        create: { currency, balanceMinor: 0 },
       },
     },
   });

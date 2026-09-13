@@ -4,11 +4,13 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { STORE_COUNTRY_LABELS, STORE_COUNTRY_FLAGS } from "@/lib/store";
 import { submitShopForMeAction } from "./actions";
 import { getDestination } from "@/lib/destination";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Shop For Me — We buy it, you receive it",
-  description: "Send us a product link from any store — China, USA, UK or anywhere else — and ATG Mall will purchase, inspect, warehouse and ship it to Nigeria or Gambia.",
+  description: "Send us a product link from any store — China, USA, UK or anywhere else — and ATG Mall will purchase, inspect, warehouse and ship it worldwide.",
 };
 
 export default async function ShopForMePage({
@@ -16,7 +18,7 @@ export default async function ShopForMePage({
 }: {
   searchParams: { error?: string; storeId?: string; productUrl?: string; productName?: string; productImageUrl?: string };
 }) {
-  const destination = getDestination();
+  const [destination, countries] = await Promise.all([getDestination(), getActiveDestinationCountries()]);
   const store = searchParams.storeId
     ? await db.store.findUnique({ where: { id: searchParams.storeId } })
     : null;
@@ -62,10 +64,11 @@ export default async function ShopForMePage({
               <Input id="color" name="color" placeholder="e.g. Black" />
             </Field>
           </div>
-          <Field label="Delivery destination" htmlFor="destination" required>
-            <Select id="destination" name="destination" defaultValue={destination.country} required>
-              <option value="NIGERIA">🇳🇬 Nigeria</option>
-              <option value="GAMBIA">🇬🇲 Gambia</option>
+          <Field label="Delivery destination" htmlFor="destinationIso" required>
+            <Select id="destinationIso" name="destinationIso" defaultValue={destination.isoCode} required>
+              {countries.map((c) => (
+                <option key={c.isoCode} value={c.isoCode}>{isoToFlagEmoji(c.isoCode)} {c.name}</option>
+              ))}
             </Select>
           </Field>
           <Field label="Special instructions" htmlFor="instructions" hint="Anything our team should know — variant, deadline, etc.">

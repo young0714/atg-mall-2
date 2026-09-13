@@ -2,7 +2,7 @@
 // "server-only" dependency so both server and client components can import
 // it — unlike the service layer under src/lib/services, which talks to the
 // database and must stay server-side.
-import type { ShippingMethod, Country, Currency, Role } from "@prisma/client";
+import type { ShippingMethod, Currency, Role } from "@prisma/client";
 
 export const SHIPPING_METHOD_LABELS: Record<ShippingMethod, string> = {
   AIR_FREIGHT: "Air Freight",
@@ -23,26 +23,19 @@ export const SHIPPING_METHOD_DESCRIPTIONS: Record<ShippingMethod, string> = {
 export const DESTINATION_COOKIE = "atg_destination";
 
 export interface Destination {
-  country: Country;
+  isoCode: string;
+  name: string;
   currency: Currency;
-  label: string;
-  flag: string;
 }
 
-export const DESTINATIONS: Record<Country, Destination> = {
-  NIGERIA: { country: "NIGERIA", currency: "NGN", label: "Nigeria", flag: "🇳🇬" },
-  GAMBIA: { country: "GAMBIA", currency: "GMD", label: "Gambia", flag: "🇬🇲" },
-};
-
-export const COUNTRY_LABELS: Record<Country, string> = {
-  NIGERIA: "Nigeria",
-  GAMBIA: "Gambia",
-};
-
-export const COUNTRY_FLAGS: Record<Country, string> = {
-  NIGERIA: "🇳🇬",
-  GAMBIA: "🇬🇲",
-};
+// Renders any 2-letter ISO-3166 country code as its flag emoji (a formula,
+// not a lookup table) — works for any country an admin adds to
+// DestinationCountry without needing a matching flag map entry.
+export function isoToFlagEmoji(isoCode: string): string {
+  return isoCode
+    .toUpperCase()
+    .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
 
 export const ROLE_LABELS: Record<Role, string> = {
   SUPER_ADMIN: "Super Admin",

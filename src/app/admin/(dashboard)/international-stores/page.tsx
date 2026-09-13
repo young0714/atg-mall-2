@@ -4,6 +4,8 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { Badge } from "@/components/ui/Badge";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { STORE_COUNTRY_LABELS, STORE_COUNTRY_FLAGS, storeIntegrationTypeLabel } from "@/lib/store";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import { createStoreAction, toggleStoreActiveAction, deleteStoreAction } from "./actions";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -21,7 +23,10 @@ export default async function AdminInternationalStoresPage({
 }) {
   await requirePermission(PERMISSIONS.MANAGE_STORES);
 
-  const stores = await db.store.findMany({ orderBy: [{ country: "asc" }, { sortOrder: "asc" }, { name: "asc" } ] });
+  const [stores, destinationCountries] = await Promise.all([
+    db.store.findMany({ orderBy: [{ country: "asc" }, { sortOrder: "asc" }, { name: "asc" } ] }),
+    getActiveDestinationCountries(),
+  ]);
   const byCountry: Record<StoreCountry, typeof stores> = { CHINA: [], USA: [], UK: [] };
   for (const s of stores) byCountry[s.country].push(s);
 
@@ -78,8 +83,11 @@ export default async function AdminInternationalStoresPage({
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isActive" value="true" defaultChecked /> Active</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="shopForMeEnabled" value="true" defaultChecked /> Shop for Me enabled</label>
             <span className="text-sm text-navy-500">Ships to:</span>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="supportedDestinations" value="NIGERIA" defaultChecked /> Nigeria</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="supportedDestinations" value="GAMBIA" defaultChecked /> Gambia</label>
+            {destinationCountries.map((c) => (
+              <label key={c.isoCode} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" name="supportedDestinations" value={c.isoCode} defaultChecked={c.isoCode === "NG" || c.isoCode === "GM"} /> {isoToFlagEmoji(c.isoCode)} {c.name}
+              </label>
+            ))}
           </div>
           <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Create Store</button>
         </form>

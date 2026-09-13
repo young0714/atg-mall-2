@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { formatDate } from "@/lib/utils";
+import { currencyForDestinationIso } from "@/lib/services/destinationCountryService";
 import { issueShopForMeQuotationAction, markShopForMeUnderReviewAction } from "./actions";
 import type { Metadata } from "next";
 
@@ -34,7 +35,7 @@ export default async function AdminShopForMePage({
               <div>
                 <p className="font-semibold text-navy-800">{req.productName}</p>
                 <p className="text-xs text-navy-400">
-                  {req.user.fullName} · Qty {req.quantity} · {req.destination} · {formatDate(req.createdAt)}
+                  {req.user.fullName} · Qty {req.quantity} · {req.destinationIso} · {formatDate(req.createdAt)}
                   {req.store && <> · <span className="font-medium text-atgblue-600">{req.store.name}</span></>}
                 </p>
                 <a href={req.productUrl} target="_blank" rel="noreferrer" className="text-xs text-atgblue-600 underline">
@@ -62,7 +63,7 @@ export default async function AdminShopForMePage({
                   <Field label="Intl shipping" htmlFor={`is-${req.id}`} required><Input id={`is-${req.id}`} name="intlShipping" type="number" step="0.01" required /></Field>
                   <Field label="Other charges" htmlFor={`oc-${req.id}`}><Input id={`oc-${req.id}`} name="otherCharges" type="number" step="0.01" defaultValue={0} /></Field>
                   <Field label="Currency" htmlFor={`cur-${req.id}`} required>
-                    <Select id={`cur-${req.id}`} name="currency" defaultValue={req.destination === "NIGERIA" ? "NGN" : "GMD"} required>
+                    <Select id={`cur-${req.id}`} name="currency" defaultValue={currencyForDestinationIso(req.destinationIso)} required>
                       <option value="NGN">NGN</option>
                       <option value="GMD">GMD</option>
                       <option value="USD">USD</option>

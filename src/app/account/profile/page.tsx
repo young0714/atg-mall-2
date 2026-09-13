@@ -1,6 +1,8 @@
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { Field, Input, Select } from "@/components/ui/Form";
+import { getActiveDestinationCountries, destinationCountryNameFor } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import { updateProfileAction, addProfileAddressAction, deleteAddressAction } from "./actions";
 import type { Metadata } from "next";
 
@@ -13,10 +15,14 @@ export default async function ProfilePage({
   searchParams: { saved?: string; error?: string };
 }) {
   const user = await requireUser();
-  const [profile, addresses] = await Promise.all([
+  const [profile, addresses, countries] = await Promise.all([
     db.customerProfile.findUnique({ where: { userId: user.id } }),
     db.address.findMany({ where: { userId: user.id }, orderBy: { isDefault: "desc" } }),
+    getActiveDestinationCountries(),
   ]);
+  const addressCountryNames = new Map(
+    await Promise.all(addresses.map(async (a) => [a.countryIso, await destinationCountryNameFor(a.countryIso)] as const)),
+  );
 
   return (
     <div className="space-y-8">
@@ -41,10 +47,11 @@ export default async function ProfilePage({
         <Field label="WhatsApp" htmlFor="whatsapp">
           <Input id="whatsapp" name="whatsapp" defaultValue={user.whatsapp ?? ""} />
         </Field>
-        <Field label="Country" htmlFor="country">
-          <Select id="country" name="country" defaultValue={profile?.country ?? "NIGERIA"}>
-            <option value="NIGERIA">Nigeria</option>
-            <option value="GAMBIA">Gambia</option>
+        <Field label="Country" htmlFor="countryIso">
+          <Select id="countryIso" name="countryIso" defaultValue={profile?.countryIso ?? "NG"}>
+            {countries.map((c) => (
+              <option key={c.isoCode} value={c.isoCode}>{isoToFlagEmoji(c.isoCode)} {c.name}</option>
+            ))}
           </Select>
         </Field>
         <Field label="Preferred currency" htmlFor="preferredCurrency">
@@ -70,7 +77,7 @@ export default async function ProfilePage({
             <div key={a.id} className="flex items-center justify-between rounded-lg border border-navy-100 p-3 text-sm">
               <div>
                 <p className="font-medium text-navy-800">{a.label}{a.isDefault && <span className="ml-2 badge bg-navy-50 text-navy-500">Default</span>}</p>
-                <p className="text-navy-500">{a.fullName} · {a.addressLine1}, {a.city}, {a.state}, {a.country === "NIGERIA" ? "Nigeria" : "Gambia"}</p>
+                <p className="text-navy-500">{a.fullName} · {a.addressLine1}, {a.city}, {a.state}, {addressCountryNames.get(a.countryIso) ?? a.countryIso}</p>
               </div>
               <form action={deleteAddressAction}>
                 <input type="hidden" name="addressId" value={a.id} />
@@ -85,9 +92,10 @@ export default async function ProfilePage({
           <Field label="Full name" htmlFor="a-fullName" required><Input id="a-fullName" name="fullName" required /></Field>
           <Field label="Phone" htmlFor="a-phone" required><Input id="a-phone" name="phone" required /></Field>
           <Field label="Country" htmlFor="a-country" required>
-            <Select id="a-country" name="country" required>
-              <option value="NIGERIA">Nigeria</option>
-              <option value="GAMBIA">Gambia</option>
+            <Select id="a-country" name="countryIso" required>
+              {countries.map((c) => (
+                <option key={c.isoCode} value={c.isoCode}>{isoToFlagEmoji(c.isoCode)} {c.name}</option>
+              ))}
             </Select>
           </Field>
           <Field label="State" htmlFor="a-state" required><Input id="a-state" name="state" required /></Field>

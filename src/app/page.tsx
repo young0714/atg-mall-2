@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { getDestination } from "@/lib/destination";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { toProductCard } from "@/lib/product-view";
 import { Hero } from "@/components/home/Hero";
 import { ServicesPromo } from "@/components/home/ServicesPromo";
@@ -17,7 +18,7 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const destination = getDestination();
+  const [destination, countries] = await Promise.all([getDestination(), getActiveDestinationCountries()]);
 
   const [featuredProducts, categories, wholesaleProducts] = await Promise.all([
     db.product.findMany({
@@ -41,7 +42,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero destination={destination.country} />
+      <Hero destination={destination.isoCode} countries={countries} />
       <ServicesPromo />
       <ShopTheWorld />
 

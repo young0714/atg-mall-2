@@ -2,6 +2,8 @@ import { Container, Section, SectionHeading } from "@/components/ui/Section";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { submitSourcingRequestAction } from "./actions";
 import { getDestination } from "@/lib/destination";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,12 +11,12 @@ export const metadata: Metadata = {
   description: "Can't find a supplier? Tell ATG Mall what you need and our sourcing team will find verified options and quotes.",
 };
 
-export default function SourceAProductPage({
+export default async function SourceAProductPage({
   searchParams,
 }: {
   searchParams: { error?: string };
 }) {
-  const destination = getDestination();
+  const [destination, countries] = await Promise.all([getDestination(), getActiveDestinationCountries()]);
 
   return (
     <Section className="!py-12">
@@ -47,10 +49,11 @@ export default function SourceAProductPage({
               <Input id="targetPriceMinor" name="targetPriceMinor" type="number" min={0} step={1} />
             </Field>
           </div>
-          <Field label="Delivery destination" htmlFor="destination" required>
-            <Select id="destination" name="destination" defaultValue={destination.country} required>
-              <option value="NIGERIA">🇳🇬 Nigeria</option>
-              <option value="GAMBIA">🇬🇲 Gambia</option>
+          <Field label="Delivery destination" htmlFor="destinationIso" required>
+            <Select id="destinationIso" name="destinationIso" defaultValue={destination.isoCode} required>
+              {countries.map((c) => (
+                <option key={c.isoCode} value={c.isoCode}>{isoToFlagEmoji(c.isoCode)} {c.name}</option>
+              ))}
             </Select>
           </Field>
           <Field label="Additional notes" htmlFor="notes">

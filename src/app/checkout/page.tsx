@@ -3,7 +3,8 @@ import { requireUser } from "@/lib/auth/current-user";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import { groupCartForShipping } from "@/lib/services/shipping/cartShipmentGrouping";
 import { customsService } from "@/lib/services/shipping/customsService";
-import { destinationCountryToIsoCode } from "@/lib/services/storeOrigin";
+import { currencyForDestinationIso, getActiveDestinationCountries, destinationCountryNameFor } from "@/lib/services/destinationCountryService";
+import { isoToFlagEmoji } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import { Container, Section } from "@/components/ui/Section";
 import { Field, Input, Select } from "@/components/ui/Form";
@@ -21,19 +22,19 @@ export default async function CheckoutPage({
 }) {
   const user = await requireUser();
 
-  const [cart, addresses, profile] = await Promise.all([
+  const [cart, addresses, profile, countries] = await Promise.all([
     db.cart.findUnique({ where: { userId: user.id }, include: { items: { include: { product: true } } } }),
     db.address.findMany({ where: { userId: user.id }, orderBy: { isDefault: "desc" } }),
     db.customerProfile.findUnique({ where: { userId: user.id } }),
+    getActiveDestinationCountries(),
   ]);
 
   if (!cart || cart.items.length === 0) redirect("/cart");
 
   const wallet = await db.wallet.findUnique({ where: { userId: user.id } });
 
-  const destinationCountry = profile?.country ?? addresses[0]?.country ?? "NIGERIA";
-  const orderCurrency = profile?.preferredCurrency ?? (destinationCountry === "NIGERIA" ? "NGN" : "GMD");
-  const destinationIso = destinationCountryToIsoCode(destinationCountry);
+  const destinationIso = profile?.countryIso ?? addresses[0]?.countryIso ?? "NG";
+  const orderCurrency = profile?.preferredCurrency ?? currencyForDestinationIso(destinationIso);
 
   // Convert each item from its OWN base currency (CNY, USD, etc.) — not
   // hardcoded as if every product were CNY-priced.
@@ -57,6 +58,13 @@ export default async function CheckoutPage({
   );
 
   const customs = await customsService.getDisclosure(destinationIso);
+
+  // Addresses can reference a country that's since been deactivated (still
+  // valid historical data), so resolve names from the full reference table,
+  // not just the active `countries` list used for the select options.
+  const addressCountryNames = new Map(
+    await Promise.all(addresses.map(async (a) => [a.countryIso, await destinationCountryNameFor(a.countryIso)] as const)),
+  );
 
   const blockedGroups = groups.filter((g) => g.quote.options.length === 0);
   const canCheckout = unresolvedLines.length === 0 && blockedGroups.length === 0 && addresses.length > 0;
@@ -107,10 +115,11 @@ export default async function CheckoutPage({
               <Field label="Phone" htmlFor="phone" required>
                 <Input id="phone" name="phone" required />
               </Field>
-              <Field label="Country" htmlFor="country" required>
-                <Select id="country" name="country" defaultValue={destinationCountry} required>
-                  <option value="NIGERIA">Nigeria</option>
-                  <option value="GAMBIA">Gambia</option>
+              <Field label="Country" htmlFor="countryIso" required>
+                <Select id="countryIso" name="countryIso" defaultValue={destinationIso} required>
+                  {countries.map((c) => (
+                    <option key={c.isoCode} value={c.isoCode}>{isoToFlagEmoji(c.isoCode)} {c.name}</option>
+                  ))}
                 </Select>
               </Field>
               <Field label="State/Region" htmlFor="state" required>
@@ -137,7 +146,7 @@ export default async function CheckoutPage({
                     <label key={a.id} className="flex cursor-pointer items-start gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
                       <input type="radio" name="addressId" value={a.id} defaultChecked={a.isDefault} className="mt-1" required />
                       <span className="text-sm">
-                        <span className="font-medium text-navy-800">{a.fullName}</span> — {a.addressLine1}, {a.city}, {a.state}, {a.country === "NIGERIA" ? "Nigeria" : "Gambia"}
+                        <span className="font-medium text-navy-800">{a.fullName}</span> — {a.addressLine1}, {a.city}, {a.state}, {addressCountryNames.get(a.countryIso) ?? a.countryIso}
                         <br />
                         <span className="text-navy-400">{a.phone}</span>
                       </span>

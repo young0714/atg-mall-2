@@ -19,12 +19,12 @@ export async function acceptQuotationAction(formData: FormData) {
   });
   if (!quotation) redirect("/account/quotations?error=Quotation+not+found+or+already+processed");
 
-  const destination = quotation!.shopForMeRequest?.destination ?? quotation!.sourcingRequest?.destination ?? "NIGERIA";
+  const destinationIso = quotation!.shopForMeRequest?.destinationIso ?? quotation!.sourcingRequest?.destinationIso ?? "NG";
   const address = await db.address.findFirst({ where: { userId: user.id }, orderBy: { isDefault: "desc" } });
 
   const { orderNumber } = await orderService.createOrderFromQuotation({
     quotationId: quotation!.id,
-    destination,
+    destinationIso,
     addressId: address?.id,
   });
 

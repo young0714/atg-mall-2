@@ -4,7 +4,8 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { Stat } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/money";
-import { COUNTRY_LABELS, COUNTRY_FLAGS } from "@/lib/constants";
+import { isoToFlagEmoji } from "@/lib/constants";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Reports" };
@@ -22,9 +23,10 @@ export default async function AdminReportsPage() {
     walletsByCurrency,
     coupons,
     packagesByStatus,
+    countries,
   ] = await Promise.all([
     db.order.groupBy({
-      by: ["destination", "currency"],
+      by: ["destinationIso", "currency"],
       _count: { _all: true },
       _sum: { totalMinor: true },
       where: { status: { not: "CANCELLED" } },
@@ -41,6 +43,7 @@ export default async function AdminReportsPage() {
     db.wallet.groupBy({ by: ["currency"], _sum: { balanceMinor: true }, _count: { _all: true } }),
     db.coupon.findMany({ orderBy: { createdAt: "desc" } }),
     db.package.groupBy({ by: ["status"], _count: { _all: true } }),
+    getActiveDestinationCountries(),
   ]);
 
   const productIds = orderItemsByProduct.map((r) => r.productId).filter((id): id is string => !!id);
@@ -48,13 +51,14 @@ export default async function AdminReportsPage() {
     ? await db.product.findMany({ where: { id: { in: productIds } }, select: { id: true, name: true } })
     : [];
   const productNameById = new Map(products.map((p) => [p.id, p.name]));
+  const countryNameByIso = new Map(countries.map((c) => [c.isoCode, c.name]));
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-display font-bold text-navy-900">Reports</h1>
         <p className="text-sm text-navy-500">
-          Operational and financial breakdowns across Nigeria and Gambia. Figures reflect data stored in ATG Mall —
+          Operational and financial breakdowns across every destination. Figures reflect data stored in ATG Mall —
           revenue is shown per currency and is not converted or combined, since a single blended total across NGN and
           GMD would be misleading.
         </p>
@@ -68,8 +72,8 @@ export default async function AdminReportsPage() {
           )}
           {ordersByDestination.map((row) => (
             <Stat
-              key={`${row.destination}-${row.currency}`}
-              label={`${COUNTRY_FLAGS[row.destination]} ${COUNTRY_LABELS[row.destination]} (${row.currency})`}
+              key={`${row.destinationIso}-${row.currency}`}
+              label={`${isoToFlagEmoji(row.destinationIso)} ${countryNameByIso.get(row.destinationIso) ?? row.destinationIso} (${row.currency})`}
               value={formatMoney(row._sum.totalMinor ?? 0, row.currency)}
               hint={`${row._count._all} order${row._count._all === 1 ? "" : "s"}`}
               tone="blue"

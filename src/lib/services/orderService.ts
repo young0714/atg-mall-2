@@ -1,7 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
 import type {
-  Country,
   Currency,
   OrderStatus,
   PaymentMethod,
@@ -51,7 +50,7 @@ export interface OrderShipmentSpec {
 export interface CreateOrderFromCartParams {
   userId: string;
   addressId: string;
-  destination: Country;
+  destinationIso: string;
   currency: Currency;
   paymentMethod: PaymentMethod;
   domesticShippingMinor?: number;
@@ -61,7 +60,7 @@ export interface CreateOrderFromCartParams {
 
 export interface OrderService {
   createOrderFromCart(params: CreateOrderFromCartParams): Promise<{ orderId: string; orderNumber: string; paymentStatus: string }>;
-  createOrderFromQuotation(params: { quotationId: string; destination: Country; addressId?: string }): Promise<{ orderId: string; orderNumber: string }>;
+  createOrderFromQuotation(params: { quotationId: string; destinationIso: string; addressId?: string }): Promise<{ orderId: string; orderNumber: string }>;
   advanceStatus(orderId: string, status: OrderStatus, description?: string): Promise<void>;
 }
 
@@ -111,7 +110,7 @@ class DefaultOrderService implements OrderService {
     const intlShippingMinor = sumMinor(...params.shipments.map((s) => s.customerPriceMinor));
     const totalMinor = sumMinor(subtotalMinor, domesticShippingMinor, intlShippingMinor, serviceFeeMinor);
 
-    const orderNumber = generateAtgNumber("ATG", params.destination);
+    const orderNumber = generateAtgNumber("ATG", params.destinationIso);
 
     const orderId = await db.$transaction(async (tx) => {
       const order = await tx.order.create({
@@ -121,7 +120,7 @@ class DefaultOrderService implements OrderService {
           addressId: params.addressId,
           source: "CATALOG",
           status: "PENDING_PAYMENT",
-          destination: params.destination,
+          destinationIso: params.destinationIso,
           currency: params.currency,
           subtotalMinor,
           serviceFeeMinor,
@@ -269,11 +268,11 @@ class DefaultOrderService implements OrderService {
 
   async createOrderFromQuotation({
     quotationId,
-    destination,
+    destinationIso,
     addressId,
   }: {
     quotationId: string;
-    destination: Country;
+    destinationIso: string;
     addressId?: string;
   }) {
     const quotation = await db.quotation.findUniqueOrThrow({
@@ -287,7 +286,7 @@ class DefaultOrderService implements OrderService {
     const userId = quotation.shopForMeRequest?.userId ?? quotation.sourcingRequest?.userId;
     if (!userId) throw new Error("Quotation is not linked to a request");
 
-    const orderNumber = generateAtgNumber("ATG", destination);
+    const orderNumber = generateAtgNumber("ATG", destinationIso);
     const source = quotation.shopForMeRequestId ? "SHOP_FOR_ME" : "SOURCING";
     const name =
       quotation.shopForMeRequest?.productName ?? quotation.sourcingRequest?.productName ?? "Sourced item";
@@ -311,7 +310,7 @@ class DefaultOrderService implements OrderService {
         addressId,
         source,
         status: "PENDING_PAYMENT",
-        destination,
+        destinationIso,
         currency: quotation.currency,
         subtotalMinor: quotation.productCostMinor,
         serviceFeeMinor: quotation.serviceFeeMinor,

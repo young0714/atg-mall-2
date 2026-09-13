@@ -20,7 +20,7 @@ export async function GET() {
       weightGrams: p.weightGrams,
       warehouse: p.warehouse?.name ?? null,
       shippingMethod: p.shippingMethod,
-      destination: p.destination,
+      destination: p.destinationIso,
       createdAt: p.createdAt,
     })),
   });

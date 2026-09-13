@@ -26,7 +26,7 @@ export async function submitShopForMeAction(formData: FormData) {
       quantity: data.quantity,
       size: data.size || undefined,
       color: data.color || undefined,
-      destination: data.destination,
+      destinationIso: data.destinationIso,
       instructions: data.instructions || undefined,
     },
   });

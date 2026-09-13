@@ -6,9 +6,10 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "International Stores — Shop from China, USA & UK",
   description:
-    "International shopping from Nigeria and Gambia — browse ATG Mall's directory of stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping.",
+    "International shopping worldwide — browse ATG Mall's directory of stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping.",
   keywords: [
     "International Stores",
+    "international shopping worldwide",
     "international shopping from Nigeria",
     "international shopping from Gambia",
     "Shop from China",
@@ -60,7 +61,7 @@ export default async function InternationalStoresPage() {
         <SectionHeading
           eyebrow="Shop the World"
           title="International Stores"
-          description="ATG Mall sources from stores across China, the USA and the UK — send us a link from any of them and we'll buy, consolidate and ship it to Nigeria or Gambia."
+          description="ATG Mall sources from stores across China, the USA and the UK — send us a link from any of them and we'll buy, consolidate and ship it worldwide."
         />
 
         <div className="mt-10 grid gap-5 lg:grid-cols-3">

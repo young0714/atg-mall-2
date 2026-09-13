@@ -3,11 +3,26 @@
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
 import { addressSchema } from "@/lib/validation/schemas";
+import { isActiveDestinationIso } from "@/lib/services/destinationCountryService";
+import type { Currency } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+const VALID_CURRENCIES: Currency[] = ["NGN", "GMD", "USD", "EUR", "GBP", "CNY"];
+
 export async function updateProfileAction(formData: FormData) {
   const user = await requireUser();
+
+  const countryIso = String(formData.get("countryIso") ?? "").trim().toUpperCase();
+  if (!(await isActiveDestinationIso(countryIso))) {
+    redirect("/account/profile?error=" + encodeURIComponent("Select a valid country."));
+  }
+
+  const preferredCurrencyRaw = String(formData.get("preferredCurrency") ?? "");
+  if (!VALID_CURRENCIES.includes(preferredCurrencyRaw as Currency)) {
+    redirect("/account/profile?error=" + encodeURIComponent("Select a valid currency."));
+  }
+  const preferredCurrency = preferredCurrencyRaw as Currency;
 
   await db.user.update({
     where: { id: user.id },
@@ -18,19 +33,22 @@ export async function updateProfileAction(formData: FormData) {
     },
   });
 
+  // `country` used to only be set on `create:` — editing an existing
+  // profile's country silently did nothing. Both branches now set it.
   await db.customerProfile.upsert({
     where: { userId: user.id },
     update: {
+      countryIso,
       state: String(formData.get("state") ?? ""),
       city: String(formData.get("city") ?? ""),
-      preferredCurrency: String(formData.get("preferredCurrency") ?? "NGN") as never,
+      preferredCurrency,
     },
     create: {
       userId: user.id,
-      country: String(formData.get("country") ?? "NIGERIA") as never,
+      countryIso,
       state: String(formData.get("state") ?? ""),
       city: String(formData.get("city") ?? ""),
-      preferredCurrency: String(formData.get("preferredCurrency") ?? "NGN") as never,
+      preferredCurrency,
     },
   });
 

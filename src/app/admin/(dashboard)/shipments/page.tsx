@@ -2,7 +2,8 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { StatusBadge } from "@/components/ui/Badge";
-import { SHIPPING_METHOD_LABELS, COUNTRY_LABELS } from "@/lib/constants";
+import { SHIPPING_METHOD_LABELS } from "@/lib/constants";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -12,10 +13,14 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminShipmentsPage() {
   await requirePermission(PERMISSIONS.MANAGE_SHIPMENTS);
-  const shipments = await db.shipment.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { packages: true },
-  });
+  const [shipments, countries] = await Promise.all([
+    db.shipment.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { packages: true },
+    }),
+    getActiveDestinationCountries(),
+  ]);
+  const countryNameByIso = new Map(countries.map((c) => [c.isoCode, c.name]));
 
   return (
     <div className="space-y-6">
@@ -43,7 +48,7 @@ export default async function AdminShipmentsPage() {
                   <Link href={`/admin/shipments/${s.id}`} className="font-medium text-atgblue-600">{s.trackingNumber}</Link>
                 </td>
                 <td className="p-3 text-navy-500">{SHIPPING_METHOD_LABELS[s.method]}</td>
-                <td className="p-3 text-navy-500">{COUNTRY_LABELS[s.destinationCountry]}{s.destinationCity ? `, ${s.destinationCity}` : ""}</td>
+                <td className="p-3 text-navy-500">{countryNameByIso.get(s.destinationCountryIso) ?? s.destinationCountryIso}{s.destinationCity ? `, ${s.destinationCity}` : ""}</td>
                 <td className="p-3 text-navy-500">{s.packages.length}</td>
                 <td className="p-3"><StatusBadge status={s.status} /></td>
                 <td className="p-3 text-navy-400">{formatDate(s.createdAt)}</td>

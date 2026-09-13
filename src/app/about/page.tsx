@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About ATG Mall",
   description:
-    "ATG Mall connects shoppers in Nigeria and Gambia to Chinese suppliers on 1688, Taobao and Alibaba — we source, buy, consolidate, ship and deliver.",
+    "ATG Mall connects shoppers worldwide to Chinese suppliers on 1688, Taobao and Alibaba — we source, buy, consolidate, ship and deliver.",
 };
 
 export default function AboutPage() {
@@ -16,7 +16,7 @@ export default function AboutPage() {
           <SectionHeading
             eyebrow="About ATG Mall"
             title="Shop global. Delivered local."
-            description="ATG Mall makes it simple to shop from Chinese marketplaces and get your items home to Nigeria or Gambia — without needing a China-based agent, a freight forwarder, and a customs broker of your own."
+            description="ATG Mall makes it simple to shop from Chinese marketplaces and get your items home — anywhere we ship to worldwide — without needing a China-based agent, a freight forwarder, and a customs broker of your own."
           />
 
           <div className="legal-content mt-8">
@@ -30,7 +30,7 @@ export default function AboutPage() {
               <li><strong>Shop &amp; Source</strong> — browse products through ATG Mall, or send us a link or description of something you found elsewhere and we&apos;ll source it and quote you a landed cost.</li>
               <li><strong>Buy</strong> — we purchase from the supplier on your behalf once you approve pricing.</li>
               <li><strong>Consolidate</strong> — multiple purchases are received at our warehouse and can be combined into a single shipment to reduce your shipping cost.</li>
-              <li><strong>Ship</strong> — we arrange international freight (air, sea or courier) to Nigeria or Gambia.</li>
+              <li><strong>Ship</strong> — we arrange international freight (air, sea or courier) to any destination we support, worldwide.</li>
               <li><strong>Deliver</strong> — your consolidated shipment clears and is delivered to a city we serve, or made available for pickup.</li>
             </ul>
 
@@ -42,8 +42,9 @@ export default function AboutPage() {
               <a href="https://apexterraglobal.com" target="_blank" rel="noreferrer">apexterraglobal.com</a>.
             </p>
             <p>
-              We are currently focused on serving customers in <strong>🇳🇬 Nigeria</strong> and <strong>🇬🇲 Gambia</strong>,
-              with plans to expand to more markets over time.
+              We ship worldwide to any destination country you select at checkout. Our deepest operational roots and
+              local delivery expertise remain in <strong>🇳🇬 Nigeria</strong> and <strong>🇬🇲 Gambia</strong>, and we
+              continue to add more supported destinations over time.
             </p>
 
             <h2>How we&apos;re different</h2>
@@ -68,7 +69,7 @@ export default function AboutPage() {
         <Container className="grid gap-4 sm:grid-cols-3">
           <Card><CardBody><p className="text-sm font-semibold text-navy-800">Company</p><p className="mt-1 text-sm text-navy-500">Apex Terra Global Limited</p></CardBody></Card>
           <Card><CardBody><p className="text-sm font-semibold text-navy-800">Director</p><p className="mt-1 text-sm text-navy-500">Alabi Olasesan</p></CardBody></Card>
-          <Card><CardBody><p className="text-sm font-semibold text-navy-800">Serving</p><p className="mt-1 text-sm text-navy-500">🇳🇬 Nigeria · 🇬🇲 Gambia</p></CardBody></Card>
+          <Card><CardBody><p className="text-sm font-semibold text-navy-800">Serving</p><p className="mt-1 text-sm text-navy-500">🌍 Worldwide · rooted in 🇳🇬 Nigeria &amp; 🇬🇲 Gambia</p></CardBody></Card>
         </Container>
       </Section>
     </>

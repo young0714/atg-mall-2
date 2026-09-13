@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
 import { DestinationSwitcher } from "./DestinationSwitcher";
 import { getDestination } from "@/lib/destination";
+import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { isStaffRole } from "@/lib/rbac";
 
@@ -13,8 +14,11 @@ const NAV_LINKS = [
 ];
 
 export async function Header() {
-  const destination = getDestination();
-  const user = await getCurrentUser();
+  const [destination, countries, user] = await Promise.all([
+    getDestination(),
+    getActiveDestinationCountries(),
+    getCurrentUser(),
+  ]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-navy-100 bg-white/95 backdrop-blur">
@@ -77,7 +81,7 @@ export async function Header() {
 
         <div className="flex items-center gap-3">
           <div className="hidden md:block">
-            <DestinationSwitcher current={destination.country} />
+            <DestinationSwitcher current={destination.isoCode} countries={countries} />
           </div>
           <Link href="/cart" aria-label="Cart" className="rounded-full p-2 text-navy-700 hover:bg-sand-100">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

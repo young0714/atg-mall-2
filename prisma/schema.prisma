@@ -87,7 +87,7 @@ model CustomerProfile {
   id               String   @id @default(cuid())
   userId           String   @unique
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  country          Country  @default(NIGERIA)
+  countryIso       String
   state            String?
   city             String?
   preferredCurrency Currency @default(NGN)
@@ -103,7 +103,7 @@ model Address {
   label        String   @default("Home")
   fullName     String
   phone        String
-  country      Country
+  countryIso   String
   state        String
   city         String
   addressLine1 String
@@ -217,7 +217,7 @@ model Store {
   apiStatus          String?
   isActive           Boolean  @default(true)
   shopForMeEnabled   Boolean  @default(true)
-  supportedDestinations Country[] @default([NIGERIA, GAMBIA])
+  supportedDestinations String[] @default(["NG", "GM"])
   sortOrder          Int      @default(0)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
@@ -413,7 +413,7 @@ model Order {
   address       Address?    @relation(fields: [addressId], references: [id])
   source        OrderSource @default(CATALOG)
   status        OrderStatus @default(PENDING_PAYMENT)
-  destination   Country
+  destinationIso String
   currency      Currency
 
   subtotalMinor        Int
@@ -574,7 +574,7 @@ model ShopForMeRequest {
   quantity      Int           @default(1)
   size          String?
   color         String?
-  destination   Country
+  destinationIso String
   instructions  String?
   status        RequestStatus @default(SUBMITTED)
   createdAt     DateTime      @default(now())
@@ -597,7 +597,7 @@ model SourcingRequest {
   quantity      Int           @default(1)
   targetPriceMinor Int?
   targetCurrency Currency?    @default(USD)
-  destination   Country
+  destinationIso String
   notes         String?
   status        RequestStatus @default(SUBMITTED)
   createdAt     DateTime      @default(now())
@@ -749,7 +749,7 @@ model Package {
   widthCm       Int?
   heightCm      Int?
   photos        String[]
-  destination   Country
+  destinationIso String
   addressId     String?
   address       Address?      @relation(fields: [addressId], references: [id])
   createdAt     DateTime      @default(now())
@@ -802,7 +802,7 @@ model Shipment {
   trackingNumber String        @unique // e.g. ATG-NG-2026000123
   method        ShippingMethod
   origin        String         @default("Guangzhou, China")
-  destinationCountry Country
+  destinationCountryIso String
   destinationCity    String?
   status        ShipmentStatus @default(READY_TO_SHIP)
   estimatedDeliveryAt DateTime?
@@ -883,7 +883,7 @@ model PricingPolicy {
 
 model DeliveryZone {
   id          String   @id @default(cuid())
-  country     Country
+  countryIso  String
   city        String
   isActive    Boolean  @default(true)
   localFeeMinor Int    @default(0)
@@ -891,7 +891,7 @@ model DeliveryZone {
   etaDaysMin  Int      @default(1)
   etaDaysMax  Int      @default(3)
 
-  @@unique([country, city])
+  @@unique([countryIso, city])
 }
 
 // ---------------------------------------------------------------------------

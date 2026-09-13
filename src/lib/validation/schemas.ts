@@ -11,12 +11,18 @@ const optionalCoercedInt = (min = 0) =>
     z.coerce.number().int().min(min).optional(),
   );
 
+// A 2-letter destination-country ISO code (e.g. "NG", "GM", "GH"). Format
+// only — whether it's a real, active DestinationCountry is checked
+// separately via isActiveDestinationIso() in the server action, the same
+// two-layer pattern the shipping-engine's own admin forms already use.
+const isoCountrySchema = z.string().trim().toUpperCase().length(2, "Select a country");
+
 export const registerSchema = z.object({
   fullName: z.string().min(2, "Enter your full name"),
   email: z.string().email("Enter a valid email address"),
   phone: z.string().min(7, "Enter a valid phone number"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  country: z.enum(["NIGERIA", "GAMBIA"]),
+  countryIso: isoCountrySchema,
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 
@@ -34,7 +40,7 @@ export const shopForMeSchema = z.object({
   quantity: z.coerce.number().int().min(1).max(10000),
   size: z.string().optional(),
   color: z.string().optional(),
-  destination: z.enum(["NIGERIA", "GAMBIA"]),
+  destinationIso: isoCountrySchema,
   instructions: z.string().optional(),
 });
 export type ShopForMeInput = z.infer<typeof shopForMeSchema>;
@@ -45,7 +51,7 @@ export const sourcingRequestSchema = z.object({
   productUrl: z.string().url().optional().or(z.literal("")),
   quantity: z.coerce.number().int().min(1).max(1_000_000),
   targetPriceMinor: z.coerce.number().int().min(0).optional(),
-  destination: z.enum(["NIGERIA", "GAMBIA"]),
+  destinationIso: isoCountrySchema,
   notes: z.string().optional(),
 });
 export type SourcingRequestInput = z.infer<typeof sourcingRequestSchema>;
@@ -54,7 +60,7 @@ export const addressSchema = z.object({
   label: z.string().min(1).default("Home"),
   fullName: z.string().min(2),
   phone: z.string().min(7),
-  country: z.enum(["NIGERIA", "GAMBIA"]),
+  countryIso: isoCountrySchema,
   state: z.string().min(1),
   city: z.string().min(1),
   addressLine1: z.string().min(4),
@@ -190,8 +196,8 @@ export const storeSchema = z.object({
   isActive: z.coerce.boolean().default(true),
   shopForMeEnabled: z.coerce.boolean().default(true),
   supportedDestinations: z
-    .array(z.enum(["NIGERIA", "GAMBIA"]))
-    .default(["NIGERIA", "GAMBIA"]),
+    .array(isoCountrySchema)
+    .default(["NG", "GM"]),
   sortOrder: z.coerce.number().int().default(0),
 });
 export type StoreInput = z.infer<typeof storeSchema>;
@@ -229,7 +235,7 @@ export const warehouseReceiveSchema = z.object({
   heightCm: z.coerce.number().int().min(0).optional(),
   trackingNumberIn: z.string().optional(),
   notes: z.string().optional(),
-  destination: z.enum(["NIGERIA", "GAMBIA"]),
+  destinationIso: isoCountrySchema,
 });
 export type WarehouseReceiveInput = z.infer<typeof warehouseReceiveSchema>;
 
@@ -240,9 +246,9 @@ export const walletDepositSchema = z.object({
 export type WalletDepositInput = z.infer<typeof walletDepositSchema>;
 
 export const deliveryZoneSchema = z.object({
-  country: z.enum(["NIGERIA", "GAMBIA"]),
+  countryIso: isoCountrySchema,
   city: z.string().min(2, "Enter a city name"),
-  currency: z.enum(["NGN", "GMD"]),
+  currency: z.enum(["NGN", "GMD", "USD", "EUR", "GBP", "CNY"]),
   localFeeMinor: z.coerce.number().int().min(0).default(0),
   etaDaysMin: z.coerce.number().int().min(0),
   etaDaysMax: z.coerce.number().int().min(0),

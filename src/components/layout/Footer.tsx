@@ -52,7 +52,7 @@ export function Footer() {
         <div className="col-span-2 lg:col-span-2">
           <Logo />
           <p className="mt-4 max-w-xs text-sm text-navy-300">
-            Shop products from China and get them delivered to Nigeria or Gambia. We handle
+            Shop products from China and get them delivered worldwide. We handle
             sourcing, purchasing, receiving, consolidation and international shipping.
           </p>
           <div className="mt-5 space-y-1 text-sm text-navy-300">

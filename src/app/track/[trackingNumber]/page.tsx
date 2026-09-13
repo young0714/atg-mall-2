@@ -2,17 +2,19 @@ import { trackingService } from "@/lib/services/trackingService";
 import { StatusTimeline } from "@/components/tracking/StatusTimeline";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Container, Section } from "@/components/ui/Section";
-import { SHIPPING_METHOD_LABELS, COUNTRY_LABELS } from "@/lib/constants";
+import { SHIPPING_METHOD_LABELS } from "@/lib/constants";
+import { destinationCountryNameFor } from "@/lib/services/destinationCountryService";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import type { Metadata } from "next";
-import type { Country, ShippingMethod } from "@prisma/client";
+import type { ShippingMethod } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Track Shipment" };
 export const dynamic = "force-dynamic";
 
 export default async function TrackResultPage({ params }: { params: { trackingNumber: string } }) {
   const result = await trackingService.track(decodeURIComponent(params.trackingNumber));
+  const destinationCountryName = result ? await destinationCountryNameFor(result.destinationCountry) : null;
 
   return (
     <Section className="!py-12">
@@ -39,7 +41,7 @@ export default async function TrackResultPage({ params }: { params: { trackingNu
               </div>
               <dl className="mt-5 grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
                 <div><dt className="text-navy-400">Method</dt><dd className="font-medium text-navy-800">{SHIPPING_METHOD_LABELS[result.method as ShippingMethod]}</dd></div>
-                <div><dt className="text-navy-400">Destination</dt><dd className="font-medium text-navy-800">{COUNTRY_LABELS[result.destinationCountry as Country]}{result.destinationCity ? `, ${result.destinationCity}` : ""}</dd></div>
+                <div><dt className="text-navy-400">Destination</dt><dd className="font-medium text-navy-800">{destinationCountryName}{result.destinationCity ? `, ${result.destinationCity}` : ""}</dd></div>
                 <div><dt className="text-navy-400">Est. delivery</dt><dd className="font-medium text-navy-800">{result.estimatedDeliveryAt ? formatDate(result.estimatedDeliveryAt) : "TBC"}</dd></div>
               </dl>
               {result.packages.length > 0 && (
