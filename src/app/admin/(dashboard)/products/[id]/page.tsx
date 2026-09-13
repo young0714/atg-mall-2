@@ -190,7 +190,7 @@ export default async function AdminProductDetailPage({
       <section className="card space-y-4 p-5">
         <h2 className="font-semibold text-navy-900">Variants ({product.variants.length})</h2>
         {product.variants.length > 0 && (
-          <VariantsTable productId={product.id} variants={product.variants} baseCurrency={product.baseCurrency} />
+          <VariantsTable productId={product.id} variants={product.variants} />
         )}
         <details>
           <summary className="cursor-pointer text-sm font-medium text-atgblue-600">+ Add variant</summary>
@@ -200,9 +200,6 @@ export default async function AdminProductDetailPage({
               <Input id="v-name" name="name" required />
             </Field>
             <Field label="SKU" htmlFor="v-sku"><Input id="v-sku" name="sku" /></Field>
-            <Field label="Price delta (minor units)" htmlFor="v-priceDeltaMinor" hint="Added to base price; can be negative">
-              <Input id="v-priceDeltaMinor" name="priceDeltaMinor" type="number" defaultValue={0} />
-            </Field>
             <Field label="Stock" htmlFor="v-stock"><Input id="v-stock" name="stock" type="number" defaultValue={999} /></Field>
             <Field label="Attributes (JSON)" htmlFor="v-attributes" hint='e.g. {"color":"Black","size":"XL"}'>
               <Input id="v-attributes" name="attributes" placeholder='{"color":"Black","size":"XL"}' />

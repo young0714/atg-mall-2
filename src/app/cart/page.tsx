@@ -21,10 +21,7 @@ export default async function CartPage() {
   });
 
   const items = cart?.items ?? [];
-  const subtotalMinor = items.reduce(
-    (sum, item) => sum + (item.product.basePriceMinor + (item.variant?.priceDeltaMinor ?? 0)) * item.quantity,
-    0,
-  );
+  const subtotalMinor = items.reduce((sum, item) => sum + item.product.basePriceMinor * item.quantity, 0);
 
   return (
     <Section className="!py-10">
@@ -40,7 +37,7 @@ export default async function CartPage() {
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
             <div className="space-y-4">
               {items.map((item) => {
-                const unitPrice = item.product.basePriceMinor + (item.variant?.priceDeltaMinor ?? 0);
+                const unitPrice = item.product.basePriceMinor;
                 return (
                   <div key={item.id} className="card flex gap-4 p-4">
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-sand-100">

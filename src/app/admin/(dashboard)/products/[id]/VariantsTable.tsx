@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import type { Currency } from "@prisma/client";
-import { formatMoney } from "@/lib/money";
 import { deleteProductVariantsAction } from "./actions";
 
 interface VariantRow {
   id: string;
   name: string;
   sku: string | null;
-  priceDeltaMinor: number;
   stock: number;
   attributes: unknown;
 }
@@ -17,11 +14,9 @@ interface VariantRow {
 export function VariantsTable({
   productId,
   variants,
-  baseCurrency,
 }: {
   productId: string;
   variants: VariantRow[];
-  baseCurrency: Currency;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -70,7 +65,6 @@ export function VariantsTable({
               </th>
               <th className="p-2">Name</th>
               <th className="p-2">SKU</th>
-              <th className="p-2">Price delta</th>
               <th className="p-2">Stock</th>
               <th className="p-2">Attributes</th>
             </tr>
@@ -93,10 +87,6 @@ export function VariantsTable({
                   </td>
                   <td className="p-2 font-medium text-navy-800">{v.name}</td>
                   <td className="p-2 text-navy-500">{v.sku ?? "—"}</td>
-                  <td className="p-2 text-navy-500">
-                    {v.priceDeltaMinor >= 0 ? "+" : ""}
-                    {formatMoney(v.priceDeltaMinor, baseCurrency)}
-                  </td>
                   <td className="p-2 text-navy-500">{v.stock}</td>
                   <td className="p-2 text-navy-400">{JSON.stringify(v.attributes)}</td>
                 </tr>

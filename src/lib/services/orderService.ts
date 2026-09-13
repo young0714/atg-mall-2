@@ -86,9 +86,10 @@ class DefaultOrderService implements OrderService {
     // almost always CNY. Convert every line into the order's currency before
     // summing, so subtotal/shipping/fees/total are never a mix of currencies.
     const itemsInOrderCurrency = cart.items.map((item) => {
-      const unitPriceSourceMinor = item.product.basePriceMinor + (item.variant?.priceDeltaMinor ?? 0);
+      // Flat pricing: every variant sells at the product's own price —
+      // variants are a choice (color/size/etc.), not a price adjustment.
       const unitPriceMinor = currencyConversionService.convert(
-        unitPriceSourceMinor,
+        item.product.basePriceMinor,
         item.product.baseCurrency,
         params.currency,
       );

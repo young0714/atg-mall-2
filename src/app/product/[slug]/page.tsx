@@ -105,7 +105,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
               <ProductPurchasePanel
                 productId={product.id}
                 slug={product.slug}
-                variants={product.variants.map((v) => ({ id: v.id, name: v.name, priceDeltaMinor: v.priceDeltaMinor }))}
+                variants={product.variants.map((v) => ({ id: v.id, name: v.name }))}
                 moq={product.moq}
                 baseCurrency={product.baseCurrency}
                 basePriceMinor={product.basePriceMinor}

@@ -47,10 +47,13 @@ export async function importCjProductAction(formData: FormData) {
       },
       variants: importVariants
         ? {
+            // Flat pricing: every variant sells at the product's own price
+            // (set above), regardless of what CJ charges per variant —
+            // variants are just a choice (color/size/etc.), not a price
+            // adjustment.
             create: cjProduct!.variants.map((v) => ({
               name: v.name,
               sku: v.sku,
-              priceDeltaMinor: v.priceMinorUsd - basePriceMinor,
               attributes: v.attributes,
             })),
           }

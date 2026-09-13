@@ -11,7 +11,6 @@ import type { LandedCostBreakdown as Breakdown } from "@/lib/services/pricingSer
 interface Variant {
   id: string;
   name: string;
-  priceDeltaMinor: number;
 }
 
 export function ProductPurchasePanel({
@@ -42,8 +41,10 @@ export function ProductPurchasePanel({
   const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
   const [quantity, setQuantity] = useState(moq);
 
-  const selectedVariant = variants.find((v) => v.id === variantId);
-  const unitPrice = basePriceMinor + (selectedVariant?.priceDeltaMinor ?? 0);
+  // Flat pricing: every variant of a product sells at the same price — the
+  // one the admin sets. Variants are purely a choice (color/size/etc.), not
+  // a price adjustment, everywhere in the app (cart, checkout included).
+  const unitPrice = basePriceMinor;
 
   if (affiliateUrl) {
     return (
