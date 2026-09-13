@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
 import { getDestination } from "@/lib/destination";
+import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import { formatMoney } from "@/lib/money";
 import { Container, Section } from "@/components/ui/Section";
 import Link from "next/link";
@@ -21,7 +22,16 @@ export default async function CartPage() {
   });
 
   const items = cart?.items ?? [];
-  const subtotalMinor = items.reduce((sum, item) => sum + item.product.basePriceMinor * item.quantity, 0);
+  // Each product is priced in its own baseCurrency (CNY, USD, GBP, ...) —
+  // convert every line to USD before summing, so a cart with mixed-currency
+  // products doesn't just add raw minor units from different currencies
+  // together. Shown as a stable reference figure in USD; the real total in
+  // the customer's own destination currency is calculated at checkout.
+  const itemsInUsd = items.map((item) => ({
+    item,
+    unitPriceUsdMinor: currencyConversionService.convert(item.product.basePriceMinor, item.product.baseCurrency, "USD"),
+  }));
+  const subtotalMinor = itemsInUsd.reduce((sum, { item, unitPriceUsdMinor }) => sum + unitPriceUsdMinor * item.quantity, 0);
 
   return (
     <Section className="!py-10">
@@ -36,8 +46,7 @@ export default async function CartPage() {
         ) : (
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
             <div className="space-y-4">
-              {items.map((item) => {
-                const unitPrice = item.product.basePriceMinor;
+              {itemsInUsd.map(({ item, unitPriceUsdMinor }) => {
                 return (
                   <div key={item.id} className="card flex gap-4 p-4">
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-sand-100">
@@ -51,7 +60,7 @@ export default async function CartPage() {
                       </Link>
                       {item.variant && <p className="text-xs text-navy-400">{item.variant.name}</p>}
                       <p className="mt-1 text-sm font-medium text-navy-700">
-                        {formatMoney(unitPrice, item.product.baseCurrency)} × {item.quantity}
+                        {formatMoney(unitPriceUsdMinor, "USD")} × {item.quantity}
                       </p>
                       <div className="mt-auto flex items-center gap-3 pt-2">
                         <form action={updateCartItemAction} className="flex items-center gap-2">
@@ -82,7 +91,7 @@ export default async function CartPage() {
               <h2 className="font-semibold text-navy-900">Order Summary</h2>
               <div className="mt-3 flex justify-between text-sm">
                 <span className="text-navy-500">Subtotal (product cost)</span>
-                <span className="font-medium text-navy-800">{formatMoney(subtotalMinor, "CNY")}</span>
+                <span className="font-medium text-navy-800">{formatMoney(subtotalMinor, "USD")}</span>
               </div>
               <p className="mt-2 text-xs text-navy-400">
                 Shipping, service fee and final total in {destination.currency} are calculated at checkout.
