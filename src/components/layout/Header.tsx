@@ -4,6 +4,7 @@ import { DestinationSwitcher } from "./DestinationSwitcher";
 import { getDestination } from "@/lib/destination";
 import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { getCartItemCount } from "@/lib/services/cartService";
 import { isStaffRole } from "@/lib/rbac";
 
 const NAV_LINKS = [
@@ -15,10 +16,11 @@ const NAV_LINKS = [
 ];
 
 export async function Header() {
-  const [destination, countries, user] = await Promise.all([
+  const [destination, countries, user, cartItemCount] = await Promise.all([
     getDestination(),
     getActiveDestinationCountries(),
     getCurrentUser(),
+    getCartItemCount(),
   ]);
 
   return (
@@ -84,12 +86,21 @@ export async function Header() {
           <div className="hidden md:block">
             <DestinationSwitcher current={destination.isoCode} countries={countries} />
           </div>
-          <Link href="/cart" aria-label="Cart" className="rounded-full p-2 text-navy-700 hover:bg-sand-100">
+          <Link
+            href="/cart"
+            aria-label={cartItemCount > 0 ? `Cart (${cartItemCount} item${cartItemCount === 1 ? "" : "s"})` : "Cart"}
+            className="relative rounded-full p-2 text-navy-700 hover:bg-sand-100"
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M3 3h2l2.4 12.4a2 2 0 002 1.6h8.4a2 2 0 002-1.6L21 8H6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
               <circle cx="10" cy="21" r="1.4" fill="currentColor" />
               <circle cx="18" cy="21" r="1.4" fill="currentColor" />
             </svg>
+            {cartItemCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-atgblue-600 px-1 text-[10px] font-bold leading-none text-white">
+                {cartItemCount > 99 ? "99+" : cartItemCount}
+              </span>
+            )}
           </Link>
           {user ? (
             <div className="group relative hidden sm:block">

@@ -49,6 +49,18 @@ export async function getCartId(): Promise<string | null> {
 }
 
 /**
+ * Total quantity of items in the current visitor's cart (for the header's
+ * cart badge) — 0 if they have no cart yet. A single aggregate query, not
+ * a full cart fetch.
+ */
+export async function getCartItemCount(): Promise<number> {
+  const cartId = await getCartId();
+  if (!cartId) return 0;
+  const result = await db.cartItem.aggregate({ where: { cartId }, _sum: { quantity: true } });
+  return result._sum.quantity ?? 0;
+}
+
+/**
  * Resolves the current visitor's cart id, creating one (and a guest-cart
  * cookie, for anonymous visitors) if it doesn't exist yet. Use this from
  * the "add to cart" action — the one place a cart genuinely needs to
