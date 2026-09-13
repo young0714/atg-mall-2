@@ -33,16 +33,6 @@ export default function AdminLoginPage({
             <button type="submit" className="btn-secondary w-full">Sign In</button>
           </form>
         </div>
-        <div className="mt-6 rounded-xl2 bg-white/5 p-4 text-xs text-navy-300">
-          <p className="font-semibold text-white">Demo staff logins (password: AtgMall#2026)</p>
-          <p className="mt-1">admin@atgmall.com — Super Admin</p>
-          <p>ops@atgmall.com — Operations Admin</p>
-          <p>sourcing@atgmall.com — Sourcing Staff</p>
-          <p>warehouse@atgmall.com — Warehouse Staff</p>
-          <p>shipping@atgmall.com — Shipping Staff</p>
-          <p>finance@atgmall.com — Finance Staff</p>
-          <p>support@atgmall.com — Customer Support</p>
-        </div>
       </div>
     </div>
   );
