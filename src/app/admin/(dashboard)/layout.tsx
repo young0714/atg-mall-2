@@ -1,5 +1,6 @@
 import { requireStaff } from "@/lib/auth/current-user";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminMobileNav } from "@/components/admin/AdminMobileNav";
 import { PERMISSIONS, ROLE_LABELS, can, type Permission } from "@/lib/rbac";
 import { Logo } from "@/components/ui/Logo";
 import Link from "next/link";
@@ -17,20 +18,27 @@ export default async function AdminDashboardLayout({ children }: { children: Rea
         <AdminSidebar allowed={allowed} />
       </aside>
 
-      <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-navy-100 bg-white px-6 py-3">
-          <div>
-            <p className="text-sm font-semibold text-navy-900">{user.fullName}</p>
-            <p className="text-xs text-navy-400">{ROLE_LABELS[user.role]}</p>
+      {/* min-w-0 keeps this column capped at the viewport width — without
+          it, a flex child sizes to fit its widest content (e.g. a wide
+          table), stretching the whole page instead of letting that one
+          table scroll within its own overflow-x-auto wrapper. */}
+      <div className="min-w-0 flex-1">
+        <header className="flex items-center justify-between gap-3 border-b border-navy-100 bg-white px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-2">
+            <AdminMobileNav allowed={allowed} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-navy-900">{user.fullName}</p>
+              <p className="text-xs text-navy-400">{ROLE_LABELS[user.role]}</p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-sm text-navy-500 hover:text-navy-800">View storefront ↗</Link>
+          <div className="flex shrink-0 items-center gap-3">
+            <Link href="/" className="hidden text-sm text-navy-500 hover:text-navy-800 sm:inline">View storefront ↗</Link>
             <form action="/api/v1/auth/logout" method="POST">
               <button className="btn-outline btn-sm">Sign out</button>
             </form>
           </div>
         </header>
-        <main className="p-6">{children}</main>
+        <main className="overflow-x-hidden p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

@@ -29,9 +29,9 @@ export function Stat({
 
   return (
     <Card>
-      <CardBody className="space-y-1">
+      <CardBody className="space-y-1 p-4 sm:p-6">
         <p className="text-xs font-medium uppercase tracking-wide text-navy-400">{label}</p>
-        <p className={cn("text-2xl font-display font-bold", toneText)}>{value}</p>
+        <p className={cn("break-words text-lg font-display font-bold sm:text-2xl", toneText)}>{value}</p>
         {hint && <p className="text-xs text-navy-400">{hint}</p>}
       </CardBody>
     </Card>

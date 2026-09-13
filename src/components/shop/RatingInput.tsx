@@ -7,7 +7,17 @@ import { Fragment } from "react";
 // selected/hovered one down to 1.
 const STARS = [5, 4, 3, 2, 1] as const;
 
-export function RatingInput({ name = "rating", defaultValue }: { name?: string; defaultValue?: number }) {
+export function RatingInput({
+  name = "rating",
+  defaultValue,
+  idPrefix,
+}: {
+  name?: string;
+  defaultValue?: number;
+  /** Disambiguates ids when multiple RatingInputs render on one page (e.g. one per row in a list) — defaults to `name`, which is only unique if there's just one on the page. */
+  idPrefix?: string;
+}) {
+  const prefix = idPrefix ?? name;
   return (
     <div className="flex w-fit flex-row-reverse items-center justify-end gap-0.5">
       {STARS.map((value) => (
@@ -16,13 +26,13 @@ export function RatingInput({ name = "rating", defaultValue }: { name?: string; 
             type="radio"
             name={name}
             value={value}
-            id={`${name}-star-${value}`}
+            id={`${prefix}-star-${value}`}
             defaultChecked={defaultValue === value}
             required
             className="peer sr-only"
           />
           <label
-            htmlFor={`${name}-star-${value}`}
+            htmlFor={`${prefix}-star-${value}`}
             className="cursor-pointer text-3xl text-navy-200 transition-colors peer-checked:text-gold-400 peer-hover:text-gold-400"
           >
             ★
