@@ -22,6 +22,11 @@ export const SHIPPING_METHOD_DESCRIPTIONS: Record<ShippingMethod, string> = {
 
 export const DESTINATION_COOKIE = "atg_destination";
 
+// The default destination for a visitor with no cookie yet — United States
+// resolves to USD via currencyForDestinationIso, the same bucket every
+// country except Nigeria/Gambia already falls into.
+export const DEFAULT_DESTINATION_ISO = "US";
+
 export interface Destination {
   isoCode: string;
   name: string;

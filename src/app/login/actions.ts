@@ -4,7 +4,7 @@ import { loginSchema, guestCheckoutSchema } from "@/lib/validation/schemas";
 import { authenticateUser, AuthError, provisionGuestUser, createMagicLinkToken } from "@/lib/auth/auth-service";
 import { createSession } from "@/lib/auth/session";
 import { isStaffRole } from "@/lib/rbac";
-import { getDestination } from "@/lib/destination";
+import { getDestination, setDestinationCookie, syncDestinationToProfile } from "@/lib/destination";
 import { notificationService, NOTIFICATION_EVENTS } from "@/lib/services/notificationService";
 import { redirect } from "next/navigation";
 
@@ -36,6 +36,7 @@ export async function continueAsGuestAction(formData: FormData) {
         fullName: result.user.fullName,
         email: result.user.email,
       });
+      setDestinationCookie(destination.isoCode);
 
       const rawToken = await createMagicLinkToken(result.user.id);
       if (rawToken) {
@@ -89,6 +90,7 @@ export async function loginAction(formData: FormData) {
   try {
     const user = await authenticateUser(parsed.data);
     await createSession({ userId: user.id, role: user.role, fullName: user.fullName, email: user.email });
+    await syncDestinationToProfile(user.id);
     redirect(next || (isStaffRole(user.role) ? "/admin" : "/account"));
   } catch (err) {
     if (err instanceof AuthError) {

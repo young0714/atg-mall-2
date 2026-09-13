@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { pricingService } from "@/lib/services/pricingService";
 import { sourcePlatformToStoreCountry } from "@/lib/services/storeOrigin";
 import { currencyForDestinationIso } from "@/lib/services/destinationCountryService";
+import { DEFAULT_DESTINATION_ISO } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export async function GET(req: Request, { params }: { params: { slug: string } }
   const destinationCountry =
     (requestedIso
       ? await db.destinationCountry.findFirst({ where: { isoCode: requestedIso, isActive: true } })
-      : null) ?? (await db.destinationCountry.findFirst({ where: { isoCode: "NG", isActive: true } }));
+      : null) ?? (await db.destinationCountry.findFirst({ where: { isoCode: DEFAULT_DESTINATION_ISO, isActive: true } }));
   const destinationIso = destinationCountry!.isoCode;
   const destinationCurrency = currencyForDestinationIso(destinationIso);
 
