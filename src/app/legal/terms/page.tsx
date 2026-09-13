@@ -27,7 +27,7 @@ export default function TermsPage() {
         <li>"Shop for Me" — purchasing a specific product on your behalf from a link or description you provide.</li>
         <li>"Source a Product" — sourcing quotes for products you describe, which you may accept or decline.</li>
         <li>Receiving, inspecting and consolidating packages at our warehouse.</li>
-        <li>Arranging international shipping to Nigeria and Gambia, and local delivery within the cities we serve.</li>
+        <li>Arranging international shipping to supported destination countries worldwide, and local delivery within the cities we serve.</li>
         <li>An ATG Wallet for holding funds you deposit to pay for orders, quotations and shipments.</li>
       </ul>
       <p>

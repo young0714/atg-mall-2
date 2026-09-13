@@ -24,7 +24,7 @@ export default function SellerTermsPage() {
       <p>Sellers are responsible for the accuracy of their own listings, including:</p>
       <ul>
         <li>Product descriptions, images, pricing, and available quantity.</li>
-        <li>Ensuring listed products are legal to sell and ship into Nigeria and Gambia (see our <a href="/legal/prohibited-items">Prohibited Items</a> policy).</li>
+        <li>Ensuring listed products are legal to sell and ship into the destination countries ATG Mall supports (see our <a href="/legal/prohibited-items">Prohibited Items</a> policy).</li>
         <li>Not infringing the intellectual property or trademarks of others.</li>
       </ul>
 

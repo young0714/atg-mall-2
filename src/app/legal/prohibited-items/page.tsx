@@ -11,12 +11,12 @@ export default function ProhibitedItemsPage() {
     <LegalPage
       title="Prohibited Items Policy"
       lastUpdated="September 2026"
-      intro="To keep ATG Mall compliant with import regulations in Nigeria and Gambia, and to keep our customers, staff and carriers safe, we do not source, purchase, receive, consolidate or ship the categories of items below. This list is not exhaustive — customs authorities in your destination country may restrict additional items, and we reserve the right to refuse any item at our discretion."
+      intro="To keep ATG Mall compliant with import regulations in Nigeria, Gambia and the other destinations we ship to worldwide, and to keep our customers, staff and carriers safe, we do not source, purchase, receive, consolidate or ship the categories of items below. This list is not exhaustive — customs authorities in your destination country may restrict additional items, and we reserve the right to refuse any item at our discretion."
     >
       <h2>1. Always prohibited</h2>
       <ul>
         <li>Firearms, ammunition, explosives, and weapon parts or replicas designed to resemble real weapons.</li>
-        <li>Illegal drugs and drug paraphernalia, and any substances controlled under the laws of Nigeria or Gambia.</li>
+        <li>Illegal drugs and drug paraphernalia, and any substances controlled under the laws of Nigeria, Gambia, or your destination country.</li>
         <li>Counterfeit currency, and items designed to defraud financial institutions.</li>
         <li>Live animals and endangered species products (including ivory, exotic skins, and similar items).</li>
         <li>Human remains or body parts.</li>
@@ -37,7 +37,7 @@ export default function ProhibitedItemsPage() {
         <li>Prescription medication and medical devices.</li>
         <li>Agricultural products, seeds, and plant material.</li>
         <li>Precious metals, gemstones, and high-value jewelry.</li>
-        <li>Publications or media restricted under the laws of Nigeria or Gambia.</li>
+        <li>Publications or media restricted under the laws of Nigeria, Gambia, or your destination country.</li>
       </ul>
 
       <h2>3. What happens if a prohibited item is identified</h2>
