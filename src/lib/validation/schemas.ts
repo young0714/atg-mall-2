@@ -32,6 +32,23 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+export const guestCheckoutSchema = z.object({
+  fullName: z.string().min(2, "Enter your full name"),
+  email: z.string().email("Enter a valid email address"),
+});
+export type GuestCheckoutInput = z.infer<typeof guestCheckoutSchema>;
+
+export const setPasswordSchema = z
+  .object({
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+export type SetPasswordInput = z.infer<typeof setPasswordSchema>;
+
 export const shopForMeSchema = z.object({
   storeId: z.string().optional(),
   productUrl: z.string().url("Paste a valid product link"),

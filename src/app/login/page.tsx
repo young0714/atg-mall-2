@@ -1,7 +1,7 @@
 import { Container, Section } from "@/components/ui/Section";
 import { Field, Input } from "@/components/ui/Form";
 import { Logo } from "@/components/ui/Logo";
-import { loginAction } from "./actions";
+import { loginAction, continueAsGuestAction } from "./actions";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Sign In" };
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: { error?: string; next?: string };
+  searchParams: { error?: string; guestError?: string; guestLinkSent?: string; next?: string };
 }) {
   return (
     <Section className="!py-16">
@@ -40,6 +40,35 @@ export default function LoginPage({
           <p className="mt-5 text-center text-sm text-navy-500">
             New to ATG Mall? <Link href="/register" className="font-medium text-atgblue-600">Create an account</Link>
           </p>
+        </div>
+
+        <div className="card mt-6 p-7">
+          <h2 className="text-lg font-display font-bold text-navy-900">Or continue as a guest</h2>
+          <p className="mt-1 text-sm text-navy-500">
+            No password needed — we&apos;ll email you a link to access your account and orders later.
+          </p>
+
+          {searchParams.guestError && (
+            <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.guestError}</div>
+          )}
+          {searchParams.guestLinkSent && (
+            <div className="mt-4 rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
+              Check your email for a link to continue.
+            </div>
+          )}
+
+          {!searchParams.guestLinkSent && (
+            <form action={continueAsGuestAction} className="mt-5 space-y-4">
+              {searchParams.next && <input type="hidden" name="next" value={searchParams.next} />}
+              <Field label="Full name" htmlFor="guestFullName" required>
+                <Input id="guestFullName" name="fullName" required />
+              </Field>
+              <Field label="Email address" htmlFor="guestEmail" required>
+                <Input id="guestEmail" name="email" type="email" required />
+              </Field>
+              <button type="submit" className="btn-outline w-full">Continue as Guest</button>
+            </form>
+          )}
         </div>
 
         <div className="mt-6 rounded-xl2 border border-navy-100 bg-sand-50 p-4 text-xs text-navy-500">

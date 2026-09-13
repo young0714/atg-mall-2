@@ -10,7 +10,11 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "My Account" };
 export const dynamic = "force-dynamic";
 
-export default async function AccountOverviewPage() {
+export default async function AccountOverviewPage({
+  searchParams,
+}: {
+  searchParams: { welcome?: string; passwordSet?: string };
+}) {
   const user = await requireUser();
 
   const [wallet, recentOrders, packageCounts, pendingQuotations] = await Promise.all([
@@ -35,6 +39,16 @@ export default async function AccountOverviewPage() {
 
   return (
     <div className="space-y-8">
+      {searchParams.welcome && (
+        <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
+          You&apos;re signed in. Set a password below to make it easier to come back next time.
+        </div>
+      )}
+      {searchParams.passwordSet && (
+        <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
+          Password set — you can now sign in with your email and password.
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-display font-bold text-navy-900">Welcome back, {user.fullName.split(" ")[0]}</h1>
         <p className="text-sm text-navy-500">Here&apos;s what&apos;s happening with your ATG Mall account.</p>

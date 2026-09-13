@@ -53,7 +53,12 @@ export default async function AdminCustomersPage() {
                     : "—"}
                 </td>
                 <td className="p-3 text-navy-500">{c.orders.length}</td>
-                <td className="p-3"><Badge tone={c.isActive ? "green" : "red"}>{c.isActive ? "Active" : "Disabled"}</Badge></td>
+                <td className="p-3">
+                  <div className="flex flex-wrap gap-1.5">
+                    <Badge tone={c.isActive ? "green" : "red"}>{c.isActive ? "Active" : "Disabled"}</Badge>
+                    {c.isGuest && <Badge tone="gold">Guest</Badge>}
+                  </div>
+                </td>
                 <td className="p-3 text-navy-400">{formatDate(c.createdAt)}</td>
               </tr>
             ))}
