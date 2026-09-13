@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { getDestination } from "@/lib/destination";
-import { pricingService } from "@/lib/services/pricingService";
-import { sourcePlatformToStoreCountry } from "@/lib/services/storeOrigin";
 import { customerFacingSourceLabel } from "@/lib/sourcePlatform";
 import { StarRating } from "@/components/shop/StarRating";
 import { Badge } from "@/components/ui/Badge";
@@ -40,15 +38,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
   });
 
   if (!product || !product.isActive) notFound();
-
-  const breakdown = await pricingService.estimateLandedCost({
-    productCostMinor: product.basePriceMinor,
-    productCostCurrency: product.baseCurrency,
-    destinationIso: destination.isoCode,
-    destinationCurrency: destination.currency,
-    originCountry: sourcePlatformToStoreCountry(product.sourcePlatform),
-    weightGrams: product.weightGrams,
-  });
 
   return (
     <Section className="!py-8">
@@ -109,7 +98,6 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 moq={product.moq}
                 baseCurrency={product.baseCurrency}
                 basePriceMinor={product.basePriceMinor}
-                breakdown={breakdown}
                 imageUrl={product.images[0]?.url ?? null}
                 productName={product.name}
                 affiliateUrl={product.sourcePlatform === "AFFILIATE" ? product.affiliateUrl : null}

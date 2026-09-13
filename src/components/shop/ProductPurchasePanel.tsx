@@ -4,9 +4,7 @@ import { useState } from "react";
 import type { Currency } from "@prisma/client";
 import { formatMoney } from "@/lib/money";
 import { addToCartAction, requestSourcingForProductAction } from "@/app/product/[slug]/actions";
-import { LandedCostBreakdown } from "./LandedCostBreakdown";
 import { Select } from "@/components/ui/Form";
-import type { LandedCostBreakdown as Breakdown } from "@/lib/services/pricingService";
 
 interface Variant {
   id: string;
@@ -20,7 +18,6 @@ export function ProductPurchasePanel({
   moq,
   baseCurrency,
   basePriceMinor,
-  breakdown,
   imageUrl,
   productName,
   affiliateUrl,
@@ -32,7 +29,6 @@ export function ProductPurchasePanel({
   moq: number;
   baseCurrency: Currency;
   basePriceMinor: number;
-  breakdown: Breakdown;
   imageUrl: string | null;
   productName: string;
   affiliateUrl?: string | null;
@@ -112,8 +108,6 @@ export function ProductPurchasePanel({
           </button>
         </div>
       </div>
-
-      <LandedCostBreakdown breakdown={breakdown} quantity={quantity} />
 
       <div className="flex flex-col gap-2.5 sm:flex-row">
         <form action={addToCartAction} className="w-full sm:flex-1">
