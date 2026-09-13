@@ -11,6 +11,15 @@ import type { Prisma } from "@prisma/client";
 export const metadata: Metadata = {
   title: "Shop — Buy from China, delivered worldwide",
   description: "Browse ATG Mall's catalog of products sourced from China, with worldwide delivery.",
+  openGraph: {
+    title: "Shop — Buy from China, delivered worldwide",
+    description: "Browse ATG Mall's catalog of products sourced from China, with worldwide delivery.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Shop — Buy from China, delivered worldwide",
+    description: "Browse ATG Mall's catalog of products sourced from China, with worldwide delivery.",
+  },
 };
 
 export const dynamic = "force-dynamic";

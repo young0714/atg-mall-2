@@ -10,6 +10,15 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Support",
   description: "Get help with your ATG Mall orders, packages and shipments.",
+  openGraph: {
+    title: "Support",
+    description: "Get help with your ATG Mall orders, packages and shipments.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Support",
+    description: "Get help with your ATG Mall orders, packages and shipments.",
+  },
 };
 export const dynamic = "force-dynamic";
 

@@ -41,11 +41,13 @@ export const metadata: Metadata = {
     url: appUrl,
     siteName: "ATG Mall",
     type: "website",
+    images: [{ url: "/logo.png", width: 1254, height: 1254, alt: "ATG Mall" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "ATG Mall — Shop The World. Delivered To You.",
     description: "Shop from China, USA and UK. We handle the rest. Cross-border shopping, worldwide.",
+    images: ["/logo.png"],
   },
   alternates: { canonical: appUrl },
 };

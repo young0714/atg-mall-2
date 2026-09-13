@@ -11,6 +11,15 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Shop For Me — We buy it, you receive it",
   description: "Send us a product link from any store — China, USA, UK or anywhere else — and ATG Mall will purchase, inspect, warehouse and ship it worldwide.",
+  openGraph: {
+    title: "Shop For Me — We buy it, you receive it",
+    description: "Send us a product link from any store — China, USA, UK or anywhere else — and ATG Mall will purchase, inspect, warehouse and ship it worldwide.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Shop For Me — We buy it, you receive it",
+    description: "Send us a product link from any store — China, USA, UK or anywhere else — and ATG Mall will purchase, inspect, warehouse and ship it worldwide.",
+  },
 };
 
 export default async function ShopForMePage({

@@ -5,6 +5,15 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Track Your Shipment",
   description: "Track your ATG Mall shipment with your ATG tracking number.",
+  openGraph: {
+    title: "Track Your Shipment",
+    description: "Track your ATG Mall shipment with your ATG tracking number.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Track Your Shipment",
+    description: "Track your ATG Mall shipment with your ATG tracking number.",
+  },
 };
 
 async function trackAction(formData: FormData) {

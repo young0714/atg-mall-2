@@ -9,6 +9,15 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Source A Product — Let our team find it for you",
   description: "Can't find a supplier? Tell ATG Mall what you need and our sourcing team will find verified options and quotes.",
+  openGraph: {
+    title: "Source A Product — Let our team find it for you",
+    description: "Can't find a supplier? Tell ATG Mall what you need and our sourcing team will find verified options and quotes.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Source A Product — Let our team find it for you",
+    description: "Can't find a supplier? Tell ATG Mall what you need and our sourcing team will find verified options and quotes.",
+  },
 };
 
 export default async function SourceAProductPage({

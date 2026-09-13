@@ -11,7 +11,7 @@ const faqs = [
   },
   {
     q: "How is my landed cost calculated?",
-    a: "Landed cost = product price + domestic shipping to our consolidation warehouse (in China, the USA or the UK, depending on where you're buying from) + international shipping to your destination + ATG's service fee. You'll always see this breakdown before paying.",
+    a: "Landed cost = product price + domestic shipping to our consolidation warehouse (in China, the USA or the UK, depending on where you're buying from) + international shipping to your destination + ATG's handling fee (1%). You'll always see this breakdown before paying.",
   },
   {
     q: "What if I don't know exactly what shipping will cost?",

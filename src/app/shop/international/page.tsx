@@ -7,6 +7,15 @@ export const metadata: Metadata = {
   title: "International Stores — Shop from China, USA & UK",
   description:
     "International shopping worldwide — browse ATG Mall's directory of stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping.",
+  openGraph: {
+    title: "International Stores — Shop from China, USA & UK",
+    description: "International shopping worldwide — browse ATG Mall's directory of stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "International Stores — Shop from China, USA & UK",
+    description: "International shopping worldwide — browse ATG Mall's directory of stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping.",
+  },
   keywords: [
     "International Stores",
     "international shopping worldwide",

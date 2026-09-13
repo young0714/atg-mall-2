@@ -17,12 +17,18 @@ import { createReviewAction } from "./actions";
 import Link from "next/link";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const product = await db.product.findUnique({ where: { slug: params.slug } });
+  const product = await db.product.findUnique({
+    where: { slug: params.slug },
+    include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+  });
   if (!product) return {};
+  const description = product.description.slice(0, 155);
+  const image = product.images[0]?.url;
   return {
     title: product.name,
-    description: product.description.slice(0, 155),
-    openGraph: { title: product.name, description: product.description.slice(0, 155) },
+    description,
+    openGraph: { title: product.name, description, images: image ? [image] : undefined },
+    twitter: { card: "summary_large_image", title: product.name, description, images: image ? [image] : undefined },
   };
 }
 

@@ -21,6 +21,7 @@ const staticRoutes = [
   "/track",
   "/support",
   "/about",
+  "/why-atg-mall",
   "/contact",
   "/login",
   "/register",

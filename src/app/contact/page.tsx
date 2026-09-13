@@ -5,6 +5,15 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Contact Us",
   description: "Get in touch with ATG Mall — support for orders, packages, shipments and general enquiries.",
+  openGraph: {
+    title: "Contact Us",
+    description: "Get in touch with ATG Mall — support for orders, packages, shipments and general enquiries.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Contact Us",
+    description: "Get in touch with ATG Mall — support for orders, packages, shipments and general enquiries.",
+  },
 };
 
 export default function ContactPage() {

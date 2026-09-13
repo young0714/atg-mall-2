@@ -7,6 +7,15 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Shop From China — 1688, Taobao, Alibaba & Suppliers",
   description: "Browse listings from 1688, Taobao and trusted Chinese suppliers, with ATG Mall handling purchase, warehousing and worldwide shipping.",
+  openGraph: {
+    title: "Shop From China — 1688, Taobao, Alibaba & Suppliers",
+    description: "Browse listings from 1688, Taobao and trusted Chinese suppliers, with ATG Mall handling purchase, warehousing and worldwide shipping.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Shop From China — 1688, Taobao, Alibaba & Suppliers",
+    description: "Browse listings from 1688, Taobao and trusted Chinese suppliers, with ATG Mall handling purchase, warehousing and worldwide shipping.",
+  },
 };
 
 export const dynamic = "force-dynamic";

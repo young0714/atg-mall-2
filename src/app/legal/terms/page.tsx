@@ -45,7 +45,8 @@ export default function TermsPage() {
       <h2>4. Orders, quotations and pricing</h2>
       <p>
         Prices shown for catalog items, and estimates shown for Shop for Me and Source a Product requests, include an
-        estimate of product cost, our service fee, and estimated shipping, converted to your local currency using an
+        estimate of product cost, our fee (shown as a "Handling fee" at catalog checkout, or a service fee on a Shop
+        for Me / Source a Product quotation), and estimated shipping, converted to your local currency using an
         indicative exchange rate. These figures are <strong>estimates</strong> until you complete checkout or accept a
         quotation, at which point the amount charged is final for that order unless otherwise stated.
       </p>
