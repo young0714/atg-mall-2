@@ -6,6 +6,7 @@ import { Field, Input } from "@/components/ui/Form";
 import { createCarrierAction, toggleCarrierActiveAction } from "./actions";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Carriers" };
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export default async function AdminCarriersPage({
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
             <input type="checkbox" name="isLiveApiEnabled" value="true" /> Live API enabled (informational until integrated)
           </label>
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Add Carrier</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Add Carrier</SubmitButton>
         </form>
       </details>
 
@@ -76,7 +77,7 @@ export default async function AdminCarriersPage({
                     </Link>
                     <form action={toggleCarrierActiveAction}>
                       <input type="hidden" name="carrierId" value={c.id} />
-                      <button className="text-xs font-medium text-atgblue-600 hover:underline">{c.isActive ? "Deactivate" : "Activate"}</button>
+                      <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">{c.isActive ? "Deactivate" : "Activate"}</SubmitButton>
                     </form>
                   </div>
                 </td>

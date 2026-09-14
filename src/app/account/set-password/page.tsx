@@ -1,6 +1,7 @@
 import { Field, Input } from "@/components/ui/Form";
 import { setPasswordAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Set a Password" };
 
@@ -29,7 +30,7 @@ export default function SetPasswordPage({
         <Field label="Confirm password" htmlFor="confirmPassword" required>
           <Input id="confirmPassword" name="confirmPassword" type="password" required minLength={8} />
         </Field>
-        <button type="submit" className="btn-primary w-full">Set Password</button>
+        <SubmitButton className="btn-primary w-full">Set Password</SubmitButton>
       </form>
     </div>
   );

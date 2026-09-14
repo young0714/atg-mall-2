@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, Input } from "@/components/ui/Form";
 import { createShippingOriginAction, toggleShippingOriginActiveAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Shipping Origins" };
 export const dynamic = "force-dynamic";
@@ -40,7 +41,7 @@ export default async function AdminShippingOriginsPage({
           <Field label="City" htmlFor="city" hint="Optional">
             <Input id="city" name="city" />
           </Field>
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Add Origin</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Add Origin</SubmitButton>
         </form>
       </details>
 
@@ -65,7 +66,7 @@ export default async function AdminShippingOriginsPage({
                 <td className="p-3">
                   <form action={toggleShippingOriginActiveAction}>
                     <input type="hidden" name="originId" value={o.id} />
-                    <button className="text-xs font-medium text-atgblue-600 hover:underline">{o.isActive ? "Deactivate" : "Activate"}</button>
+                    <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">{o.isActive ? "Deactivate" : "Activate"}</SubmitButton>
                   </form>
                 </td>
               </tr>

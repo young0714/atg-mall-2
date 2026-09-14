@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { currencyForDestinationIso } from "@/lib/services/destinationCountryService";
 import { addSourcingOptionAction, issueSourcingQuotationAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Source a Product" };
 export const dynamic = "force-dynamic";
@@ -81,7 +82,7 @@ export default async function AdminSourcingPage({
                 <Field label="Sourcing fee" htmlFor={`sfee-${req.id}`}><Input id={`sfee-${req.id}`} name="sourcingFee" type="number" step="0.01" defaultValue={0} /></Field>
                 <Field label="Lead time (days)" htmlFor={`lt-${req.id}`}><Input id={`lt-${req.id}`} name="leadTimeDays" type="number" defaultValue={14} /></Field>
                 <Field label="Notes" htmlFor={`notes-${req.id}`}><Input id={`notes-${req.id}`} name="notes" /></Field>
-                <button type="submit" className="btn-primary btn-sm sm:col-span-3 sm:w-fit">Add Option</button>
+                <SubmitButton className="btn-primary btn-sm sm:col-span-3 sm:w-fit">Add Option</SubmitButton>
               </form>
             </details>
 
@@ -112,7 +113,7 @@ export default async function AdminSourcingPage({
                       <option value="USD">USD</option>
                     </Select>
                   </Field>
-                  <button type="submit" className="btn-primary btn-sm sm:col-span-3 sm:w-fit">Send Quotation</button>
+                  <SubmitButton className="btn-primary btn-sm sm:col-span-3 sm:w-fit">Send Quotation</SubmitButton>
                 </form>
               </details>
             )}

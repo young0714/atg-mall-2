@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, Input } from "@/components/ui/Form";
 import { createServiceLevelAction, toggleServiceLevelActiveAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Service Levels" };
 export const dynamic = "force-dynamic";
@@ -37,7 +38,7 @@ export default async function AdminServiceLevelsPage({
           <Field label="Sort order" htmlFor="sortOrder" required hint="Lower shows first at checkout">
             <Input id="sortOrder" name="sortOrder" type="number" defaultValue={0} required />
           </Field>
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Add Service Level</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Add Service Level</SubmitButton>
         </form>
       </details>
 
@@ -60,7 +61,7 @@ export default async function AdminServiceLevelsPage({
                 <td className="p-3">
                   <form action={toggleServiceLevelActiveAction}>
                     <input type="hidden" name="levelId" value={l.id} />
-                    <button className="text-xs font-medium text-atgblue-600 hover:underline">{l.isActive ? "Deactivate" : "Activate"}</button>
+                    <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">{l.isActive ? "Deactivate" : "Activate"}</SubmitButton>
                   </form>
                 </td>
               </tr>

@@ -10,6 +10,7 @@ import { createStoreAction, toggleStoreActiveAction, deleteStoreAction } from ".
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { StoreCountry } from "@prisma/client";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — International Stores" };
 export const dynamic = "force-dynamic";
@@ -89,7 +90,7 @@ export default async function AdminInternationalStoresPage({
               </label>
             ))}
           </div>
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Create Store</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Create Store</SubmitButton>
         </form>
       </details>
 
@@ -128,13 +129,13 @@ export default async function AdminInternationalStoresPage({
                       <td className="space-x-2 p-2 text-right">
                         <form action={toggleStoreActiveAction} className="inline">
                           <input type="hidden" name="storeId" value={s.id} />
-                          <button className="text-xs font-medium text-atgblue-600 hover:underline">
+                          <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">
                             {s.isActive ? "Deactivate" : "Activate"}
-                          </button>
+                          </SubmitButton>
                         </form>
                         <form action={deleteStoreAction} className="inline">
                           <input type="hidden" name="storeId" value={s.id} />
-                          <button className="text-xs font-medium text-red-600 hover:underline">Delete</button>
+                          <SubmitButton className="text-xs font-medium text-red-600 hover:underline">Delete</SubmitButton>
                         </form>
                       </td>
                     </tr>

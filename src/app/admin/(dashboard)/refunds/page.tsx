@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 import { issueRefundAction } from "./actions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Refunds" };
@@ -42,7 +43,7 @@ export default async function AdminRefundsPage() {
                 <span className="font-medium">{formatMoney(o.totalMinor, o.currency)}</span>
                 <form action={issueRefundAction}>
                   <input type="hidden" name="orderId" value={o.id} />
-                  <button className="btn-outline btn-sm">Refund to Wallet</button>
+                  <SubmitButton className="btn-outline btn-sm">Refund to Wallet</SubmitButton>
                 </form>
               </div>
             </div>

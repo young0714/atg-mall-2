@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { upsertCustomsSettingAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Customs Settings" };
 export const dynamic = "force-dynamic";
@@ -69,7 +70,7 @@ export default async function AdminCustomsSettingsPage({
               <label className="flex items-center gap-2 text-sm sm:col-span-2">
                 <input type="checkbox" name="isConfigured" value="true" defaultChecked={c.customsSetting?.isConfigured ?? false} /> Mark as configured (shown as an estimate to customers)
               </label>
-              <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Save</button>
+              <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Save</SubmitButton>
             </form>
           </details>
         ))}

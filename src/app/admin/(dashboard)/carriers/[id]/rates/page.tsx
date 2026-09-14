@@ -7,6 +7,7 @@ import { formatMoney } from "@/lib/money";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { bulkUpdateCarrierRatesAction } from "./actions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Carrier Rates" };
 export const dynamic = "force-dynamic";
@@ -74,9 +75,9 @@ export default async function AdminCarrierRatesPage({
           <Field label="Max delivery days" htmlFor="deliveryDaysMax" required>
             <Input id="deliveryDaysMax" name="deliveryDaysMax" type="number" defaultValue={cards[0]?.deliveryDaysMax ?? 5} required />
           </Field>
-          <button type="submit" className="btn-primary sm:col-span-3 sm:w-fit">
+          <SubmitButton className="btn-primary sm:col-span-3 sm:w-fit">
             Apply to all {cards.length} lanes
-          </button>
+          </SubmitButton>
         </form>
       </section>
 

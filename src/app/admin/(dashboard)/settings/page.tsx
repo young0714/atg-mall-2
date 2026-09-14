@@ -12,6 +12,7 @@ import {
   deleteDeliveryZoneAction,
 } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Settings" };
 export const dynamic = "force-dynamic";
@@ -82,7 +83,7 @@ export default async function AdminSettingsPage({
             <Field label="Max ETA (days)" htmlFor="etaDaysMax" required>
               <Input id="etaDaysMax" name="etaDaysMax" type="number" defaultValue={3} required />
             </Field>
-            <button type="submit" className="btn-primary sm:col-span-3 sm:w-fit">Save Zone</button>
+            <SubmitButton className="btn-primary sm:col-span-3 sm:w-fit">Save Zone</SubmitButton>
           </form>
         </details>
 
@@ -110,13 +111,13 @@ export default async function AdminSettingsPage({
                         <Badge tone={z.isActive ? "green" : "neutral"}>{z.isActive ? "Active" : "Inactive"}</Badge>
                         <form action={toggleDeliveryZoneActiveAction}>
                           <input type="hidden" name="zoneId" value={z.id} />
-                          <button className="text-xs font-medium text-atgblue-600 hover:underline">
+                          <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">
                             {z.isActive ? "Deactivate" : "Activate"}
-                          </button>
+                          </SubmitButton>
                         </form>
                         <form action={deleteDeliveryZoneAction}>
                           <input type="hidden" name="zoneId" value={z.id} />
-                          <button className="text-xs font-medium text-red-600 hover:underline">Delete</button>
+                          <SubmitButton className="text-xs font-medium text-red-600 hover:underline">Delete</SubmitButton>
                         </form>
                       </div>
                     </div>

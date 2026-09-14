@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { deleteProductVariantsAction } from "./actions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 interface VariantRow {
   id: string;
@@ -95,13 +96,12 @@ export function VariantsTable({
           </tbody>
         </table>
       </div>
-      <button
-        type="submit"
+      <SubmitButton
         disabled={selected.size === 0}
         className="btn-outline btn-sm mt-3 !text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Delete selected {selected.size > 0 ? `(${selected.size})` : ""}
-      </button>
+      </SubmitButton>
     </form>
   );
 }

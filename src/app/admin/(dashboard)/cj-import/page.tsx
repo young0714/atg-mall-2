@@ -5,6 +5,7 @@ import { formatMoney } from "@/lib/money";
 import { Input } from "@/components/ui/Form";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Import from CJdropshipping" };
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export default async function AdminCjImportPage({
 
       <form method="GET" className="card flex gap-3 p-4">
         <Input name="q" defaultValue={searchParams.q} placeholder="Search CJ's catalog, e.g. 'wireless earbuds'" className="flex-1" />
-        <button type="submit" className="btn-primary">Search</button>
+        <SubmitButton className="btn-primary">Search</SubmitButton>
       </form>
 
       {searchParams.q && (

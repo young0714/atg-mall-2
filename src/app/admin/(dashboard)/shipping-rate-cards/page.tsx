@@ -6,6 +6,7 @@ import { Field, Input, Select } from "@/components/ui/Form";
 import { createRateCardAction, toggleRateCardActiveAction } from "./actions";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Shipping Rate Cards" };
 export const dynamic = "force-dynamic";
@@ -100,7 +101,7 @@ export default async function AdminShippingRateCardsPage({
           <Field label="Notes" htmlFor="notes" hint="Optional internal note">
             <Input id="notes" name="notes" />
           </Field>
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Create Rate Card</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Create Rate Card</SubmitButton>
         </form>
       </details>
 
@@ -134,7 +135,7 @@ export default async function AdminShippingRateCardsPage({
                   <Link href={`/admin/shipping-rate-cards/${c.id}`} className="text-xs font-medium text-atgblue-600 hover:underline">Edit</Link>
                   <form action={toggleRateCardActiveAction} className="inline">
                     <input type="hidden" name="cardId" value={c.id} />
-                    <button className="text-xs font-medium text-atgblue-600 hover:underline">{c.isActive ? "Deactivate" : "Activate"}</button>
+                    <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">{c.isActive ? "Deactivate" : "Activate"}</SubmitButton>
                   </form>
                 </td>
               </tr>

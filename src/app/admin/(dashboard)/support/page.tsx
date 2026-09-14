@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/Form";
 import { replyToTicketAction, resolveTicketAction } from "./actions";
 import { formatDateTime } from "@/lib/utils";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Support" };
@@ -76,15 +77,15 @@ export default async function AdminSupportPage() {
                   <form action={replyToTicketAction} className="flex gap-2">
                     <input type="hidden" name="ticketId" value={t.id} />
                     <Textarea name="body" placeholder="Type a reply…" rows={2} className="flex-1" required />
-                    <button type="submit" className="btn-primary self-end">
+                    <SubmitButton className="btn-primary self-end">
                       Reply
-                    </button>
+                    </SubmitButton>
                   </form>
                   <form action={resolveTicketAction}>
                     <input type="hidden" name="ticketId" value={t.id} />
-                    <button type="submit" className="btn-outline w-full sm:w-auto">
+                    <SubmitButton className="btn-outline w-full sm:w-auto">
                       Mark Resolved
-                    </button>
+                    </SubmitButton>
                   </form>
                 </div>
               )}

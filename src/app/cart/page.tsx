@@ -8,6 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { updateCartItemAction, removeCartItemAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Your Cart" };
 export const dynamic = "force-dynamic";
@@ -74,13 +75,13 @@ export default async function CartPage() {
                             min={1}
                             className="input w-16 !py-1 text-sm"
                           />
-                          <button type="submit" className="btn-outline btn-sm">Update</button>
+                          <SubmitButton className="btn-outline btn-sm">Update</SubmitButton>
                         </form>
                         <form action={removeCartItemAction}>
                           <input type="hidden" name="itemId" value={item.id} />
-                          <button type="submit" className="text-xs font-medium text-red-600 hover:underline">
+                          <SubmitButton className="text-xs font-medium text-red-600 hover:underline">
                             Remove
-                          </button>
+                          </SubmitButton>
                         </form>
                       </div>
                     </div>

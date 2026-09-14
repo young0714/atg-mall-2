@@ -8,6 +8,7 @@ import { createProductAction, toggleProductActiveAction, deleteProductAction } f
 import { SOURCE_PLATFORM_LABELS } from "@/lib/sourcePlatform";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Products" };
 export const dynamic = "force-dynamic";
@@ -104,7 +105,7 @@ export default async function AdminProductsPage({
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isHazardous" value="true" /> Hazardous</label>
           </div>
 
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Create Product</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Create Product</SubmitButton>
         </form>
       </details>
 
@@ -135,13 +136,13 @@ export default async function AdminProductsPage({
                 <td className="space-x-2 p-3 text-right">
                   <form action={toggleProductActiveAction} className="inline">
                     <input type="hidden" name="productId" value={p.id} />
-                    <button className="text-xs font-medium text-atgblue-600 hover:underline">
+                    <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">
                       {p.isActive ? "Deactivate" : "Activate"}
-                    </button>
+                    </SubmitButton>
                   </form>
                   <form action={deleteProductAction} className="inline">
                     <input type="hidden" name="productId" value={p.id} />
-                    <button className="text-xs font-medium text-red-600 hover:underline">Delete</button>
+                    <SubmitButton className="text-xs font-medium text-red-600 hover:underline">Delete</SubmitButton>
                   </form>
                 </td>
               </tr>

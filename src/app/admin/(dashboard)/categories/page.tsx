@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { Field, Input } from "@/components/ui/Form";
 import { createCategoryAction, deleteCategoryAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Categories" };
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export default async function AdminCategoriesPage({
         <Field label="Name" htmlFor="name" required><Input id="name" name="name" required /></Field>
         <Field label="Slug" htmlFor="slug" required><Input id="slug" name="slug" required /></Field>
         <Field label="Image URL" htmlFor="imageUrl"><Input id="imageUrl" name="imageUrl" type="url" /></Field>
-        <button type="submit" className="btn-primary sm:col-span-3 sm:w-fit">Add Category</button>
+        <SubmitButton className="btn-primary sm:col-span-3 sm:w-fit">Add Category</SubmitButton>
       </form>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -42,7 +43,7 @@ export default async function AdminCategoriesPage({
             </div>
             <form action={deleteCategoryAction}>
               <input type="hidden" name="categoryId" value={c.id} />
-              <button className="text-xs font-medium text-red-600 hover:underline">Delete</button>
+              <SubmitButton className="text-xs font-medium text-red-600 hover:underline">Delete</SubmitButton>
             </form>
           </div>
         ))}

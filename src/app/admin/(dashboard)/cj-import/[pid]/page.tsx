@@ -8,6 +8,7 @@ import { importCjProductAction } from "../actions";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Review CJ Product" };
 export const dynamic = "force-dynamic";
@@ -96,7 +97,7 @@ export default async function AdminCjImportDetailPage({
             <label className="flex items-center gap-2 text-sm sm:col-span-2">
               <input type="checkbox" name="importVariants" value="true" defaultChecked={product.variants.length > 0} /> Import CJ variants
             </label>
-            <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Import Product</button>
+            <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Import Product</SubmitButton>
           </form>
         </section>
       </div>

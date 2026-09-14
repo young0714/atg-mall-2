@@ -6,6 +6,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
 import { upsertShippingRateAction, toggleShippingRateActiveAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 // LEGACY: this page manages the old flat per-kg ShippingRate table, which
 // checkout and the landed-cost estimate no longer read from (see the new
@@ -78,7 +79,7 @@ export default async function AdminShippingRatesPage({
           <Field label="Notes" htmlFor="notes" hint="Optional internal note">
             <Textarea id="notes" name="notes" />
           </Field>
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Save Rate</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Save Rate</SubmitButton>
         </form>
       </details>
 
@@ -109,7 +110,7 @@ export default async function AdminShippingRatesPage({
                 <td className="p-3">
                   <form action={toggleShippingRateActiveAction}>
                     <input type="hidden" name="rateId" value={r.id} />
-                    <button className="text-xs font-medium text-atgblue-600 hover:underline">{r.isActive ? "Deactivate" : "Activate"}</button>
+                    <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">{r.isActive ? "Deactivate" : "Activate"}</SubmitButton>
                   </form>
                 </td>
               </tr>

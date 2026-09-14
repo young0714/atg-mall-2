@@ -5,6 +5,7 @@ import type { Currency } from "@prisma/client";
 import { formatMoney } from "@/lib/money";
 import { addToCartAction, requestSourcingForProductAction } from "@/app/product/[slug]/actions";
 import { Select } from "@/components/ui/Form";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 interface Variant {
   id: string;
@@ -116,9 +117,9 @@ export function ProductPurchasePanel({
           <input type="hidden" name="quantity" value={quantity} />
           <input type="hidden" name="slug" value={slug} />
           <input type="hidden" name="redirectTo" value="/cart" />
-          <button type="submit" className="btn-outline w-full">
+          <SubmitButton className="btn-outline w-full">
             Add to Cart
-          </button>
+          </SubmitButton>
         </form>
         <form action={addToCartAction} className="w-full sm:flex-1">
           <input type="hidden" name="productId" value={productId} />
@@ -126,9 +127,9 @@ export function ProductPurchasePanel({
           <input type="hidden" name="quantity" value={quantity} />
           <input type="hidden" name="slug" value={slug} />
           <input type="hidden" name="redirectTo" value="/checkout" />
-          <button type="submit" className="btn-primary w-full">
+          <SubmitButton className="btn-primary w-full">
             Buy Now
-          </button>
+          </SubmitButton>
         </form>
       </div>
 
@@ -141,9 +142,9 @@ export function ProductPurchasePanel({
         <p className="mt-1 text-xs text-navy-500">
           Request sourcing and our team will find alternative suppliers, pricing or MOQ options for this item.
         </p>
-        <button type="submit" className="btn-ghost btn-sm mt-2 !px-0">
+        <SubmitButton className="btn-ghost btn-sm mt-2 !px-0">
           Request Sourcing →
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

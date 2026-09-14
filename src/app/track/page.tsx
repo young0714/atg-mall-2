@@ -1,6 +1,7 @@
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = {
   title: "Track Your Shipment",
@@ -42,7 +43,7 @@ export default function TrackPage() {
             required
             placeholder="e.g. ATG-NG-2026000123"
           />
-          <button type="submit" className="btn-primary shrink-0">Track Shipment</button>
+          <SubmitButton className="btn-primary shrink-0">Track Shipment</SubmitButton>
         </form>
       </Container>
     </Section>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, Input } from "@/components/ui/Form";
 import { upsertCurrencyRateAction, toggleCurrencyRateActiveAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Currency Rates" };
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export default async function AdminCurrencyRatesPage({
           <Field label="Rate" htmlFor="rate" required hint="Units of 'to' per 1 unit of 'from'">
             <Input id="rate" name="rate" type="number" step="0.0001" required />
           </Field>
-          <button type="submit" className="btn-primary sm:col-span-3 sm:w-fit">Save Rate</button>
+          <SubmitButton className="btn-primary sm:col-span-3 sm:w-fit">Save Rate</SubmitButton>
         </form>
       </details>
 
@@ -78,7 +79,7 @@ export default async function AdminCurrencyRatesPage({
                   <td className="p-3">
                     <form action={toggleCurrencyRateActiveAction}>
                       <input type="hidden" name="rateId" value={r.id} />
-                      <button className="text-xs font-medium text-atgblue-600 hover:underline">{r.isActive ? "Deactivate" : "Activate"}</button>
+                      <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">{r.isActive ? "Deactivate" : "Activate"}</SubmitButton>
                     </form>
                   </td>
                 </tr>

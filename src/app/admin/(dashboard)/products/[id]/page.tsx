@@ -14,6 +14,7 @@ import {
   addProductVariantAction,
 } from "./actions";
 import { VariantsTable } from "./VariantsTable";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Edit Product" };
 export const dynamic = "force-dynamic";
@@ -151,7 +152,7 @@ export default async function AdminProductDetailPage({
             </label>
           </div>
 
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Save changes</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Save changes</SubmitButton>
         </form>
       </section>
 
@@ -167,7 +168,7 @@ export default async function AdminProductDetailPage({
                 <form action={deleteProductImageAction}>
                   <input type="hidden" name="productId" value={product.id} />
                   <input type="hidden" name="imageId" value={img.id} />
-                  <button className="text-xs font-medium text-red-600 hover:underline">Delete</button>
+                  <SubmitButton className="text-xs font-medium text-red-600 hover:underline">Delete</SubmitButton>
                 </form>
               </div>
             ))}
@@ -182,7 +183,7 @@ export default async function AdminProductDetailPage({
             <Field label="Sort order" htmlFor="sortOrder" hint="Lower shows first">
               <Input id="sortOrder" name="sortOrder" type="number" defaultValue={product.images.length} />
             </Field>
-            <button type="submit" className="btn-primary sm:col-span-3 sm:w-fit">Add image</button>
+            <SubmitButton className="btn-primary sm:col-span-3 sm:w-fit">Add image</SubmitButton>
           </form>
         </details>
       </section>
@@ -204,7 +205,7 @@ export default async function AdminProductDetailPage({
             <Field label="Attributes (JSON)" htmlFor="v-attributes" hint='e.g. {"color":"Black","size":"XL"}'>
               <Input id="v-attributes" name="attributes" placeholder='{"color":"Black","size":"XL"}' />
             </Field>
-            <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Add variant</button>
+            <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Add variant</SubmitButton>
           </form>
         </details>
       </section>

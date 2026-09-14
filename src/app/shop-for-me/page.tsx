@@ -7,6 +7,7 @@ import { getDestination } from "@/lib/destination";
 import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { isoToFlagEmoji } from "@/lib/constants";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = {
   title: "Shop For Me — We buy it, you receive it",
@@ -86,7 +87,7 @@ export default async function ShopForMePage({
             <Textarea id="instructions" name="instructions" />
           </Field>
 
-          <button type="submit" className="btn-primary w-full">Submit Request</button>
+          <SubmitButton className="btn-primary w-full">Submit Request</SubmitButton>
           <p className="text-center text-xs text-navy-400">
             You&apos;ll receive a full quotation (product cost + shipping + ATG fee) before anything is charged.
           </p>

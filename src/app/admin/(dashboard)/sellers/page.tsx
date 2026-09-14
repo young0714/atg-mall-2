@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { StatusBadge } from "@/components/ui/Badge";
 import { updateSellerStatusAction } from "./actions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Sellers" };
@@ -38,8 +39,8 @@ export default async function AdminSellersPage() {
                 <StatusBadge status={s.status} />
                 <form action={updateSellerStatusAction} className="flex gap-1">
                   <input type="hidden" name="sellerId" value={s.id} />
-                  <button name="status" value="APPROVED" className="btn-outline btn-sm">Approve</button>
-                  <button name="status" value="SUSPENDED" className="btn-ghost btn-sm text-red-600">Suspend</button>
+                  <SubmitButton name="status" value="APPROVED" className="btn-outline btn-sm">Approve</SubmitButton>
+                  <SubmitButton name="status" value="SUSPENDED" className="btn-ghost btn-sm text-red-600">Suspend</SubmitButton>
                 </form>
               </div>
             </div>

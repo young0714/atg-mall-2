@@ -7,6 +7,7 @@ import { formatMoney } from "@/lib/money";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { updateRateCardAction, addRateBracketAction, updateRateBracketAction, deleteRateBracketAction } from "./actions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Edit Rate Card" };
 export const dynamic = "force-dynamic";
@@ -111,7 +112,7 @@ export default async function AdminRateCardDetailPage({
           <Field label="Notes" htmlFor="notes">
             <Input id="notes" name="notes" defaultValue={card.notes ?? ""} />
           </Field>
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Save changes</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Save changes</SubmitButton>
         </form>
       </section>
 
@@ -156,7 +157,7 @@ export default async function AdminRateCardDetailPage({
                         <Field label="Min charge (minor)" htmlFor={`minChargeMinor-${b.id}`}>
                           <Input id={`minChargeMinor-${b.id}`} name="minChargeMinor" type="number" defaultValue={b.minChargeMinor} className="w-24" required />
                         </Field>
-                        <button type="submit" className="btn-primary btn-sm">Save</button>
+                        <SubmitButton className="btn-primary btn-sm">Save</SubmitButton>
                         <span className="text-xs text-navy-400">
                           (currently {formatMoney(b.basePriceMinor, card.currency as never)} + {formatMoney(b.pricePerKgMinor, card.currency as never)}/kg, min {formatMoney(b.minChargeMinor, card.currency as never)})
                         </span>
@@ -164,7 +165,7 @@ export default async function AdminRateCardDetailPage({
                       <form action={deleteRateBracketAction} className="mt-1">
                         <input type="hidden" name="cardId" value={card.id} />
                         <input type="hidden" name="bracketId" value={b.id} />
-                        <button className="text-xs font-medium text-red-600 hover:underline">Delete this bracket</button>
+                        <SubmitButton className="text-xs font-medium text-red-600 hover:underline">Delete this bracket</SubmitButton>
                       </form>
                     </td>
                   </tr>
@@ -182,7 +183,7 @@ export default async function AdminRateCardDetailPage({
             <Field label="Base price (minor units)" htmlFor="basePriceMinor" required><Input id="basePriceMinor" name="basePriceMinor" type="number" defaultValue={0} required /></Field>
             <Field label="Price per kg (minor units)" htmlFor="pricePerKgMinor" required><Input id="pricePerKgMinor" name="pricePerKgMinor" type="number" defaultValue={0} required /></Field>
             <Field label="Min charge (minor units)" htmlFor="minChargeMinor" required><Input id="minChargeMinor" name="minChargeMinor" type="number" defaultValue={0} required /></Field>
-            <button type="submit" className="btn-primary sm:col-span-3 sm:w-fit">Add bracket</button>
+            <SubmitButton className="btn-primary sm:col-span-3 sm:w-fit">Add bracket</SubmitButton>
           </form>
         </details>
       </section>

@@ -4,6 +4,7 @@ import { Logo } from "@/components/ui/Logo";
 import { loginAction, continueAsGuestAction } from "./actions";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Sign In" };
 
@@ -39,7 +40,7 @@ export default function LoginPage({
                 Forgot password?
               </Link>
             </div>
-            <button type="submit" className="btn-primary w-full">Sign In</button>
+            <SubmitButton className="btn-primary w-full">Sign In</SubmitButton>
           </form>
 
           <p className="mt-5 text-center text-sm text-navy-500">
@@ -74,7 +75,7 @@ export default function LoginPage({
               <Field label="Email address" htmlFor="guestEmail" required>
                 <Input id="guestEmail" name="email" type="email" required />
               </Field>
-              <button type="submit" className="btn-outline w-full">Continue as Guest</button>
+              <SubmitButton className="btn-outline w-full">Continue as Guest</SubmitButton>
             </form>
           )}
         </div>

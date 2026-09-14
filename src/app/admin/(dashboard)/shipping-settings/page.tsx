@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { Field, Input } from "@/components/ui/Form";
 import { updateShippingGlobalSettingsAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Shipping Settings" };
 export const dynamic = "force-dynamic";
@@ -45,7 +46,7 @@ export default async function AdminShippingSettingsPage({
         <Field label="Default handling fee (minor units)" htmlFor="defaultHandlingFeeMinor" required>
           <Input id="defaultHandlingFeeMinor" name="defaultHandlingFeeMinor" type="number" defaultValue={settings?.defaultHandlingFeeMinor ?? 0} required />
         </Field>
-        <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Save Settings</button>
+        <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Save Settings</SubmitButton>
       </form>
     </div>
   );

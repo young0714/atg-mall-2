@@ -8,6 +8,7 @@ import { shippingCalculationService } from "@/lib/services/shipping/shippingCalc
 import { customsService } from "@/lib/services/shipping/customsService";
 import type { Currency } from "@prisma/client";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Shipping Test Quote" };
 export const dynamic = "force-dynamic";
@@ -109,7 +110,7 @@ export default async function AdminShippingTestQuotePage({
             <Input id="heightCm" name="heightCm" type="number" defaultValue={searchParams.heightCm ?? ""} />
           </Field>
         </div>
-        <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Get Quote</button>
+        <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Get Quote</SubmitButton>
       </form>
 
       {quoteError && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{quoteError}</div>}

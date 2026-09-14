@@ -9,6 +9,7 @@ import { destinationCountryNameFor } from "@/lib/services/destinationCountryServ
 import Link from "next/link";
 import type { Metadata } from "next";
 import { payOrderWithWalletAction, retryPaymentAction } from "./actions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Order Details" };
 export const dynamic = "force-dynamic";
@@ -63,12 +64,12 @@ export default async function OrderDetailPage({
             {order.payments.some((p) => p.method !== "WALLET") && (
               <form action={retryPaymentAction}>
                 <input type="hidden" name="orderId" value={order.id} />
-                <button type="submit" className="btn-outline btn-sm">Retry Payment</button>
+                <SubmitButton className="btn-outline btn-sm">Retry Payment</SubmitButton>
               </form>
             )}
             <form action={payOrderWithWalletAction}>
               <input type="hidden" name="orderId" value={order.id} />
-              <button type="submit" className="btn-gold btn-sm">Pay with Wallet</button>
+              <SubmitButton className="btn-gold btn-sm">Pay with Wallet</SubmitButton>
             </form>
           </div>
         </div>

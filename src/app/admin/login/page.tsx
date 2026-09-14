@@ -2,6 +2,7 @@ import { Logo } from "@/components/ui/Logo";
 import { Field, Input } from "@/components/ui/Form";
 import { loginAction } from "@/app/login/actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin Sign In" };
 
@@ -30,7 +31,7 @@ export default function AdminLoginPage({
             <Field label="Password" htmlFor="password" required>
               <Input id="password" name="password" type="password" required />
             </Field>
-            <button type="submit" className="btn-secondary w-full">Sign In</button>
+            <SubmitButton className="btn-secondary w-full">Sign In</SubmitButton>
           </form>
         </div>
       </div>

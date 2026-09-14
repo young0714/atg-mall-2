@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils";
 import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { isoToFlagEmoji } from "@/lib/constants";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Warehouse" };
 export const dynamic = "force-dynamic";
@@ -63,7 +64,7 @@ export default async function AdminWarehousePage({
         <Field label="Width (cm)" htmlFor="widthCm"><Input id="widthCm" name="widthCm" type="number" /></Field>
         <Field label="Height (cm)" htmlFor="heightCm"><Input id="heightCm" name="heightCm" type="number" /></Field>
         <Field label="Notes" htmlFor="notes"><Textarea id="notes" name="notes" /></Field>
-        <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Log Received Package</button>
+        <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Log Received Package</SubmitButton>
       </form>
 
       <div className="card">

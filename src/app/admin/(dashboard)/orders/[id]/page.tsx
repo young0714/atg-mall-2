@@ -11,6 +11,7 @@ import { currencyConversionService } from "@/lib/services/currencyConversionServ
 import { fulfillmentTypeLabel } from "@/lib/sourcePlatform";
 import { updateOrderStatusAction } from "../actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Order Detail" };
 export const dynamic = "force-dynamic";
@@ -68,7 +69,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
           <option value="CANCELLED">CANCELLED</option>
           <option value="REFUNDED">REFUNDED</option>
         </Select>
-        <button type="submit" className="btn-primary btn-sm">Update</button>
+        <SubmitButton className="btn-primary btn-sm">Update</SubmitButton>
       </form>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">

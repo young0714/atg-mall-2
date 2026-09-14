@@ -6,6 +6,7 @@ import { getActiveDestinationCountries } from "@/lib/services/destinationCountry
 import { isoToFlagEmoji } from "@/lib/constants";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Create Account" };
 
@@ -51,7 +52,7 @@ export default async function RegisterPage({
             <Field label="Password" htmlFor="password" required hint="At least 8 characters">
               <Input id="password" name="password" type="password" required minLength={8} />
             </Field>
-            <button type="submit" className="btn-primary w-full">Create Account</button>
+            <SubmitButton className="btn-primary w-full">Create Account</SubmitButton>
           </form>
 
           <p className="mt-5 text-center text-sm text-navy-500">

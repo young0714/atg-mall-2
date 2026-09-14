@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Form";
 import { SortSelect } from "@/components/shop/SortSelect";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = {
   title: "Shop — Buy from China, delivered worldwide",
@@ -84,7 +85,7 @@ export default async function ShopPage({
             <form method="GET" className="space-y-3">
               <Input type="search" name="q" placeholder="Search products..." defaultValue={q} />
               {category && <input type="hidden" name="category" value={category} />}
-              <button type="submit" className="btn-primary w-full">Search</button>
+              <SubmitButton className="btn-primary w-full">Search</SubmitButton>
             </form>
 
             <div>

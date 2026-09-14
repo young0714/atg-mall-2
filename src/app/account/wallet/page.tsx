@@ -7,6 +7,7 @@ import { formatDateTime } from "@/lib/utils";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { depositToWalletAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Wallet" };
 export const dynamic = "force-dynamic";
@@ -85,7 +86,7 @@ export default async function WalletPage({
                 <option value="BANK_TRANSFER">Bank Transfer {paymentService.isLive() ? "(via Flutterwave)" : "(mock)"}</option>
               </Select>
             </Field>
-            <button type="submit" className="btn-primary w-full">Deposit</button>
+            <SubmitButton className="btn-primary w-full">Deposit</SubmitButton>
             {!paymentService.isLive() && (
               <p className="text-center text-[11px] text-navy-400">
                 No real payment gateway is connected yet — deposits are simulated for demo purposes.

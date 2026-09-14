@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Form";
 import { requestShipmentAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Ship My Package" };
 export const dynamic = "force-dynamic";
@@ -68,7 +69,7 @@ export default async function ShipPackagePage({
               <option value="LCL">Sea Freight (LCL)</option>
               <option value="FCL">Sea Freight (FCL)</option>
             </Select>
-            <button type="submit" className="btn-primary mt-4 w-full">Request Shipment</button>
+            <SubmitButton className="btn-primary mt-4 w-full">Request Shipment</SubmitButton>
           </div>
         </form>
       )}

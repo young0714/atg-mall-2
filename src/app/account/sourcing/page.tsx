@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/utils";
 import { approveSourcingOptionAction } from "./actions";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Sourcing Requests" };
 export const dynamic = "force-dynamic";
@@ -69,7 +70,7 @@ export default async function SourcingRequestsPage({
                       ) : req.status === "UNDER_REVIEW" ? (
                         <form action={approveSourcingOptionAction}>
                           <input type="hidden" name="optionId" value={opt.id} />
-                          <button type="submit" className="btn-outline btn-sm">Approve this option</button>
+                          <SubmitButton className="btn-outline btn-sm">Approve this option</SubmitButton>
                         </form>
                       ) : null}
                     </div>

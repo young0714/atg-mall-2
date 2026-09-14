@@ -13,6 +13,7 @@ import { addAddressAction, placeOrderAction } from "./actions";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { CheckoutShippingSummary } from "@/components/checkout/CheckoutShippingSummary";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Checkout" };
 export const dynamic = "force-dynamic";
@@ -160,7 +161,7 @@ export default async function CheckoutPage({
                 <Input id="addressLine1" name="addressLine1" required />
               </Field>
               <div className="sm:col-span-2">
-                <button type="submit" className="btn-outline btn-sm">Save new address</button>
+                <SubmitButton className="btn-outline btn-sm">Save new address</SubmitButton>
               </div>
             </form>
           </section>

@@ -6,6 +6,7 @@ import { getActiveDestinationCountries } from "@/lib/services/destinationCountry
 import { isoToFlagEmoji } from "@/lib/constants";
 import { createShipmentAction } from "../actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Create Shipment" };
 export const dynamic = "force-dynamic";
@@ -69,7 +70,7 @@ export default async function NewShipmentPage({
               <Input id="destinationCity" name="destinationCity" />
             </Field>
           </div>
-          <button type="submit" className="btn-primary">Create Shipment &amp; Generate Tracking Number</button>
+          <SubmitButton className="btn-primary">Create Shipment &amp; Generate Tracking Number</SubmitButton>
         </form>
       )}
     </div>

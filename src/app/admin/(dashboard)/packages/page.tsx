@@ -7,6 +7,7 @@ import { PACKAGE_STATUS_FLOW } from "@/lib/constants";
 import { updatePackageStatusAction } from "./actions";
 import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Packages" };
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ export default async function AdminPackagesPage() {
                     <Select name="status" defaultValue={pkg.status} className="w-auto !py-1 text-xs">
                       {PACKAGE_STATUS_FLOW.map((s) => <option key={s} value={s}>{s.replaceAll("_", " ")}</option>)}
                     </Select>
-                    <button type="submit" className="btn-outline btn-sm">Save</button>
+                    <SubmitButton className="btn-outline btn-sm">Save</SubmitButton>
                   </form>
                 </td>
               </tr>

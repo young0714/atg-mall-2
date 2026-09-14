@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils";
 import { currencyForDestinationIso } from "@/lib/services/destinationCountryService";
 import { issueShopForMeQuotationAction, markShopForMeUnderReviewAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Shop For Me" };
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export default async function AdminShopForMePage({
             {req.status === "SUBMITTED" && (
               <form action={markShopForMeUnderReviewAction} className="mt-3">
                 <input type="hidden" name="requestId" value={req.id} />
-                <button className="btn-outline btn-sm">Start Review</button>
+                <SubmitButton className="btn-outline btn-sm">Start Review</SubmitButton>
               </form>
             )}
 
@@ -69,7 +70,7 @@ export default async function AdminShopForMePage({
                       <option value="USD">USD</option>
                     </Select>
                   </Field>
-                  <button type="submit" className="btn-primary btn-sm sm:col-span-3 sm:w-fit">Send Quotation</button>
+                  <SubmitButton className="btn-primary btn-sm sm:col-span-3 sm:w-fit">Send Quotation</SubmitButton>
                 </form>
               </details>
             )}

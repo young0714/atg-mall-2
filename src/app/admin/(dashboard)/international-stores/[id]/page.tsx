@@ -10,6 +10,7 @@ import { updateStoreAction } from "../actions";
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { StoreCountry } from "@prisma/client";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Edit Store" };
 export const dynamic = "force-dynamic";
@@ -96,7 +97,7 @@ export default async function AdminStoreDetailPage({
               </label>
             ))}
           </div>
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Save changes</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Save changes</SubmitButton>
         </form>
       </section>
     </div>

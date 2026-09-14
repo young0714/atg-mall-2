@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import { formatMoney } from "@/lib/money";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import type { Currency } from "@prisma/client";
 
 type ShippingOption = {
@@ -121,9 +122,9 @@ export function CheckoutShippingSummary({
         <p className="mt-3 text-xs text-navy-400">
           Final total is recalculated from your actual shipping selection when the order is placed.
         </p>
-        <button type="submit" className="btn-primary mt-4 w-full" disabled={!canCheckout}>
+        <SubmitButton className="btn-primary mt-4 w-full" disabled={!canCheckout} pendingText="Placing order…">
           {canCheckout ? "Place Order" : "Shipping unavailable — see above"}
-        </button>
+        </SubmitButton>
       </section>
     </>
   );

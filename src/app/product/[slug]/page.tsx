@@ -15,6 +15,7 @@ import { Container, Section } from "@/components/ui/Section";
 import { formatDate } from "@/lib/utils";
 import { createReviewAction } from "./actions";
 import Link from "next/link";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const product = await db.product.findUnique({
@@ -187,7 +188,7 @@ export default async function ProductPage({
                 <Field label="Your review" htmlFor="body" required>
                   <Textarea id="body" name="body" rows={4} minLength={10} maxLength={2000} required />
                 </Field>
-                <button type="submit" className="btn-primary">Submit Review</button>
+                <SubmitButton className="btn-primary">Submit Review</SubmitButton>
               </form>
             )}
           </div>

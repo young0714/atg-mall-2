@@ -5,6 +5,7 @@ import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 import { acceptQuotationAction, declineQuotationAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Quotations" };
 export const dynamic = "force-dynamic";
@@ -65,11 +66,11 @@ export default async function QuotationsPage({
                   <div className="mt-4 flex gap-2">
                     <form action={acceptQuotationAction}>
                       <input type="hidden" name="quotationId" value={q.id} />
-                      <button type="submit" className="btn-primary btn-sm">Accept &amp; Pay</button>
+                      <SubmitButton className="btn-primary btn-sm">Accept &amp; Pay</SubmitButton>
                     </form>
                     <form action={declineQuotationAction}>
                       <input type="hidden" name="quotationId" value={q.id} />
-                      <button type="submit" className="btn-ghost btn-sm">Decline</button>
+                      <SubmitButton className="btn-ghost btn-sm">Decline</SubmitButton>
                     </form>
                   </div>
                 )}

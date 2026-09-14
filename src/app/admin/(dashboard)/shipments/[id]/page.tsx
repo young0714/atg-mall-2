@@ -8,6 +8,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { SHIPMENT_STATUS_FLOW } from "@/lib/constants";
 import { addTrackingEventAction } from "../actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Shipment Detail" };
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ export default async function AdminShipmentDetailPage({ params }: { params: { id
           </Field>
           <Field label="Location" htmlFor="location"><Input id="location" name="location" placeholder="e.g. Lagos Customs" /></Field>
           <Field label="Description" htmlFor="description"><Textarea id="description" name="description" /></Field>
-          <button type="submit" className="btn-primary w-full">Add Update</button>
+          <SubmitButton className="btn-primary w-full">Add Update</SubmitButton>
         </form>
       </div>
     </div>

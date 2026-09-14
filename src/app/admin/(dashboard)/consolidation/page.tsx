@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { Badge } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/utils";
 import { markConsolidationReadyAction } from "./actions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Consolidation" };
@@ -42,7 +43,7 @@ export default async function AdminConsolidationPage() {
             {c.status === "OPEN" && (
               <form action={markConsolidationReadyAction} className="mt-3">
                 <input type="hidden" name="consolidationId" value={c.id} />
-                <button className="btn-outline btn-sm">Mark Ready to Ship</button>
+                <SubmitButton className="btn-outline btn-sm">Mark Ready to Ship</SubmitButton>
               </form>
             )}
           </div>

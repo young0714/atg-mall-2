@@ -4,6 +4,7 @@ import { Logo } from "@/components/ui/Logo";
 import { requestPasswordResetAction } from "./actions";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Forgot Password" };
 
@@ -37,7 +38,7 @@ export default function ForgotPasswordPage({
               <Field label="Email address" htmlFor="email" required>
                 <Input id="email" name="email" type="email" required autoFocus />
               </Field>
-              <button type="submit" className="btn-primary w-full">Send Reset Link</button>
+              <SubmitButton className="btn-primary w-full">Send Reset Link</SubmitButton>
             </form>
           )}
 

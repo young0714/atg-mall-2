@@ -5,6 +5,7 @@ import { getActiveDestinationCountries, destinationCountryNameFor } from "@/lib/
 import { isoToFlagEmoji } from "@/lib/constants";
 import { updateProfileAction, addProfileAddressAction, deleteAddressAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Profile & Addresses" };
 export const dynamic = "force-dynamic";
@@ -67,7 +68,7 @@ export default async function ProfilePage({
         <Field label="City" htmlFor="city">
           <Input id="city" name="city" defaultValue={profile?.city ?? ""} />
         </Field>
-        <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Save Profile</button>
+        <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Save Profile</SubmitButton>
       </form>
 
       <div className="card p-6">
@@ -81,7 +82,7 @@ export default async function ProfilePage({
               </div>
               <form action={deleteAddressAction}>
                 <input type="hidden" name="addressId" value={a.id} />
-                <button type="submit" className="text-xs font-medium text-red-600 hover:underline">Remove</button>
+                <SubmitButton className="text-xs font-medium text-red-600 hover:underline">Remove</SubmitButton>
               </form>
             </div>
           ))}
@@ -101,7 +102,7 @@ export default async function ProfilePage({
           <Field label="State" htmlFor="a-state" required><Input id="a-state" name="state" required /></Field>
           <Field label="City" htmlFor="a-city" required><Input id="a-city" name="city" required /></Field>
           <Field label="Address" htmlFor="a-addressLine1" required><Input id="a-addressLine1" name="addressLine1" required /></Field>
-          <button type="submit" className="btn-outline btn-sm sm:col-span-2">Add Address</button>
+          <SubmitButton className="btn-outline btn-sm sm:col-span-2">Add Address</SubmitButton>
         </form>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { RatingInput } from "@/components/shop/RatingInput";
 import { Field, Input, Textarea } from "@/components/ui/Form";
 import { toggleReviewApprovalAction, deleteReviewAction, updateReviewAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Reviews" };
 export const dynamic = "force-dynamic";
@@ -47,11 +48,11 @@ export default async function AdminReviewsPage({
               <div className="mt-3 flex flex-wrap gap-3">
                 <form action={toggleReviewApprovalAction}>
                   <input type="hidden" name="reviewId" value={r.id} />
-                  <button className="text-xs font-medium text-atgblue-600 hover:underline">{r.isApproved ? "Hide" : "Approve"}</button>
+                  <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">{r.isApproved ? "Hide" : "Approve"}</SubmitButton>
                 </form>
                 <form action={deleteReviewAction}>
                   <input type="hidden" name="reviewId" value={r.id} />
-                  <button className="text-xs font-medium text-red-600 hover:underline">Delete</button>
+                  <SubmitButton className="text-xs font-medium text-red-600 hover:underline">Delete</SubmitButton>
                 </form>
               </div>
 
@@ -68,7 +69,7 @@ export default async function AdminReviewsPage({
                   <Field label="Body" htmlFor={`body-${r.id}`}>
                     <Textarea id={`body-${r.id}`} name="body" defaultValue={r.body} rows={3} minLength={10} maxLength={2000} required />
                   </Field>
-                  <button type="submit" className="btn-primary btn-sm">Save changes</button>
+                  <SubmitButton className="btn-primary btn-sm">Save changes</SubmitButton>
                 </form>
               </details>
             </div>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, Input } from "@/components/ui/Form";
 import { createDestinationCountryAction, toggleDestinationCountryActiveAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Destination Countries" };
 export const dynamic = "force-dynamic";
@@ -40,7 +41,7 @@ export default async function AdminDestinationCountriesPage({
           <Field label="Region" htmlFor="region" hint='Optional, e.g. "West Africa"'>
             <Input id="region" name="region" />
           </Field>
-          <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Add Country</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Add Country</SubmitButton>
         </form>
       </details>
 
@@ -65,7 +66,7 @@ export default async function AdminDestinationCountriesPage({
                 <td className="p-3">
                   <form action={toggleDestinationCountryActiveAction}>
                     <input type="hidden" name="countryId" value={c.id} />
-                    <button className="text-xs font-medium text-atgblue-600 hover:underline">{c.isActive ? "Deactivate" : "Activate"}</button>
+                    <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">{c.isActive ? "Deactivate" : "Activate"}</SubmitButton>
                   </form>
                 </td>
               </tr>

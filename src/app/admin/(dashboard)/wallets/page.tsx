@@ -5,6 +5,7 @@ import { Field, Input, Select } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
 import { adjustWalletAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Wallets" };
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function AdminWalletsPage({
           <Input id="reason" name="reason" required />
         </Field>
         <div className="flex items-end">
-          <button type="submit" className="btn-primary w-full">Apply Adjustment</button>
+          <SubmitButton className="btn-primary w-full">Apply Adjustment</SubmitButton>
         </div>
       </form>
 

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { createSupplierAction, toggleSupplierVerifiedAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Suppliers" };
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ export default async function AdminSuppliersPage({
         <Field label="Contact name" htmlFor="contactName"><Input id="contactName" name="contactName" /></Field>
         <Field label="Contact phone" htmlFor="contactPhone"><Input id="contactPhone" name="contactPhone" /></Field>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="verified" value="true" /> Verified supplier</label>
-        <button type="submit" className="btn-primary sm:col-span-2 sm:w-fit">Add Supplier</button>
+        <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Add Supplier</SubmitButton>
       </form>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -53,9 +54,9 @@ export default async function AdminSuppliersPage({
             </div>
             <form action={toggleSupplierVerifiedAction} className="mt-2">
               <input type="hidden" name="supplierId" value={s.id} />
-              <button className="text-xs font-medium text-atgblue-600 hover:underline">
+              <SubmitButton className="text-xs font-medium text-atgblue-600 hover:underline">
                 Mark as {s.verified ? "unverified" : "verified"}
-              </button>
+              </SubmitButton>
             </form>
           </div>
         ))}

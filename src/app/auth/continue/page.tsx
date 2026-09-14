@@ -4,6 +4,7 @@ import { peekMagicLinkToken } from "@/lib/auth/auth-service";
 import { confirmMagicLinkAction } from "./actions";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Continue to ATG Mall" };
 export const dynamic = "force-dynamic";
@@ -30,7 +31,7 @@ export default async function ContinuePage({
               <form action={confirmMagicLinkAction} className="mt-5">
                 <input type="hidden" name="token" value={token} />
                 {searchParams.next && <input type="hidden" name="next" value={searchParams.next} />}
-                <button type="submit" className="btn-primary w-full">Continue</button>
+                <SubmitButton className="btn-primary w-full">Continue</SubmitButton>
               </form>
             </>
           ) : (

@@ -5,6 +5,7 @@ import { getDestination } from "@/lib/destination";
 import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { isoToFlagEmoji } from "@/lib/constants";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = {
   title: "Source A Product — Let our team find it for you",
@@ -71,7 +72,7 @@ export default async function SourceAProductPage({
             <Textarea id="notes" name="notes" placeholder="Specifications, quality requirements, deadline, etc." />
           </Field>
 
-          <button type="submit" className="btn-primary w-full">Submit Sourcing Request</button>
+          <SubmitButton className="btn-primary w-full">Submit Sourcing Request</SubmitButton>
           <p className="text-center text-xs text-navy-400">
             Our sourcing team typically responds with supplier options within 1–3 business days.
           </p>

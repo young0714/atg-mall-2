@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/utils";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "./actions";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Notifications" };
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export default async function NotificationsPage() {
         </div>
         {unreadCount > 0 && (
           <form action={markAllNotificationsReadAction}>
-            <button type="submit" className="btn-outline btn-sm">Mark all as read</button>
+            <SubmitButton className="btn-outline btn-sm">Mark all as read</SubmitButton>
           </form>
         )}
       </div>
@@ -48,9 +49,9 @@ export default async function NotificationsPage() {
                 {!n.isRead && (
                   <form action={markNotificationReadAction} className="shrink-0">
                     <input type="hidden" name="notificationId" value={n.id} />
-                    <button type="submit" className="text-xs font-medium text-navy-500 hover:text-navy-800">
+                    <SubmitButton className="text-xs font-medium text-navy-500 hover:text-navy-800">
                       Mark as read
-                    </button>
+                    </SubmitButton>
                   </form>
                 )}
               </div>

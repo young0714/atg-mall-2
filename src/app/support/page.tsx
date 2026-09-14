@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { createSupportTicketAction } from "./actions";
 import { formatDateTime } from "@/lib/utils";
 import type { Metadata } from "next";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = {
   title: "Support",
@@ -67,7 +68,7 @@ export default async function SupportPage({
               <h2 className="font-semibold text-navy-900">Open a Support Ticket</h2>
               <Field label="Subject" htmlFor="subject" required><Input id="subject" name="subject" required /></Field>
               <Field label="Message" htmlFor="message" required><Textarea id="message" name="message" required /></Field>
-              <button type="submit" className="btn-primary w-full">Submit Ticket</button>
+              <SubmitButton className="btn-primary w-full">Submit Ticket</SubmitButton>
             </form>
 
             {tickets.length > 0 && (
