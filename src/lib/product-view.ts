@@ -9,7 +9,7 @@ type ProductWithImages = Product & { images: ProductImage[] };
 /**
  * Builds the display-ready card data for a product grid — just the
  * product's own price, converted to the visitor's display currency.
- * Landed cost (which adds shipping + service fee) is shown at checkout
+ * Landed cost (which adds shipping + handling fee) is shown at checkout
  * instead, once the customer has picked a shipping method.
  */
 export async function toProductCard(product: ProductWithImages, destination: Destination): Promise<ProductCardData> {
