@@ -31,9 +31,14 @@ export default function LoginPage({
             <Field label="Email address" htmlFor="email" required>
               <Input id="email" name="email" type="email" required autoFocus />
             </Field>
-            <Field label="Password" htmlFor="password" required>
-              <Input id="password" name="password" type="password" required />
-            </Field>
+            <div>
+              <Field label="Password" htmlFor="password" required>
+                <Input id="password" name="password" type="password" required />
+              </Field>
+              <Link href="/forgot-password" className="mt-1.5 inline-block text-xs font-medium text-atgblue-600">
+                Forgot password?
+              </Link>
+            </div>
             <button type="submit" className="btn-primary w-full">Sign In</button>
           </form>
 
