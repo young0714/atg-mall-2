@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function AccountOverviewPage({
   searchParams,
 }: {
-  searchParams: { welcome?: string; passwordSet?: string };
+  searchParams: { welcome?: string; passwordSet?: string; justRegistered?: string };
 }) {
   const user = await requireUser();
 
@@ -39,6 +39,11 @@ export default async function AccountOverviewPage({
 
   return (
     <div className="space-y-8">
+      {searchParams.justRegistered && (
+        <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
+          Welcome to ATG Mall! Your account is ready — start shopping, sourcing or shipping whenever you&apos;re ready.
+        </div>
+      )}
       {searchParams.welcome && (
         <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
           You&apos;re signed in. Set a password below to make it easier to come back next time.

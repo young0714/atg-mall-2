@@ -5,6 +5,7 @@ import { registerUser, AuthError } from "@/lib/auth/auth-service";
 import { createSession } from "@/lib/auth/session";
 import { setDestinationCookie } from "@/lib/destination";
 import { mergeGuestCartIntoUser } from "@/lib/services/cartService";
+import { notificationService, NOTIFICATION_EVENTS } from "@/lib/services/notificationService";
 import { redirect } from "next/navigation";
 
 function safeNext(raw: string): string {
@@ -25,7 +26,15 @@ export async function registerAction(formData: FormData) {
     await createSession({ userId: user.id, role: user.role, fullName: user.fullName, email: user.email });
     setDestinationCookie(parsed.data!.countryIso);
     await mergeGuestCartIntoUser(user.id);
-    redirect(next || "/account");
+    await notificationService.notify({
+      userId: user.id,
+      userContact: user.email,
+      event: NOTIFICATION_EVENTS.WELCOME,
+      title: "Welcome to ATG Mall!",
+      body: `Hi ${user.fullName.split(" ")[0]}, your ATG Mall account is ready. Start shopping, sourcing or shipping — we've got the rest covered.`,
+      channels: ["EMAIL"],
+    });
+    redirect(next || "/account?justRegistered=1");
   } catch (err) {
     if (err instanceof AuthError) {
       redirect(`/register?error=${encodeURIComponent(err.message)}${next ? `&next=${encodeURIComponent(next)}` : ""}`);

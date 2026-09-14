@@ -15,6 +15,7 @@ import type { NotificationChannel } from "@prisma/client";
  */
 
 export const NOTIFICATION_EVENTS = {
+  WELCOME: "WELCOME",
   ORDER_CREATED: "ORDER_CREATED",
   PAYMENT_RECEIVED: "PAYMENT_RECEIVED",
   QUOTATION_READY: "QUOTATION_READY",
