@@ -6,7 +6,7 @@ import { notificationService, NOTIFICATION_EVENTS } from "./notificationService"
 import { walletService } from "./walletService";
 import { commissionService } from "./commissionService";
 import { matchNames } from "./nameMatchService";
-import { checkVelocityCap } from "./velocityCapService";
+import { checkDepositLimit } from "./depositLimitService";
 
 // Currencies Flutterwave accepts for card/bank-transfer charges, per their
 // own docs. GMD (Gambian Dalasi) is notably absent — Gambian customers keep
@@ -146,23 +146,24 @@ class DefaultPaymentService implements PaymentService {
   }
 
   async charge(params: ChargeParams): Promise<PaymentInitiation> {
-    // Velocity cap: wallet top-ups only, not order payments — an order
-    // payment is already tied to a specific order and delivery address
-    // (inherently traceable), so the cap is reserved for the one flow that
-    // creates a flexible, reusable balance with no delivery trail at all.
-    // Never applies to the mock provider (dev/demo stays frictionless).
+    // Monthly deposit limit: wallet top-ups only, not order payments — an
+    // order payment is already tied to a specific order and delivery
+    // address (inherently traceable), so the cap is reserved for the one
+    // flow that creates a flexible, reusable balance with no delivery trail
+    // at all. Never applies to the mock provider (dev/demo stays
+    // frictionless).
     if (this.isLive() && params.isWalletDeposit && (params.method === "CARD" || params.method === "BANK_TRANSFER")) {
-      const velocity = await checkVelocityCap({
+      const depositLimit = await checkDepositLimit({
         userId: params.userId,
         amountMinor: params.amountMinor,
         currency: params.currency,
       });
-      if (!velocity.allowed) {
+      if (!depositLimit.allowed) {
         return {
           providerRef: `CAP-BLOCKED-${Date.now().toString(36).toUpperCase()}`,
           providerName: this.provider.name,
           status: "FAILED",
-          failureReason: velocity.reason,
+          failureReason: depositLimit.reason,
         };
       }
     }

@@ -61,6 +61,13 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // BVN identity verification (Nigeria only — see depositLimitService.ts).
+  // Null until the customer completes the BVN/NIBSS consent flow, which
+  // removes the monthly wallet-deposit cap for unverified accounts. Never
+  // store the BVN itself — only the outcome of verifying it.
+  bvnVerifiedAt   DateTime?
+  bvnVerifiedName String? // the name NIBSS returned, for cross-checking against fullName
+
   customerProfile CustomerProfile?
   seller          Seller?
   addresses       Address[]
