@@ -5,7 +5,8 @@ import { paymentService } from "@/lib/services/paymentService";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { Field, Input, Select } from "@/components/ui/Form";
-import { depositToWalletAction } from "./actions";
+import { depositToWalletAction, startBvnVerificationAction } from "./actions";
+import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
@@ -93,6 +94,34 @@ export default async function WalletPage({
               </p>
             )}
           </form>
+
+          {wallet.currency === "NGN" && (
+            <div className="card space-y-3 p-5">
+              <h3 className="font-semibold text-navy-900">Identity Verification</h3>
+              {user.bvnVerifiedAt ? (
+                <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
+                  BVN verified on {formatDate(user.bvnVerifiedAt)}. Your monthly wallet deposit limit no longer applies.
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-navy-500">
+                    Unverified accounts are limited to ₦500,000 in wallet top-ups per calendar month. Verify your BVN
+                    to remove this limit.
+                  </p>
+                  <form action={startBvnVerificationAction} className="space-y-3">
+                    <Field label="Bank Verification Number (BVN)" htmlFor="bvn" required>
+                      <Input id="bvn" name="bvn" inputMode="numeric" pattern="\d{11}" maxLength={11} required placeholder="22212345678" />
+                    </Field>
+                    <SubmitButton className="btn-outline w-full">Verify BVN</SubmitButton>
+                    <p className="text-center text-[11px] text-navy-400">
+                      You&apos;ll be taken to a secure NIBSS page to confirm your identity with an OTP. We never
+                      store your BVN — only the verification result.
+                    </p>
+                  </form>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

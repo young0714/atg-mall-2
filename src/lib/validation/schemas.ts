@@ -257,6 +257,11 @@ export const walletDepositSchema = z.object({
 });
 export type WalletDepositInput = z.infer<typeof walletDepositSchema>;
 
+export const bvnVerificationSchema = z.object({
+  bvn: z.string().trim().regex(/^\d{11}$/, "Enter your 11-digit BVN"),
+});
+export type BvnVerificationInput = z.infer<typeof bvnVerificationSchema>;
+
 export const deliveryZoneSchema = z.object({
   countryIso: isoCountrySchema,
   city: z.string().min(2, "Enter a city name"),

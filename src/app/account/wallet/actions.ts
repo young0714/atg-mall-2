@@ -1,9 +1,15 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { requireUser } from "@/lib/auth/current-user";
-import { walletDepositSchema } from "@/lib/validation/schemas";
+import { walletDepositSchema, bvnVerificationSchema } from "@/lib/validation/schemas";
 import { walletService } from "@/lib/services/walletService";
 import { paymentService } from "@/lib/services/paymentService";
+import {
+  initiateBvnVerification,
+  BVN_PENDING_COOKIE,
+  BVN_PENDING_COOKIE_MAX_AGE,
+} from "@/lib/services/bvnVerificationService";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 
@@ -67,4 +73,35 @@ export async function depositToWalletAction(formData: FormData) {
   }
 
   redirect(`/account/wallet?error=${encodeURIComponent(initiation.failureReason || "Deposit could not be completed")}`);
+}
+
+export async function startBvnVerificationAction(formData: FormData) {
+  const user = await requireUser();
+  const parsed = bvnVerificationSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    redirect(`/account/wallet?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Enter a valid BVN")}`);
+  }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const initiation = await initiateBvnVerification({
+    bvn: parsed.data.bvn,
+    fullName: user.fullName,
+    redirectUrl: `${appUrl}/account/wallet/bvn-callback`,
+  });
+
+  if (!initiation.ok || !initiation.consentUrl || !initiation.reference) {
+    redirect(`/account/wallet?error=${encodeURIComponent(initiation.error || "Could not start BVN verification")}`);
+  }
+
+  // Carries the pending reference across NIBSS's redirect round-trip — see
+  // bvnVerificationService.ts for why a cookie rather than a query param.
+  cookies().set(BVN_PENDING_COOKIE, initiation.reference, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: BVN_PENDING_COOKIE_MAX_AGE,
+  });
+
+  redirect(initiation.consentUrl);
 }
