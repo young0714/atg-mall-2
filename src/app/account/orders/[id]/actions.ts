@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth/current-user";
 import { walletService } from "@/lib/services/walletService";
 import { paymentService } from "@/lib/services/paymentService";
+import { commissionService } from "@/lib/services/commissionService";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -41,6 +42,7 @@ export async function payOrderWithWalletAction(formData: FormData) {
     await db.trackingEvent.create({
       data: { orderId: order!.id, status: "PAID", description: "Payment confirmed from ATG Wallet." },
     });
+    await commissionService.createForOrder(order!.id);
     revalidatePath(`/account/orders/${orderId}`);
     redirect(`/account/orders/${orderId}?paid=1`);
   }

@@ -12,6 +12,7 @@ import { paymentService } from "./paymentService";
 import { walletService } from "./walletService";
 import { notificationService, NOTIFICATION_EVENTS } from "./notificationService";
 import { currencyConversionService } from "./currencyConversionService";
+import { commissionService } from "./commissionService";
 import { sumMinor } from "@/lib/money";
 import { fulfillmentTypeForSourcePlatform } from "@/lib/fulfillment";
 
@@ -265,6 +266,7 @@ class DefaultOrderService implements OrderService {
       await db.trackingEvent.create({
         data: { orderId: order.id, status: "PAID", description: "Payment confirmed." },
       });
+      await commissionService.createForOrder(order.id);
       await db.cart.update({ where: { id: cart.id }, data: { items: { deleteMany: {} } } });
     }
 
@@ -384,6 +386,7 @@ class DefaultOrderService implements OrderService {
       await db.trackingEvent.create({
         data: { orderId: order.id, status: "PAID", description: "Payment confirmed from ATG Wallet." },
       });
+      await commissionService.createForOrder(order.id);
     } else {
       await db.payment.create({
         data: {

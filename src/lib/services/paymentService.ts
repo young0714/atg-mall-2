@@ -4,6 +4,7 @@ import type { Currency, PaymentMethod } from "@prisma/client";
 import { db } from "@/lib/db";
 import { notificationService, NOTIFICATION_EVENTS } from "./notificationService";
 import { walletService } from "./walletService";
+import { commissionService } from "./commissionService";
 
 // Currencies Flutterwave accepts for card/bank-transfer charges, per their
 // own docs. GMD (Gambian Dalasi) is notably absent — Gambian customers keep
@@ -182,6 +183,7 @@ export async function confirmFlutterwaveTransaction(transactionId: string): Prom
     await db.trackingEvent.create({
       data: { orderId: payment.order.id, status: "PAID", description: "Payment confirmed via Flutterwave." },
     });
+    await commissionService.createForOrder(payment.order.id);
     await db.cart
       .update({ where: { userId: payment.order.userId }, data: { items: { deleteMany: {} } } })
       .catch(() => {});

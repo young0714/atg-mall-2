@@ -257,7 +257,6 @@ model Seller {
 
   products    Product[]
   commissions Commission[]
-  payouts     Payout[]
 }
 
 enum SellerStatus {
@@ -910,34 +909,17 @@ model DeliveryZone {
 }
 
 // ---------------------------------------------------------------------------
-// Marketplace (Phase 3 — schema ready)
+// Marketplace
 // ---------------------------------------------------------------------------
 
 model Commission {
   id          String   @id @default(cuid())
   sellerId    String
   seller      Seller   @relation(fields: [sellerId], references: [id])
-  orderItemRef String
+  orderItemRef String  @unique
   amountMinor Int
   currency    Currency
   createdAt   DateTime @default(now())
-}
-
-enum PayoutStatus {
-  PENDING
-  PAID
-  REJECTED
-}
-
-model Payout {
-  id          String       @id @default(cuid())
-  sellerId    String
-  seller      Seller       @relation(fields: [sellerId], references: [id])
-  amountMinor Int
-  currency    Currency
-  status      PayoutStatus @default(PENDING)
-  requestedAt DateTime     @default(now())
-  paidAt      DateTime?
 }
 
 // ---------------------------------------------------------------------------
