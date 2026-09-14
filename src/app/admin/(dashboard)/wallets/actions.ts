@@ -17,12 +17,15 @@ export async function adjustWalletAction(formData: FormData) {
 
   const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
   const profile = await db.customerProfile.findUnique({ where: { userId } });
-  await walletService.getOrCreateWallet(userId, profile?.preferredCurrency ?? "NGN");
+  // Staff enters this amount directly in the wallet's own currency (shown
+  // on the admin wallets list) — not whatever the customer's current
+  // profile/destination currency happens to be, which can differ.
+  const wallet = await walletService.getOrCreateWallet(userId, profile?.preferredCurrency ?? "NGN");
 
   if (amountMinor > 0) {
-    await walletService.credit({ userId, amountMinor, type: "ADJUSTMENT", description: reason });
+    await walletService.credit({ userId, amountMinor, currency: wallet.currency, type: "ADJUSTMENT", description: reason });
   } else {
-    await walletService.debit({ userId, amountMinor: Math.abs(amountMinor), description: reason, type: "ADJUSTMENT" });
+    await walletService.debit({ userId, amountMinor: Math.abs(amountMinor), currency: wallet.currency, description: reason, type: "ADJUSTMENT" });
   }
 
   await db.auditLog.create({

@@ -55,6 +55,7 @@ export async function depositToWalletAction(formData: FormData) {
     await walletService.credit({
       userId: user.id,
       amountMinor,
+      currency: wallet.currency,
       type: "DEPOSIT",
       description: `Wallet top-up via ${method === "CARD" ? "card" : "bank transfer"} (${initiation.providerName})`,
       referenceType: "DEPOSIT",

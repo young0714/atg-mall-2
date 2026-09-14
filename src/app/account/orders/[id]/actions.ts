@@ -19,6 +19,7 @@ export async function payOrderWithWalletAction(formData: FormData) {
   const result = await walletService.debit({
     userId: user.id,
     amountMinor: order!.totalMinor,
+    currency: order!.currency,
     description: `Payment for order ${order!.orderNumber}`,
     referenceType: "ORDER",
     referenceId: order!.id,

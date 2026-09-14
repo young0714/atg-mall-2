@@ -205,6 +205,7 @@ export async function confirmFlutterwaveTransaction(transactionId: string): Prom
     await walletService.credit({
       userId: payment.userId,
       amountMinor: payment.amountMinor,
+      currency: payment.currency,
       type: "DEPOSIT",
       description: `Wallet top-up via ${payment.method === "CARD" ? "card" : "bank transfer"} (${payment.providerName})`,
       referenceType: "DEPOSIT",

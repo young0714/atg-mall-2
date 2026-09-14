@@ -15,6 +15,7 @@ export async function issueRefundAction(formData: FormData) {
   await walletService.credit({
     userId: order.userId,
     amountMinor: order.totalMinor,
+    currency: order.currency,
     type: "REFUND",
     description: `Refund for order ${order.orderNumber}`,
     referenceType: "ORDER",

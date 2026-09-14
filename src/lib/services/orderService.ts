@@ -216,6 +216,7 @@ class DefaultOrderService implements OrderService {
       const result = await walletService.debit({
         userId: params.userId,
         amountMinor: totalMinor,
+        currency: params.currency,
         description: `Payment for order ${orderNumber}`,
         referenceType: "ORDER",
         referenceId: order.id,
@@ -354,12 +355,14 @@ class DefaultOrderService implements OrderService {
     });
 
     // Accepting a quotation implies intent to pay now — try the customer's
-    // ATG Wallet first (their balance is already in the quotation's
-    // currency); fall back to leaving the order PENDING_PAYMENT so they can
-    // pay from the order page (wallet top-up or a mock card/bank charge).
+    // ATG Wallet first (debit() converts from the quotation's currency to
+    // whatever the wallet's own currency actually is); fall back to
+    // leaving the order PENDING_PAYMENT so they can pay from the order
+    // page (wallet top-up or a mock card/bank charge).
     const walletResult = await walletService.debit({
       userId,
       amountMinor: quotation.totalMinor,
+      currency: quotation.currency,
       description: `Payment for order ${orderNumber} (quotation ${quotation.quotationNumber})`,
       referenceType: "ORDER",
       referenceId: order.id,
