@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { currencyRateService } from "./currencyRateService";
 import type { RateProvider } from "./rateProvider";
 import type { ShippingRateRequest, ShippingRateQuoteResult, ShippingRateOption } from "./types";
 
@@ -49,8 +50,14 @@ class ManualRateProvider implements RateProvider {
     const volumetricDivisor = globalSettings?.volumetricDivisor ?? 5000;
     const globalMarkupEnabled = globalSettings?.markupEnabled ?? true;
     const globalMarkupPercent = globalSettings?.defaultMarkupPercent ?? 0;
-    const globalMarkupFixedMinor = globalSettings?.defaultMarkupFixedMinor ?? 0;
-    const globalHandlingFeeMinor = globalSettings?.defaultHandlingFeeMinor ?? 0;
+    // Admin enters these two in USD (the settings form's own hint text says
+    // so: "e.g. 200 = $2.00") — but they're applied as fallbacks across rate
+    // cards in every currency (NGN, GBP, CNY, ...). Converted to each card's
+    // own currency below, right before use, rather than added as a raw
+    // number — otherwise a "$2 default markup" would silently become ₦2
+    // (~$0.001) on an NGN card or £2 (~$2.70) on a GBP card.
+    const globalMarkupFixedMinorUsd = globalSettings?.defaultMarkupFixedMinor ?? 0;
+    const globalHandlingFeeMinorUsd = globalSettings?.defaultHandlingFeeMinor ?? 0;
 
     const actualWeightGrams = pkg.weightGrams;
     const volumetricWeightGrams =
@@ -103,10 +110,18 @@ class ManualRateProvider implements RateProvider {
       let markupMinor = 0;
       if (markupEnabled) {
         const markupPercent = card.markupPercent ?? globalMarkupPercent;
-        const markupFixedMinor = card.markupFixedMinor ?? globalMarkupFixedMinor;
+        // card.markupFixedMinor (when set) is entered directly against this
+        // card, so it's already in card.currency — only the global fallback
+        // needs converting from its USD entry, using the same admin-rate
+        // service the rest of this shipping engine uses for FX.
+        const markupFixedMinor =
+          card.markupFixedMinor ??
+          (await currencyRateService.convert(globalMarkupFixedMinorUsd, "USD", card.currency)).amountMinor;
         markupMinor = Math.round((carrierCostMinor * markupPercent) / 100) + markupFixedMinor;
       }
-      const handlingFeeMinor = card.handlingFeeMinor ?? globalHandlingFeeMinor;
+      const handlingFeeMinor =
+        card.handlingFeeMinor ??
+        (await currencyRateService.convert(globalHandlingFeeMinorUsd, "USD", card.currency)).amountMinor;
 
       options.push({
         serviceLevelId: card.serviceLevelId,
