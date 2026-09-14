@@ -12,6 +12,7 @@ import { FAQSection } from "@/components/home/FAQSection";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { CategoryCard } from "@/components/shop/CategoryCard";
 import { Section, SectionHeading, Container } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +41,7 @@ export default async function HomePage() {
   ]);
 
   return (
-    <>
+    <PullToRefresh>
       <Hero destination={destination.isoCode} countries={countries} />
       <ServicesPromo />
       <ShopTheWorld />
@@ -90,6 +91,6 @@ export default async function HomePage() {
       <ShippingOptionsSection />
       <Testimonials />
       <FAQSection />
-    </>
+    </PullToRefresh>
   );
 }

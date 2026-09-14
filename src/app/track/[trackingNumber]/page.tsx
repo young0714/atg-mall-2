@@ -2,6 +2,7 @@ import { trackingService } from "@/lib/services/trackingService";
 import { StatusTimeline } from "@/components/tracking/StatusTimeline";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Container, Section } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { SHIPPING_METHOD_LABELS } from "@/lib/constants";
 import { destinationCountryNameFor } from "@/lib/services/destinationCountryService";
 import { formatDate } from "@/lib/utils";
@@ -17,6 +18,7 @@ export default async function TrackResultPage({ params }: { params: { trackingNu
   const destinationCountryName = result ? await destinationCountryNameFor(result.destinationCountry) : null;
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container className="max-w-2xl">
         <Link href="/track" className="text-sm text-atgblue-600">← Track another shipment</Link>
@@ -64,5 +66,6 @@ export default async function TrackResultPage({ params }: { params: { trackingNu
         )}
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

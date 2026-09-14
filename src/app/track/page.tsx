@@ -1,4 +1,5 @@
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -27,25 +28,27 @@ async function trackAction(formData: FormData) {
 
 export default function TrackPage() {
   return (
-    <Section className="!py-16">
-      <Container className="max-w-xl text-center">
-        <SectionHeading
-          eyebrow="Track Shipment"
-          title="Where's my package?"
-          description="Enter your ATG tracking number to see its full journey — from our China warehouse to your door."
-          align="center"
-        />
-        <form action={trackAction} className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <input
-            className="input flex-1"
-            type="text"
-            name="trackingNumber"
-            required
-            placeholder="e.g. ATG-NG-2026000123"
+    <PullToRefresh>
+      <Section className="!py-16">
+        <Container className="max-w-xl text-center">
+          <SectionHeading
+            eyebrow="Track Shipment"
+            title="Where's my package?"
+            description="Enter your ATG tracking number to see its full journey — from our China warehouse to your door."
+            align="center"
           />
-          <SubmitButton className="btn-primary shrink-0">Track Shipment</SubmitButton>
-        </form>
-      </Container>
-    </Section>
+          <form action={trackAction} className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <input
+              className="input flex-1"
+              type="text"
+              name="trackingNumber"
+              required
+              placeholder="e.g. ATG-NG-2026000123"
+            />
+            <SubmitButton className="btn-primary shrink-0">Track Shipment</SubmitButton>
+          </form>
+        </Container>
+      </Section>
+    </PullToRefresh>
   );
 }
