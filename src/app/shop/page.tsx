@@ -3,6 +3,7 @@ import { getDestination } from "@/lib/destination";
 import { toProductCard } from "@/lib/product-view";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { Container, Section } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Input } from "@/components/ui/Form";
 import { SortSelect } from "@/components/shop/SortSelect";
 import type { Metadata } from "next";
@@ -68,6 +69,7 @@ export default async function ShopPage({
   const productCards = await Promise.all(products.map((p) => toProductCard(p, destination)));
 
   return (
+    <PullToRefresh>
     <Section className="!py-10">
       <Container>
         <div className="mb-8">
@@ -148,5 +150,6 @@ export default async function ShopPage({
         </div>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }
