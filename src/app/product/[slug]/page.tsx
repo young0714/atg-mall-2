@@ -99,7 +99,7 @@ export default async function ProductPage({
               </div>
             )}
 
-            <p className="mt-4 text-sm leading-relaxed text-navy-600">{product.description}</p>
+            <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-navy-600">{product.description}</p>
 
             <div className="mt-6 border-t border-navy-100 pt-6">
               <ProductPurchasePanel

@@ -245,12 +245,27 @@ class LiveCjDropshippingService implements CjDropshippingService {
   }
 }
 
+// CJ's description HTML is a spec sheet — one attribute per <p>/<li>/<br>
+// line. Stripping tags naively (replacing them all with a space) throws
+// that structure away and leaves one giant run-on line. This preserves it
+// as real line breaks, and as a fallback also breaks before "Label:"
+// patterns for listings where CJ didn't mark up line boundaries at all.
 function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  const withBreaks = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ");
+  return formatSpecSheetText(withBreaks);
+}
+
+function formatSpecSheetText(text: string): string {
+  return text
+    .replace(/(?:^|(?<=\s))([A-Z][A-Za-z]+(?:[ -][A-Za-z]+){0,4}):(?=\s|$)/g, "\n$1:")
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n");
 }
 
 export const cjDropshippingService: CjDropshippingService = new LiveCjDropshippingService();
