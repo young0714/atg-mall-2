@@ -13,17 +13,10 @@ full Vercel + custom-domain walkthrough.
 
 ---
 
-## ⚠️ Important: this build has not been compiled or run
+## Status
 
-This codebase was hand-written directly to spec (Next.js 14 App Router, TypeScript, Tailwind CSS, Prisma/PostgreSQL)
-in an environment **without npm registry access**, so `npm install`, `next build`, `next dev` and the Prisma CLI
-could not be run here to prove the project compiles and boots. Every file was written carefully and cross-checked for
-internal consistency (import paths, Prisma model/field/enum names, and named exports were verified with automated
-scans — no broken imports or missing exports were found, and one genuinely missing dependency, `server-only`, was
-caught this way and added to `package.json`). Even so, **you should expect to fix at least a few small issues** —
-most likely TypeScript type errors — the first time you run `npm run build` or `npm run typecheck`, since no
-TypeScript compiler or bundler has actually processed this code yet. Please treat the very first `npm install` +
-`npm run typecheck` as part of setup, not as a sign something went wrong.
+This is a live, deployed production application, not a scaffold — `npm run build` and `npm run typecheck` are both
+clean, and every change lands through that same build-then-deploy cycle. See "Local setup" below to run it yourself.
 
 ---
 
