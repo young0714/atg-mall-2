@@ -40,24 +40,31 @@ TypeScript compiler or bundler has actually processed this code yet. Please trea
 
 ## What's real vs. mocked by design
 
-Per the brief, this MVP does **not** fabricate live third-party integrations. Every external dependency sits behind a
-clean service interface in `src/lib/services/`, with a `Mock*` implementation used today and a documented seam for a
-`Live*` implementation later:
+Every external dependency sits behind a clean service interface in `src/lib/services/`. Several now have a real
+`Live*` implementation, gated behind an env var; the rest still use a `Mock*`/placeholder implementation with a
+documented seam for a real one later:
 
+- **Payments** — `paymentService.ts` uses a real Flutterwave hosted-checkout integration for Card/Bank Transfer when
+  `FLUTTERWAVE_SECRET_KEY` is set, falling back to a mock success/failure simulator otherwise. The ATG Wallet is
+  always a real internal ledger regardless — it never touches the gateway.
+- **Notifications** — the EMAIL channel sends for real via Resend when `RESEND_API_KEY` is set (falls back to a
+  console-log mock otherwise); every event also always writes a real in-app `Notification` row (Account →
+  Notifications). SMS/WhatsApp/Push remain mocked — no provider integrated yet.
+- **Shipping rates** — the checkout path (`shippingCalculationService.ts`) quotes from admin-configured
+  `ShippingRateCard`/`ShippingRateBracket` rows (Admin → Shipping Rate Cards), with `liveCarrierProvider.ts` a
+  documented, unconfigured seam for a real DHL/FedEx/UPS API later. An older, simpler `shippingService.ts`
+  (Admin → Shipping Rates (Legacy)) still backs the public `/api/v1/shipping/quote` route.
+- **Currency conversion** — `currencyRateService.ts` (admin-configurable, under Admin → Currency Rates) is the
+  primary path for shipping/checkout math, falling back to `currencyConversionService.ts`'s static, clearly-labeled
+  indicative rate table where no admin rate exists.
 - **1688 / Taobao product data** — `oneSixEightEightProductService.ts` / `taobaoProductService.ts` return a small set
   of hand-written, realistic sample listings. No live API is called.
-- **Payments** — `paymentService.ts` simulates success/failure. No card numbers are collected or processed.
-- **Shipping rates** — `shippingService.ts` reads admin-configured `ShippingRate` rows from the database (editable
-  under **Admin → Shipping Rates**). If no rate is configured for a route, it returns `null` rather than inventing one.
-- **Currency conversion** — `currencyConversionService.ts` uses a static, clearly-labeled indicative rate table.
-- **Notifications** (Email/SMS/WhatsApp/Push) — always recorded in-app; other channels log to the console in
-  development via `ConsoleMockTransport` rather than sending real messages.
 - **File storage** — uploads are saved to `public/uploads/` on the local filesystem, documented as a Phase 1
   placeholder for S3/Cloudinary.
 
 Everything else — accounts, RBAC, catalog, cart/checkout, Shop for Me, Source a Product with quotations, the
-ATG Wallet ledger, warehouse receiving, consolidation, shipments, tracking, the full admin dashboard, coupons,
-reviews, support tickets, and the legal/SEO pages — is fully implemented against a real PostgreSQL schema.
+ATG Wallet ledger, warehouse receiving, consolidation, shipments, tracking, the full admin dashboard, reviews,
+support tickets, and the legal/SEO pages — is fully implemented against a real PostgreSQL schema.
 
 ## Local setup
 
@@ -129,7 +136,7 @@ src/
     legal/             # Terms, Privacy, Refund/Shipping Policy, Prohibited Items, Seller Terms, Customer Agreement
   components/          # UI primitives, layout, and feature-specific components
   lib/
-    services/          # Mock* service abstractions (see above) — the seam for real integrations later
+    services/          # Mock*/Live* service abstractions (see above) — some connected, some still a seam for later
     auth/               # Password hashing, JWT sessions, current-user helpers
     validation/         # Zod schemas
     rbac.ts             # Central role → permission matrix
@@ -151,8 +158,8 @@ prisma/
 
 ## Roadmap
 
-See **Phase 2–4** in [`ARCHITECTURE.md`](./ARCHITECTURE.md) for what comes after this MVP: real 1688/Taobao/payment/
-carrier integrations, the seller marketplace going live end-to-end, and native mobile apps.
+See **Phase 2–4** in [`ARCHITECTURE.md`](./ARCHITECTURE.md) for what comes after this MVP: real 1688/Taobao data and
+live carrier-rate integrations, the seller marketplace going live end-to-end, and native mobile apps.
 
 ## Support
 
