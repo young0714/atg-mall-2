@@ -4,16 +4,20 @@ import { formatMoney } from "@/lib/money";
 import type { Currency } from "@prisma/client";
 
 /**
- * Caps how much real gateway money (Card/Bank Transfer) a brand-new account
- * can bring in during its first few days — blunts the "fresh account, one
- * large fraudulent hit" pattern specifically. Unlike the bank-transfer name
+ * Caps how much real gateway money a brand-new account can put into its ATG
+ * Wallet during its first few days — blunts the "fresh account, one large
+ * fraudulent top-up" pattern specifically. Deliberately wallet-deposits-only:
+ * paying for an order directly is already tied to a specific order and
+ * delivery address (inherently traceable), so only the flow that creates a
+ * flexible, reusable, undelivered balance needs this hard gate — see the
+ * isWalletDeposit check in paymentService.ts. Unlike the bank-transfer name
  * match, this is a hard block, not a flag: review-after-the-fact doesn't
- * help here, since the point is stopping the hit before goods ship, not
+ * help here, since the point is stopping the hit before it can be spent, not
  * noticing it afterward.
  *
  * Only currencies Flutterwave actually charges need a cap (GMD customers
  * never reach the gateway — see paymentService.ts). Adjust these numbers as
- * real order volumes make clear what's too tight or too loose; they're the
+ * real deposit volumes make clear what's too tight or too loose; they're the
  * only thing here that should need tuning.
  */
 export const NEW_ACCOUNT_WINDOW_DAYS = 7;
@@ -43,14 +47,17 @@ export async function checkVelocityCap(params: {
 
   // Count PENDING alongside SUCCESSFUL — Bank Transfer payments can sit
   // PENDING for a while before confirming, so only counting SUCCESSFUL would
-  // let several near-cap attempts race in before any of them settle.
+  // let several near-cap attempts race in before any of them settle. Only
+  // wallet-deposit payments count toward this (orderId is always null for
+  // those — see the Payment model) since order payments are uncapped.
   const priorAgg = await db.payment.aggregate({
     _sum: { amountMinor: true },
     where: {
       status: { in: ["PENDING", "SUCCESSFUL"] },
       currency: params.currency,
       providerName: "FLUTTERWAVE",
-      OR: [{ userId: params.userId }, { order: { userId: params.userId } }],
+      userId: params.userId,
+      orderId: null,
     },
   });
   const priorTotal = priorAgg._sum.amountMinor ?? 0;
@@ -58,7 +65,7 @@ export async function checkVelocityCap(params: {
   if (priorTotal + params.amountMinor > cap) {
     return {
       allowed: false,
-      reason: `New accounts are limited to ${formatMoney(cap, params.currency)} in Card/Bank Transfer payments during their first ${NEW_ACCOUNT_WINDOW_DAYS} days. Please pay from your ATG Wallet, or contact support to lift this limit.`,
+      reason: `New accounts are limited to ${formatMoney(cap, params.currency)} in wallet top-ups during their first ${NEW_ACCOUNT_WINDOW_DAYS} days. Contact support to lift this limit.`,
     };
   }
 

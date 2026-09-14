@@ -75,6 +75,7 @@ export async function retryPaymentAction(formData: FormData) {
     customerEmail: user.email,
     customerName: user.fullName,
     redirectUrl: `${appUrl}/checkout/callback`,
+    isWalletDeposit: false,
   });
 
   await db.payment.create({

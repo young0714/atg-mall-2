@@ -32,6 +32,7 @@ export async function depositToWalletAction(formData: FormData) {
     customerEmail: user.email,
     customerName: user.fullName,
     redirectUrl: `${appUrl}/account/wallet/callback`,
+    isWalletDeposit: true,
   });
 
   await db.payment.create({

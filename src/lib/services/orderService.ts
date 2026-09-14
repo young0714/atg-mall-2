@@ -245,6 +245,7 @@ class DefaultOrderService implements OrderService {
         customerEmail: user.email,
         customerName: user.fullName,
         redirectUrl: `${appUrl}/checkout/callback`,
+        isWalletDeposit: false,
       });
       paymentStatus = initiation.status;
       redirectUrl = initiation.redirectUrl;

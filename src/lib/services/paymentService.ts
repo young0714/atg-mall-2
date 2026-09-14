@@ -39,6 +39,11 @@ export interface ChargeParams {
   customerEmail: string;
   customerName: string;
   redirectUrl: string;
+  // True only for the Wallet "Deposit Funds" flow. An order payment is
+  // already tied to a specific order and delivery address — inherently
+  // traceable — so the velocity cap only applies to wallet top-ups, which
+  // create a flexible, reusable balance with no delivery trail at all.
+  isWalletDeposit: boolean;
 }
 
 export interface PaymentInitiation {
@@ -141,10 +146,12 @@ class DefaultPaymentService implements PaymentService {
   }
 
   async charge(params: ChargeParams): Promise<PaymentInitiation> {
-    // Velocity cap only applies to real gateway money coming in — never to
-    // the mock provider (dev/demo stays frictionless) and never to Wallet
-    // (spending an existing balance isn't new money entering the system).
-    if (this.isLive() && (params.method === "CARD" || params.method === "BANK_TRANSFER")) {
+    // Velocity cap: wallet top-ups only, not order payments — an order
+    // payment is already tied to a specific order and delivery address
+    // (inherently traceable), so the cap is reserved for the one flow that
+    // creates a flexible, reusable balance with no delivery trail at all.
+    // Never applies to the mock provider (dev/demo stays frictionless).
+    if (this.isLive() && params.isWalletDeposit && (params.method === "CARD" || params.method === "BANK_TRANSFER")) {
       const velocity = await checkVelocityCap({
         userId: params.userId,
         amountMinor: params.amountMinor,
