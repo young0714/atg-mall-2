@@ -13,10 +13,11 @@ const links = [
   { href: "/account/sourcing", label: "Sourcing Requests" },
   { href: "/account/quotations", label: "Quotations" },
   { href: "/account/wallet", label: "Wallet" },
+  { href: "/account/notifications", label: "Notifications" },
   { href: "/account/profile", label: "Profile & Addresses" },
 ];
 
-export function AccountNav() {
+export function AccountNav({ unreadNotifications = 0 }: { unreadNotifications?: number }) {
   const pathname = usePathname();
   return (
     <nav className="flex gap-1 overflow-x-auto whitespace-nowrap rounded-xl2 border border-navy-100 bg-white p-1.5 lg:flex-col lg:whitespace-normal">
@@ -27,11 +28,16 @@ export function AccountNav() {
             key={link.href}
             href={link.href}
             className={cn(
-              "shrink-0 rounded-lg px-3.5 py-2.5 text-sm font-medium",
+              "flex shrink-0 items-center justify-between gap-2 rounded-lg px-3.5 py-2.5 text-sm font-medium",
               active ? "bg-navy-900 text-white" : "text-navy-600 hover:bg-sand-100",
             )}
           >
             {link.label}
+            {link.href === "/account/notifications" && unreadNotifications > 0 && (
+              <span className="rounded-full bg-gold-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                {unreadNotifications}
+              </span>
+            )}
           </Link>
         );
       })}

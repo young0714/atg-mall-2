@@ -26,6 +26,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
       items: true,
       payments: true,
       packages: true,
+      shipments: true,
       trackingEvents: { orderBy: { occurredAt: "desc" } },
     },
   });
@@ -88,6 +89,36 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
               </div>
             ))}
           </div>
+          {order.shipments.length > 0 && (
+            <div className="card p-5">
+              <h2 className="mb-3 font-semibold text-navy-900">Shipments ({order.shipments.length})</h2>
+              <div className="space-y-3">
+                {order.shipments.map((s, idx) => (
+                  <div key={s.id} className="rounded-lg border border-navy-100 p-3 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 font-medium text-navy-800">
+                        Shipment {idx + 1}: {s.originNameSnapshot} → {s.destinationCountryIso}
+                      </span>
+                      <span className="shrink-0 font-semibold text-navy-800">{formatMoney(s.customerPriceMinor, s.currency)}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-navy-500">
+                      {s.serviceLevelNameSnapshot} via {s.carrierNameSnapshot} · {(s.chargeableWeightGrams / 1000).toFixed(2)} kg ·{" "}
+                      {s.estimatedDeliveryDaysMin}–{s.estimatedDeliveryDaysMax} days · {s.rateSource.replaceAll("_", " ")}
+                    </p>
+                    <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-navy-50 pt-2 text-xs text-navy-500">
+                      <div className="flex justify-between"><dt>Carrier cost</dt><dd>{formatMoney(s.carrierCostMinor, s.currency)}</dd></div>
+                      <div className="flex justify-between"><dt>Markup</dt><dd>{formatMoney(s.markupMinor, s.currency)}</dd></div>
+                      <div className="flex justify-between"><dt>Handling fee</dt><dd>{formatMoney(s.handlingFeeMinor, s.currency)}</dd></div>
+                      {s.customsEstimateMinor != null && (
+                        <div className="flex justify-between"><dt>Customs est.</dt><dd>{formatMoney(s.customsEstimateMinor, s.currency)}</dd></div>
+                      )}
+                    </dl>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="card p-5">
             <h2 className="mb-4 font-semibold text-navy-900">Timeline</h2>
             <StatusTimeline events={order.trackingEvents} />
