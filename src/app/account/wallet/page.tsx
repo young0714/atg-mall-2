@@ -41,7 +41,7 @@ export default async function WalletPage({
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="card">
+        <div className="card order-last lg:order-none">
           <div className="border-b border-navy-100 p-5">
             <h2 className="font-semibold text-navy-900">Transaction History</h2>
           </div>
