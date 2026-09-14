@@ -98,7 +98,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
             <h2 className="mb-2 font-semibold text-navy-900">Cost</h2>
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatMoney(order.subtotalMinor, order.currency)}</dd></div>
-              <div className="flex justify-between"><dt>Service fee</dt><dd>{formatMoney(order.serviceFeeMinor, order.currency)}</dd></div>
+              <div className="flex justify-between"><dt>{order.source === "CATALOG" ? "Handling fee" : "Service fee"}</dt><dd>{formatMoney(order.serviceFeeMinor, order.currency)}</dd></div>
               <div className="flex justify-between"><dt>Intl shipping</dt><dd>{formatMoney(order.intlShippingMinor, order.currency)}</dd></div>
               <div className="flex justify-between font-bold"><dt>Total</dt><dd>{formatMoney(order.totalMinor, order.currency)}</dd></div>
             </dl>
