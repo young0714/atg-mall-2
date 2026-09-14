@@ -532,6 +532,17 @@ model Payment {
   providerRef   String?       // opaque reference from the (mock) PaymentService
   providerName  String        @default("MOCK") // e.g. "MOCK", "PAYSTACK", "FLUTTERWAVE"
   createdAt     DateTime      @default(now())
+
+  // Bank-transfer sender name match (see nameMatchService.ts) — Nigeria/NGN
+  // only, since it relies on NIBSS transfer metadata Flutterwave passes
+  // through. All null unless method=BANK_TRANSFER, currency=NGN, and that
+  // metadata was present on confirmation. This is a plausibility flag for
+  // admin review, never an automated block — never derive account access
+  // or order fulfillment decisions from it directly.
+  payerBankName            String?
+  payerAccountName         String? // NIBSS originator name — the sender's own bank account name
+  payerAccountNumberMasked String?
+  nameMatchScore           Float?  // 0–1, share of the profile name found in payerAccountName
 }
 
 // ---------------------------------------------------------------------------

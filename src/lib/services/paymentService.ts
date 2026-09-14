@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { notificationService, NOTIFICATION_EVENTS } from "./notificationService";
 import { walletService } from "./walletService";
 import { commissionService } from "./commissionService";
+import { matchNames } from "./nameMatchService";
 
 // Currencies Flutterwave accepts for card/bank-transfer charges, per their
 // own docs. GMD (Gambian Dalasi) is notably absent — Gambian customers keep
@@ -176,7 +177,28 @@ export async function confirmFlutterwaveTransaction(transactionId: string): Prom
 
   if (payment.status === "SUCCESSFUL") return { ok: true, orderId: payment.orderId ?? undefined };
 
-  await db.payment.update({ where: { id: payment.id }, data: { status: "SUCCESSFUL" } });
+  // Resolve the profile whose name we'd compare a bank-transfer sender
+  // against — the order's buyer, or the wallet-deposit's own user.
+  const profileUserId = payment.order?.userId ?? payment.userId ?? null;
+  const profileUser = profileUserId ? await db.user.findUnique({ where: { id: profileUserId } }) : null;
+
+  // Bank-transfer sender name match — Nigeria/NGN only, since it relies on
+  // NIBSS transfer metadata Flutterwave passes through on the verify
+  // response. A plausibility flag for admin review, never an automated
+  // block — see nameMatchService.ts.
+  const meta = data.meta_data ?? data.meta ?? null;
+  const originatorName: string | undefined = meta?.originatorname;
+  const nameMatchFields =
+    payment.method === "BANK_TRANSFER" && payment.currency === "NGN" && originatorName && profileUser
+      ? {
+          payerBankName: meta?.bankname ?? null,
+          payerAccountName: originatorName,
+          payerAccountNumberMasked: meta?.originatoraccountnumber ?? null,
+          nameMatchScore: matchNames(profileUser.fullName, originatorName).score,
+        }
+      : {};
+
+  await db.payment.update({ where: { id: payment.id }, data: { status: "SUCCESSFUL", ...nameMatchFields } });
 
   if (payment.order) {
     await db.order.update({ where: { id: payment.order.id }, data: { status: "PAID" } });
@@ -188,11 +210,10 @@ export async function confirmFlutterwaveTransaction(transactionId: string): Prom
       .update({ where: { userId: payment.order.userId }, data: { items: { deleteMany: {} } } })
       .catch(() => {});
 
-    const user = await db.user.findUnique({ where: { id: payment.order.userId } });
-    if (user) {
+    if (profileUser) {
       await notificationService.notify({
-        userId: user.id,
-        userContact: user.email,
+        userId: profileUser.id,
+        userContact: profileUser.email,
         event: NOTIFICATION_EVENTS.PAYMENT_RECEIVED,
         title: "Payment received",
         body: `We've received your payment for order ${payment.order.orderNumber}.`,

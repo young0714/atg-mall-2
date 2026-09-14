@@ -1,10 +1,11 @@
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
-import { StatusBadge } from "@/components/ui/Badge";
+import { Badge, StatusBadge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { paymentService } from "@/lib/services/paymentService";
+import { NAME_MATCH_THRESHOLD } from "@/lib/services/nameMatchService";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Payments" };
@@ -30,13 +31,14 @@ export default async function AdminPaymentsPage() {
       </div>
 
       <div className="overflow-x-auto rounded-xl2 border border-navy-100 bg-white">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="w-full min-w-[1040px] text-sm">
           <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
             <tr>
               <th className="p-3">Order</th>
               <th className="p-3">Customer</th>
               <th className="p-3">Method</th>
               <th className="p-3">Provider</th>
+              <th className="p-3">Bank transfer from</th>
               <th className="p-3">Amount</th>
               <th className="p-3">Status</th>
               <th className="p-3">Date</th>
@@ -49,6 +51,23 @@ export default async function AdminPaymentsPage() {
                 <td className="p-3 text-navy-500">{p.order?.user.fullName ?? p.user?.fullName ?? "—"}</td>
                 <td className="p-3 text-navy-500">{p.method.replaceAll("_", " ")}</td>
                 <td className="p-3 text-navy-500">{p.providerName}</td>
+                <td className="p-3">
+                  {p.payerAccountName ? (
+                    <div className="space-y-1">
+                      <p className="text-navy-700">{p.payerAccountName}</p>
+                      <p className="text-xs text-navy-400">{p.payerBankName}</p>
+                      {p.nameMatchScore != null && (
+                        <Badge tone={p.nameMatchScore >= NAME_MATCH_THRESHOLD ? "green" : "gold"}>
+                          {p.nameMatchScore >= NAME_MATCH_THRESHOLD ? "Matched" : "Review"} · {Math.round(p.nameMatchScore * 100)}%
+                        </Badge>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-navy-300">
+                      {p.method === "BANK_TRANSFER" ? "Not evaluated" : "—"}
+                    </span>
+                  )}
+                </td>
                 <td className="p-3 text-navy-700">{formatMoney(p.amountMinor, p.currency)}</td>
                 <td className="p-3"><StatusBadge status={p.status} /></td>
                 <td className="p-3 text-navy-400">{formatDateTime(p.createdAt)}</td>
