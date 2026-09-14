@@ -68,14 +68,11 @@ Postgres connection string that accepts external connections.)
    | `AUTH_SECRET` | a long random string — generate with `openssl rand -base64 48` |
    | `AUTH_COOKIE_NAME` | `atg_session` |
    | `NEXT_PUBLIC_APP_URL` | your Vercel URL for now, e.g. `https://atg-mall.vercel.app` (you'll update this in step 7) |
-   | `NEXT_PUBLIC_APP_NAME` | `ATG Mall` |
-   | `NEXT_PUBLIC_PARENT_COMPANY` | `Apex Terra Global Limited` |
-   | `NEXT_PUBLIC_SUPPORT_EMAIL` | `support@apexterraglobal.com` |
-   | `NEXT_PUBLIC_SUPPORT_PHONE` | `+234 704 394 5345` |
-   | `NEXT_PUBLIC_CORPORATE_SITE` | `https://apexterraglobal.com` |
 
-   Leave the payment/notification/1688/Taobao keys blank for now — those are
-   Phase 2, once you have a real provider to connect.
+   Leave `FLUTTERWAVE_SECRET_KEY`, `FLUTTERWAVE_WEBHOOK_HASH`, `RESEND_API_KEY`
+   and `CJ_API_KEY` blank for now — the app runs fine without them (mock
+   payments, console-logged emails, no CJ import), and each one has its own
+   comment in `.env.example` explaining what setting it switches on.
 
 5. Click **Deploy**. `npm install` runs `prisma generate` automatically
    (via the `postinstall` script), then `next build` compiles the app.
@@ -174,8 +171,11 @@ Once the domain resolves:
 
 - **Rotate `AUTH_SECRET`** if it was ever shared outside your own
   environment variables — anyone with it can forge session cookies.
-- **Phase 2 integrations** (real payments, real 1688/Taobao data, real
-  carrier rates, real email/SMS/WhatsApp) each have a documented seam in
-  `src/lib/services/*` — see `ARCHITECTURE.md` for the roadmap.
+- **Remaining integrations** (real 1688/Taobao data, real live carrier rate
+  APIs, real SMS/WhatsApp) each have a documented seam in `src/lib/services/*`
+  — see `ARCHITECTURE.md` for the roadmap. Payments (Flutterwave) and email
+  (Resend) already have real implementations — just add
+  `FLUTTERWAVE_SECRET_KEY`/`FLUTTERWAVE_WEBHOOK_HASH` and `RESEND_API_KEY`
+  from `.env.example` to switch them on.
 - Keep using `npx prisma migrate dev` locally when the schema changes, then
   `npx prisma migrate deploy` against production the same way as step 4.
