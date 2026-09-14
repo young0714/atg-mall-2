@@ -78,7 +78,6 @@ const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: "Marketplace",
     items: [
-      { href: "/admin/coupons", label: "Coupons", permission: PERMISSIONS.MANAGE_COUPONS },
       { href: "/admin/reviews", label: "Reviews", permission: PERMISSIONS.MANAGE_REVIEWS },
     ],
   },

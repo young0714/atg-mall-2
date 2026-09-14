@@ -944,24 +944,6 @@ model Payout {
 // Marketing / support / ops
 // ---------------------------------------------------------------------------
 
-enum CouponType {
-  PERCENTAGE
-  FIXED
-}
-
-model Coupon {
-  id          String     @id @default(cuid())
-  code        String     @unique
-  type        CouponType
-  value       Int        // percentage (0-100) or fixed minor-unit amount
-  currency    Currency?
-  isActive    Boolean    @default(true)
-  usageLimit  Int?
-  usedCount   Int        @default(0)
-  expiresAt   DateTime?
-  createdAt   DateTime   @default(now())
-}
-
 enum NotificationChannel {
   EMAIL
   SMS

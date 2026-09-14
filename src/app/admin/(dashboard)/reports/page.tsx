@@ -21,7 +21,6 @@ export default async function AdminReportsPage() {
     shopForMeByStatus,
     sourcingByStatus,
     walletsByCurrency,
-    coupons,
     packagesByStatus,
     countries,
   ] = await Promise.all([
@@ -41,7 +40,6 @@ export default async function AdminReportsPage() {
     db.shopForMeRequest.groupBy({ by: ["status"], _count: { _all: true } }),
     db.sourcingRequest.groupBy({ by: ["status"], _count: { _all: true } }),
     db.wallet.groupBy({ by: ["currency"], _sum: { balanceMinor: true }, _count: { _all: true } }),
-    db.coupon.findMany({ orderBy: { createdAt: "desc" } }),
     db.package.groupBy({ by: ["status"], _count: { _all: true } }),
     getActiveDestinationCountries(),
   ]);
@@ -160,27 +158,6 @@ export default async function AdminReportsPage() {
               hint={`${row._count._all} wallet${row._count._all === 1 ? "" : "s"}`}
               tone="green"
             />
-          ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-3 font-semibold text-navy-900">Coupons</h2>
-        <div className="card divide-y divide-navy-100">
-          {coupons.length === 0 && <p className="p-5 text-sm text-navy-400">No coupons created yet.</p>}
-          {coupons.map((c) => (
-            <div key={c.id} className="flex items-center justify-between px-5 py-3 text-sm">
-              <div>
-                <p className="font-medium text-navy-800">{c.code}</p>
-                <p className="text-xs text-navy-400">
-                  {c.type === "PERCENTAGE" ? `${c.value}% off` : `${formatMoney(c.value, c.currency ?? "NGN")} off`}
-                  {c.usageLimit ? ` · limit ${c.usageLimit}` : ""}
-                </p>
-              </div>
-              <span className="text-navy-600">
-                {c.usedCount} used{c.isActive ? "" : " · inactive"}
-              </span>
-            </div>
           ))}
         </div>
       </section>

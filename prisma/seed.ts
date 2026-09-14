@@ -736,15 +736,6 @@ async function main() {
     },
   });
 
-  // ---------------------------------------------------------------------
-  // Coupon
-  // ---------------------------------------------------------------------
-  await db.coupon.upsert({
-    where: { code: "WELCOME10" },
-    update: {},
-    create: { code: "WELCOME10", type: "PERCENTAGE", value: 10, usageLimit: 500 },
-  });
-
   console.log("Seed complete.");
   console.log("---");
   console.log("Staff logins (password: AtgMall#2026):");
