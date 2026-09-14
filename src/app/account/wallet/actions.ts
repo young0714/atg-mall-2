@@ -24,6 +24,7 @@ export async function depositToWalletAction(formData: FormData) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const initiation = await paymentService.charge({
+    userId: user.id,
     amountMinor,
     currency: wallet.currency,
     method,

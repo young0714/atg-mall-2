@@ -237,6 +237,7 @@ class DefaultOrderService implements OrderService {
     } else {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
       const initiation = await paymentService.charge({
+        userId: params.userId,
         amountMinor: totalMinor,
         currency: params.currency,
         method: params.paymentMethod,

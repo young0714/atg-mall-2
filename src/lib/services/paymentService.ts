@@ -6,6 +6,7 @@ import { notificationService, NOTIFICATION_EVENTS } from "./notificationService"
 import { walletService } from "./walletService";
 import { commissionService } from "./commissionService";
 import { matchNames } from "./nameMatchService";
+import { checkVelocityCap } from "./velocityCapService";
 
 // Currencies Flutterwave accepts for card/bank-transfer charges, per their
 // own docs. GMD (Gambian Dalasi) is notably absent — Gambian customers keep
@@ -30,6 +31,7 @@ const FLUTTERWAVE_SUPPORTED_CURRENCIES: Currency[] = [
  */
 
 export interface ChargeParams {
+  userId: string;
   amountMinor: number;
   currency: Currency;
   method: PaymentMethod;
@@ -139,6 +141,25 @@ class DefaultPaymentService implements PaymentService {
   }
 
   async charge(params: ChargeParams): Promise<PaymentInitiation> {
+    // Velocity cap only applies to real gateway money coming in — never to
+    // the mock provider (dev/demo stays frictionless) and never to Wallet
+    // (spending an existing balance isn't new money entering the system).
+    if (this.isLive() && (params.method === "CARD" || params.method === "BANK_TRANSFER")) {
+      const velocity = await checkVelocityCap({
+        userId: params.userId,
+        amountMinor: params.amountMinor,
+        currency: params.currency,
+      });
+      if (!velocity.allowed) {
+        return {
+          providerRef: `CAP-BLOCKED-${Date.now().toString(36).toUpperCase()}`,
+          providerName: this.provider.name,
+          status: "FAILED",
+          failureReason: velocity.reason,
+        };
+      }
+    }
+
     return this.provider.charge(params);
   }
 }
