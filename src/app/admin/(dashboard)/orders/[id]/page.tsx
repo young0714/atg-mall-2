@@ -118,7 +118,7 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
             </dl>
             <p className="mt-2 text-xs text-navy-400">
               Estimate only — product cost is the item&apos;s own catalog price, not a distinct vendor cost; ATG&apos;s
-              service fee is treated as margin, not a cost.
+              handling fee is treated as margin, not a cost.
               {itemsMissingCost > 0 && ` ${itemsMissingCost} item(s) predate cost tracking and are excluded.`}
             </p>
           </div>

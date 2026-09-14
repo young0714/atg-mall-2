@@ -96,7 +96,7 @@ export default async function CartPage() {
                 <span className="font-medium text-navy-800">{formatMoney(subtotalMinor, "USD")}</span>
               </div>
               <p className="mt-2 text-xs text-navy-400">
-                Shipping, service fee and final total in {destination.currency} are calculated at checkout.
+                Shipping, handling fee and final total in {destination.currency} are calculated at checkout.
               </p>
               <Link href="/checkout" className="btn-primary mt-4 w-full">
                 Proceed to Checkout

@@ -81,7 +81,7 @@ export default async function AdminCjImportDetailPage({
               label="Your price, minor units (USD)"
               htmlFor="basePriceMinor"
               required
-              hint={`Pre-filled at CJ's cost (${formatMoney(product.sellPriceMinorUsd, "USD")}) — set your own price. Shipping/service fee are calculated separately on top of this at checkout.`}
+              hint={`Pre-filled at CJ's cost (${formatMoney(product.sellPriceMinorUsd, "USD")}) — set your own price. Shipping/handling fee are calculated separately on top of this at checkout.`}
             >
               <Input id="basePriceMinor" name="basePriceMinor" type="number" defaultValue={product.sellPriceMinorUsd} required />
             </Field>
