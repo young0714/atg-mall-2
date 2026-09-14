@@ -84,9 +84,13 @@ export async function continueAsGuestAction(formData: FormData) {
 export async function loginAction(formData: FormData) {
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   const next = String(formData.get("next") ?? "");
+  // The admin console's sign-in form posts here too (it's the same action),
+  // always with next=/admin — use that to send a failed attempt back to
+  // /admin/login instead of stranding the admin on the customer-facing page.
+  const loginPath = next.startsWith("/admin") ? "/admin/login" : "/login";
 
   if (!parsed.success) {
-    redirect(`/login?error=${encodeURIComponent("Enter a valid email and password")}${next ? `&next=${encodeURIComponent(next)}` : ""}`);
+    redirect(`${loginPath}?error=${encodeURIComponent("Enter a valid email and password")}${next ? `&next=${encodeURIComponent(next)}` : ""}`);
   }
 
   try {
@@ -97,7 +101,7 @@ export async function loginAction(formData: FormData) {
     redirect(next || (isStaffRole(user.role) ? "/admin" : "/account"));
   } catch (err) {
     if (err instanceof AuthError) {
-      redirect(`/login?error=${encodeURIComponent(err.message)}`);
+      redirect(`${loginPath}?error=${encodeURIComponent(err.message)}${next ? `&next=${encodeURIComponent(next)}` : ""}`);
     }
     throw err;
   }
