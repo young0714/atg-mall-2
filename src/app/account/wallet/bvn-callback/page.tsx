@@ -26,12 +26,6 @@ export default async function BvnCallbackPage() {
             Your BVN has been confirmed{result.verifiedName ? ` for ${result.verifiedName}` : ""}. Your monthly
             wallet deposit limit no longer applies.
           </p>
-          {result.nameMatches === false && (
-            <p className="mt-3 rounded-lg bg-gold-50 p-3 text-xs text-gold-700">
-              Note: the name on your BVN record doesn&apos;t closely match your account name. Verification still
-              completed, but this has been noted for review.
-            </p>
-          )}
         </>
       ) : (
         <>

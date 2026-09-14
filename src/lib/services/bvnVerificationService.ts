@@ -64,7 +64,6 @@ export async function initiateBvnVerification(params: {
 export interface ConfirmBvnResult {
   ok: boolean;
   verifiedName?: string;
-  nameMatches?: boolean;
   error?: string;
 }
 
@@ -73,6 +72,13 @@ export interface ConfirmBvnResult {
  * Called once, from the consent-return callback page. Idempotent — if this
  * user is already verified, returns success without calling Flutterwave
  * again (covers a reloaded or replayed callback).
+ *
+ * A completed NIBSS consent isn't enough on its own to lift the deposit
+ * cap — the name NIBSS returns must also match the account's profile name
+ * (see matchNames()). Unlike the bank-transfer name match, which is a soft
+ * flag for admin review after the fact, this is a hard requirement: the cap
+ * exists specifically to stop money moving through an unverified identity,
+ * so a name that doesn't match defeats the point of verifying at all.
  */
 export async function confirmBvnVerification(params: {
   userId: string;
@@ -83,7 +89,7 @@ export async function confirmBvnVerification(params: {
 
   const user = await db.user.findUniqueOrThrow({ where: { id: params.userId } });
   if (user.bvnVerifiedAt) {
-    return { ok: true, verifiedName: user.bvnVerifiedName ?? undefined, nameMatches: true };
+    return { ok: true, verifiedName: user.bvnVerifiedName ?? undefined };
   }
 
   const res = await fetch(`${FLUTTERWAVE_API}/bvn/verifications/${encodeURIComponent(params.reference)}`, {
@@ -102,10 +108,17 @@ export async function confirmBvnVerification(params: {
     .trim();
   const { flagged } = matchNames(user.fullName, verifiedName || user.fullName);
 
+  if (flagged) {
+    return {
+      ok: false,
+      error: `The name on your BVN record (${verifiedName || "unknown"}) doesn't match your account name (${user.fullName}). Update your profile name to match your ID, or contact support if this looks wrong.`,
+    };
+  }
+
   await db.user.update({
     where: { id: user.id },
     data: { bvnVerifiedAt: new Date(), bvnVerifiedName: verifiedName || null },
   });
 
-  return { ok: true, verifiedName, nameMatches: !flagged };
+  return { ok: true, verifiedName };
 }
