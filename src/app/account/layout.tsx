@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { Container, Section } from "@/components/ui/Section";
 import { AccountNav } from "@/components/account/AccountNav";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import Link from "next/link";
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
@@ -25,7 +26,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
               </button>
             </form>
           </div>
-          <div>{children}</div>
+          <PullToRefresh>{children}</PullToRefresh>
         </div>
       </Container>
     </Section>

@@ -13,6 +13,10 @@
   }
   body {
     @apply bg-sand-50 text-navy-900 antialiased;
+    /* Stops the browser's own native pull-to-refresh from firing alongside
+       our custom PullToRefresh gesture (they'd otherwise double-trigger a
+       reload on mobile Chrome/Safari when the page is scrolled to top). */
+    overscroll-behavior-y: contain;
   }
   h1, h2, h3, h4 {
     @apply font-display tracking-tight text-navy-900;
