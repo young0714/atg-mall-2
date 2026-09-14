@@ -38,34 +38,40 @@ export default async function AdminOrdersPage({
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-xl2 border border-navy-100 bg-white">
-        <table className="w-full min-w-[800px] text-sm">
-          <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
-            <tr>
-              <th className="p-3">Order</th>
-              <th className="p-3">Customer</th>
-              <th className="p-3">Items</th>
-              <th className="p-3">Total</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Date</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-navy-100">
-            {orders.map((o) => (
-              <tr key={o.id} className="cursor-pointer hover:bg-sand-50">
-                <td className="p-3">
-                  <Link href={`/admin/orders/${o.id}`} className="font-medium text-atgblue-600">{o.orderNumber}</Link>
-                </td>
-                <td className="p-3 text-navy-600">{o.user.fullName}</td>
-                <td className="p-3 text-navy-500">{o.items.length}</td>
-                <td className="p-3 text-navy-700">{formatMoney(o.totalMinor, o.currency)}</td>
-                <td className="p-3"><StatusBadge status={o.status} /></td>
-                <td className="p-3 text-navy-400">{formatDateTime(o.createdAt)}</td>
+      {orders.length === 0 ? (
+        <div className="rounded-xl2 border border-dashed border-navy-200 p-12 text-center text-navy-400">
+          {searchParams.status ? `No ${searchParams.status.replaceAll("_", " ").toLowerCase()} orders.` : "No orders yet."}
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl2 border border-navy-100 bg-white">
+          <table className="w-full min-w-[800px] text-sm">
+            <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
+              <tr>
+                <th className="p-3">Order</th>
+                <th className="p-3">Customer</th>
+                <th className="p-3">Items</th>
+                <th className="p-3">Total</th>
+                <th className="p-3">Status</th>
+                <th className="p-3">Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-navy-100">
+              {orders.map((o) => (
+                <tr key={o.id} className="cursor-pointer hover:bg-sand-50">
+                  <td className="p-3">
+                    <Link href={`/admin/orders/${o.id}`} className="font-medium text-atgblue-600">{o.orderNumber}</Link>
+                  </td>
+                  <td className="p-3 text-navy-600">{o.user.fullName}</td>
+                  <td className="p-3 text-navy-500">{o.items.length}</td>
+                  <td className="p-3 text-navy-700">{formatMoney(o.totalMinor, o.currency)}</td>
+                  <td className="p-3"><StatusBadge status={o.status} /></td>
+                  <td className="p-3 text-navy-400">{formatDateTime(o.createdAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

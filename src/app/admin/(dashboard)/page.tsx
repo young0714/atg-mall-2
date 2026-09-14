@@ -105,20 +105,24 @@ export default async function AdminDashboardPage() {
           <h2 className="font-semibold text-navy-900">Recent Orders</h2>
           <Link href="/admin/orders" className="text-sm font-medium text-atgblue-600">View all</Link>
         </div>
-        <div className="divide-y divide-navy-100">
-          {recentOrders.map((order) => (
-            <Link key={order.id} href={`/admin/orders/${order.id}`} className="flex items-center justify-between gap-3 p-4 hover:bg-sand-50">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-navy-800">{order.orderNumber}</p>
-                <p className="truncate text-xs text-navy-400">{order.user.fullName} · {formatDateTime(order.createdAt)}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <span className="text-sm font-medium text-navy-700">{formatMoney(order.totalMinor, order.currency)}</span>
-                <StatusBadge status={order.status} />
-              </div>
-            </Link>
-          ))}
-        </div>
+        {recentOrders.length === 0 ? (
+          <p className="p-5 text-sm text-navy-400">No orders yet.</p>
+        ) : (
+          <div className="divide-y divide-navy-100">
+            {recentOrders.map((order) => (
+              <Link key={order.id} href={`/admin/orders/${order.id}`} className="flex items-center justify-between gap-3 p-4 hover:bg-sand-50">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-navy-800">{order.orderNumber}</p>
+                  <p className="truncate text-xs text-navy-400">{order.user.fullName} · {formatDateTime(order.createdAt)}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="text-sm font-medium text-navy-700">{formatMoney(order.totalMinor, order.currency)}</span>
+                  <StatusBadge status={order.status} />
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
