@@ -150,7 +150,7 @@ enum SourcePlatform {
   CJDROPSHIPPING
 }
 
-// Sourcing/origin country for a Store or a PricingPolicy row — distinct from
+// Sourcing/origin country for a Store — distinct from
 // `Country` (NIGERIA|GAMBIA), which is always the CUSTOMER's delivery
 // destination. Kept as its own enum rather than widening `Country`, since
 // mixing origin and destination into one enum would be a real semantic bug.
@@ -896,17 +896,6 @@ model ShippingRate {
 // every landed-cost calculation for that origin. Admin-editable via
 // /admin/settings. Replaces the old China-only singleton pricingService used
 // to hardcode as constants.
-model PricingPolicy {
-  id                        String       @id @default(cuid())
-  originCountry             StoreCountry @unique
-  currency                  Currency
-  domesticShippingMinor     Int          @default(0)
-  serviceFeePercent         Int          @default(0)
-  serviceFeeMinMinor        Int          @default(0)
-  warehouseHandlingFeeMinor Int          @default(0)
-  updatedAt                 DateTime     @updatedAt
-}
-
 model DeliveryZone {
   id          String   @id @default(cuid())
   countryIso  String

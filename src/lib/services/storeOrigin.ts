@@ -1,7 +1,7 @@
 import type { SourcePlatform, StoreCountry } from "@prisma/client";
 
 /**
- * Bridges the typed `StoreCountry` enum (used by `Store`/`PricingPolicy`)
+ * Bridges the typed `StoreCountry` enum (used by `Store`)
  * and `ShippingRate.originCountry`, which stays a plain string for backward
  * compatibility with the 9 production rows that already exist as "China" —
  * see ARCHITECTURE notes in schema.prisma. Never widen ShippingRate itself

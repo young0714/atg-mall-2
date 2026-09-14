@@ -6,15 +6,12 @@ import { Field, Input, Select } from "@/components/ui/Form";
 import { formatMoney } from "@/lib/money";
 import { isoToFlagEmoji } from "@/lib/constants";
 import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
-import { STORE_COUNTRY_LABELS, STORE_COUNTRY_FLAGS } from "@/lib/store";
 import {
   upsertDeliveryZoneAction,
   toggleDeliveryZoneActiveAction,
   deleteDeliveryZoneAction,
-  updatePricingPolicyAction,
 } from "./actions";
 import type { Metadata } from "next";
-import type { StoreCountry } from "@prisma/client";
 
 export const metadata: Metadata = { title: "Admin — Settings" };
 export const dynamic = "force-dynamic";
@@ -25,13 +22,10 @@ export default async function AdminSettingsPage({
   searchParams: { saved?: string; error?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_SETTINGS);
-  const [zones, pricingPolicies, countries] = await Promise.all([
+  const [zones, countries] = await Promise.all([
     db.deliveryZone.findMany({ orderBy: [{ countryIso: "asc" }, { city: "asc" }] }),
-    db.pricingPolicy.findMany(),
     getActiveDestinationCountries(),
   ]);
-  const pricingByOrigin: Partial<Record<StoreCountry, (typeof pricingPolicies)[number]>> = {};
-  for (const p of pricingPolicies) pricingByOrigin[p.originCountry] = p;
 
   const countryNameByIso = new Map(countries.map((c) => [c.isoCode, c.name]));
   const byCountry = new Map<string, typeof zones>();
@@ -132,56 +126,6 @@ export default async function AdminSettingsPage({
             </div>
           ))}
         </div>
-      </section>
-
-      <section className="card space-y-6 p-5">
-        <div>
-          <h2 className="mb-2 font-semibold text-navy-900">Landed-Cost Pricing</h2>
-          <p className="text-sm text-navy-500">
-            ATG&apos;s service-fee policy, domestic-shipping and warehouse-handling estimates used in every
-            landed-cost calculation on product pages — one policy per sourcing origin. International shipping lane
-            rates themselves are configured separately under{" "}
-            <a href="/admin/shipping-rates" className="text-atgblue-600 hover:underline">Shipping Rates</a>.
-          </p>
-        </div>
-
-        {(["CHINA", "USA", "UK"] as StoreCountry[]).map((origin) => {
-          const policy = pricingByOrigin[origin];
-          const defaultCurrency = origin === "CHINA" ? "CNY" : origin === "USA" ? "USD" : "GBP";
-          return (
-            <div key={origin} className="rounded-lg border border-navy-100 p-4">
-              <h3 className="mb-3 text-sm font-semibold text-navy-800">
-                {STORE_COUNTRY_FLAGS[origin]} {STORE_COUNTRY_LABELS[origin]}
-              </h3>
-              <form action={updatePricingPolicyAction} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <input type="hidden" name="originCountry" value={origin} />
-                <Field label="Currency" htmlFor={`currency-${origin}`} required>
-                  <Select id={`currency-${origin}`} name="currency" defaultValue={policy?.currency ?? defaultCurrency} required>
-                    <option value="CNY">CNY</option>
-                    <option value="USD">USD</option>
-                    <option value="GBP">GBP</option>
-                    <option value="NGN">NGN</option>
-                    <option value="GMD">GMD</option>
-                    <option value="EUR">EUR</option>
-                  </Select>
-                </Field>
-                <Field label="Domestic shipping (minor units)" htmlFor={`ds-${origin}`} required hint="Flat per-parcel estimate to ATG's warehouse">
-                  <Input id={`ds-${origin}`} name="domesticShippingMinor" type="number" defaultValue={policy?.domesticShippingMinor ?? 0} required />
-                </Field>
-                <Field label="Warehouse/handling fee (minor units)" htmlFor={`wh-${origin}`} required>
-                  <Input id={`wh-${origin}`} name="warehouseHandlingFeeMinor" type="number" defaultValue={policy?.warehouseHandlingFeeMinor ?? 0} required />
-                </Field>
-                <Field label="ATG service fee (%)" htmlFor={`sf-${origin}`} required hint="Percentage of product cost">
-                  <Input id={`sf-${origin}`} name="serviceFeePercent" type="number" defaultValue={policy?.serviceFeePercent ?? 0} required />
-                </Field>
-                <Field label="Min service fee (minor units)" htmlFor={`sfm-${origin}`} required>
-                  <Input id={`sfm-${origin}`} name="serviceFeeMinMinor" type="number" defaultValue={policy?.serviceFeeMinMinor ?? 0} required />
-                </Field>
-                <button type="submit" className="btn-primary sm:col-span-3 sm:w-fit">Save {STORE_COUNTRY_LABELS[origin]} Pricing</button>
-              </form>
-            </div>
-          );
-        })}
       </section>
 
       <section className="card p-5">
