@@ -22,7 +22,7 @@ export function StatusTimeline({ events }: { events: TimelineEvent[] }) {
             }`}
           />
           <p className="text-sm font-semibold text-navy-900">{event.status.replaceAll("_", " ")}</p>
-          <p className="text-sm text-navy-500">{event.description}</p>
+          <p className="whitespace-pre-line text-sm text-navy-500">{event.description}</p>
           <p className="mt-0.5 text-xs text-navy-400">
             {event.location && `${event.location} · `}
             {formatDateTime(event.occurredAt)}

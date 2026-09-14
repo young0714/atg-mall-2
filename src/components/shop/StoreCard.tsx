@@ -27,7 +27,7 @@ export function StoreCard({ store }: { store: Store }) {
         </div>
       </div>
 
-      {store.description && <p className="mt-3 text-sm text-navy-500">{store.description}</p>}
+      {store.description && <p className="mt-3 whitespace-pre-line text-sm text-navy-500">{store.description}</p>}
 
       <div className="mt-5 flex flex-col gap-2">
         {isComingSoon ? (

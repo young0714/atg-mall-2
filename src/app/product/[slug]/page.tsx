@@ -138,7 +138,7 @@ export default async function ProductPage({
                   </div>
                   <StarRating rating={r.rating} />
                   {r.title && <p className="mt-1 text-sm font-medium text-navy-800">{r.title}</p>}
-                  <p className="mt-1 text-sm text-navy-500">{r.body}</p>
+                  <p className="mt-1 whitespace-pre-line text-sm text-navy-500">{r.body}</p>
                 </div>
               ))}
             </div>

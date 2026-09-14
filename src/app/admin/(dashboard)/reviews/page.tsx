@@ -40,7 +40,7 @@ export default async function AdminReviewsPage({
                   <p className="text-xs text-navy-400">by {r.user.fullName}</p>
                   <StarRating rating={r.rating} />
                   {r.title && <p className="mt-1 text-sm font-medium text-navy-800">{r.title}</p>}
-                  <p className="mt-1 text-sm text-navy-600">{r.body}</p>
+                  <p className="mt-1 whitespace-pre-line text-sm text-navy-600">{r.body}</p>
                 </div>
                 <Badge tone={r.isApproved ? "green" : "gold"}>{r.isApproved ? "Approved" : "Hidden"}</Badge>
               </div>

@@ -42,7 +42,7 @@ export default async function AdminSourcingPage({
               <div>
                 <p className="font-semibold text-navy-800">{req.productName}</p>
                 <p className="text-xs text-navy-400">{req.user.fullName} · Qty {req.quantity} · {req.destinationIso} · {formatDate(req.createdAt)}</p>
-                {req.notes && <p className="mt-1 text-sm text-navy-500">{req.notes}</p>}
+                {req.notes && <p className="mt-1 whitespace-pre-line text-sm text-navy-500">{req.notes}</p>}
               </div>
               <StatusBadge status={req.status} />
             </div>

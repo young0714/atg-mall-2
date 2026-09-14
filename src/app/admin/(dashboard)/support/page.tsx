@@ -66,7 +66,7 @@ export default async function AdminSupportPage() {
                     <p className="mb-1 text-xs font-semibold text-navy-500">
                       {m.author.fullName} · {formatDateTime(m.createdAt)}
                     </p>
-                    <p>{m.body}</p>
+                    <p className="whitespace-pre-line">{m.body}</p>
                   </div>
                 ))}
               </div>
