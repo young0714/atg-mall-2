@@ -14,8 +14,15 @@ export default async function AccountLayout({ children }: { children: React.Reac
             <Link href="/account/set-password" className="btn-outline btn-sm shrink-0">Set a password</Link>
           </div>
         )}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
-          <AccountNav />
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[220px_1fr] lg:gap-6">
+          <div className="space-y-3">
+            <AccountNav />
+            <form action="/api/v1/auth/logout" method="POST">
+              <button className="w-full rounded-lg border border-red-100 px-3.5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50">
+                Sign out
+              </button>
+            </form>
+          </div>
           <div>{children}</div>
         </div>
       </Container>
