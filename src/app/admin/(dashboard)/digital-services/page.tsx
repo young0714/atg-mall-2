@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { reloadlyService } from "@/lib/services/reloadlyService";
+import { giftCardService } from "@/lib/services/reloadlyGiftCardService";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Digital Services" };
@@ -23,9 +24,9 @@ export default async function AdminDigitalServicesPage() {
       <div>
         <h1 className="text-2xl font-display font-bold text-navy-900">Digital Services</h1>
         <p className="text-sm text-navy-500">
-          {reloadlyService.isLive()
-            ? "Airtime top-ups are processed live via Reloadly, paid from the customer's ATG Wallet."
-            : "No live Reloadly credentials are configured — top-ups here are processed via the mock provider."}
+          {reloadlyService.isLive() && giftCardService.isLive()
+            ? "Airtime and gift card orders are processed live via Reloadly, paid from the customer's ATG Wallet."
+            : "No live Reloadly credentials are configured for at least one product — orders here may be processed via the mock provider."}
         </p>
       </div>
 
@@ -35,7 +36,7 @@ export default async function AdminDigitalServicesPage() {
             <tr>
               <th className="p-3">Customer</th>
               <th className="p-3">Type</th>
-              <th className="p-3">Network</th>
+              <th className="p-3">Item</th>
               <th className="p-3">Recipient</th>
               <th className="p-3">Charged</th>
               <th className="p-3">Status</th>
@@ -53,7 +54,7 @@ export default async function AdminDigitalServicesPage() {
                 <td className="p-3">
                   {order.operatorName} ({order.countryIso})
                 </td>
-                <td className="p-3 font-mono text-xs">{order.recipientPhone}</td>
+                <td className="p-3 font-mono text-xs">{order.recipientPhone ?? order.recipientEmail}</td>
                 <td className="p-3 font-mono">{formatMoney(order.amountMinor, order.currency)}</td>
                 <td className="p-3">
                   <StatusBadge status={order.status} />

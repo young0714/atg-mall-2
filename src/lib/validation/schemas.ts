@@ -272,6 +272,16 @@ export const airtimePurchaseSchema = z.object({
 });
 export type AirtimePurchaseInput = z.infer<typeof airtimePurchaseSchema>;
 
+export const giftCardPurchaseSchema = z.object({
+  countryIso: isoCountrySchema,
+  productId: z.coerce.number().int().positive(),
+  brandName: z.string().min(1),
+  recipientEmail: z.string().trim().email("Enter a valid email address"),
+  amount: z.coerce.number().positive(),
+  chargeCurrency: z.enum(["NGN", "GMD", "USD", "EUR", "GBP", "CNY"]),
+});
+export type GiftCardPurchaseInput = z.infer<typeof giftCardPurchaseSchema>;
+
 export const deliveryZoneSchema = z.object({
   countryIso: isoCountrySchema,
   city: z.string().min(2, "Enter a city name"),

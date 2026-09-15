@@ -2,8 +2,9 @@ import "server-only";
 import { db } from "@/lib/db";
 import { walletService } from "./walletService";
 import { reloadlyService } from "./reloadlyService";
+import { giftCardService } from "./reloadlyGiftCardService";
 import { currencyConversionService } from "./currencyConversionService";
-import type { Currency } from "@prisma/client";
+import type { Currency, Prisma } from "@prisma/client";
 
 export interface PurchaseAirtimeParams {
   userId: string;
@@ -100,6 +101,109 @@ export async function purchaseAirtime(params: PurchaseAirtimeParams): Promise<Pu
       deliveredAmountMinor: result.deliveredAmount != null ? Math.round(result.deliveredAmount * 100) : undefined,
       deliveredCurrencyCode: result.deliveredCurrencyCode,
       providerCostMinor: result.costMinor,
+    },
+  });
+
+  return { ok: true, orderId: order.id };
+}
+
+export interface PurchaseGiftCardParams {
+  userId: string;
+  countryIso: string;
+  productId: number;
+  brandName: string;
+  recipientEmail: string;
+  senderName: string;
+  amount: number; // major units, in `chargeCurrency` (the product's own currency)
+  chargeCurrency: Currency;
+  walletCurrency: Currency;
+}
+
+export interface PurchaseGiftCardResult {
+  ok: boolean;
+  orderId: string;
+  failureReason?: string;
+}
+
+/**
+ * Same shape as purchaseAirtime(): debit first, deliver via Reloadly,
+ * reverse the debit if delivery fails. Gift cards additionally fetch the
+ * redeem code right after a successful order — if that particular call
+ * fails (or the code isn't ready yet), the order still stands as
+ * SUCCESSFUL (the customer WAS charged and the card WAS ordered) with
+ * deliveryPayload left null; there's no retry path for that yet.
+ */
+export async function purchaseGiftCard(params: PurchaseGiftCardParams): Promise<PurchaseGiftCardResult> {
+  const chargeAmountMinor = Math.round(params.amount * 100);
+  const debitAmountMinor =
+    params.chargeCurrency === params.walletCurrency
+      ? chargeAmountMinor
+      : currencyConversionService.convert(chargeAmountMinor, params.chargeCurrency, params.walletCurrency);
+
+  const order = await db.digitalServiceOrder.create({
+    data: {
+      userId: params.userId,
+      type: "GIFT_CARD",
+      status: "PENDING",
+      countryIso: params.countryIso,
+      operatorId: params.productId,
+      operatorName: params.brandName,
+      recipientEmail: params.recipientEmail,
+      amountMinor: debitAmountMinor,
+      currency: params.walletCurrency,
+    },
+  });
+
+  const debit = await walletService.debit({
+    userId: params.userId,
+    amountMinor: debitAmountMinor,
+    currency: params.walletCurrency,
+    description: `${params.brandName} gift card — ${params.recipientEmail}`,
+    referenceType: "DIGITAL_SERVICE_ORDER",
+    referenceId: order.id,
+  });
+
+  if (!debit.success) {
+    const failureReason = "Insufficient wallet balance.";
+    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason } });
+    return { ok: false, orderId: order.id, failureReason };
+  }
+
+  const result = await giftCardService.placeOrder({
+    productId: params.productId,
+    countryCode: params.countryIso,
+    quantity: 1,
+    unitPrice: params.amount,
+    recipientEmail: params.recipientEmail,
+    senderName: params.senderName,
+  });
+
+  if (!result.ok) {
+    await walletService.credit({
+      userId: params.userId,
+      amountMinor: debitAmountMinor,
+      currency: params.walletCurrency,
+      type: "REFUND",
+      description: `Refund: ${params.brandName} gift card order failed`,
+      referenceType: "DIGITAL_SERVICE_ORDER",
+      referenceId: order.id,
+    });
+    const failureReason = result.failureReason ?? "The gift card order could not be completed.";
+    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason } });
+    return { ok: false, orderId: order.id, failureReason };
+  }
+
+  const redeemCode = result.providerRef ? await giftCardService.getRedeemCode(result.providerRef).catch(() => null) : null;
+
+  await db.digitalServiceOrder.update({
+    where: { id: order.id },
+    data: {
+      status: "SUCCESSFUL",
+      providerRef: result.providerRef,
+      deliveredAmountMinor: result.deliveredAmount != null ? Math.round(result.deliveredAmount * 100) : undefined,
+      deliveredCurrencyCode: result.deliveredCurrencyCode,
+      providerCostMinor: result.costMinor,
+      deliveryPayload: (redeemCode as unknown as Prisma.InputJsonValue) ?? undefined,
     },
   });
 

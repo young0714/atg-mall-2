@@ -564,6 +564,7 @@ model Payment {
 
 enum DigitalServiceType {
   AIRTIME
+  GIFT_CARD
 }
 
 model DigitalServiceOrder {
@@ -575,11 +576,16 @@ model DigitalServiceOrder {
   providerName   String             @default("RELOADLY")
   providerRef    String? // Reloadly's transactionId
   countryIso     String
-  operatorId     Int
-  operatorName   String // snapshot — order history stays readable even if the catalog changes later
-  recipientPhone String
-  amountMinor    Int // what the customer's ATG Wallet was actually debited
-  currency       Currency
+  operatorId     Int // reused as productId for gift cards — both are "the catalog item ordered"
+  operatorName   String // reused as brand/product name for gift cards — snapshot, stays readable even if the catalog changes later
+
+  // Airtime delivers to a phone; gift cards deliver to an email. Exactly one
+  // is set, depending on `type`.
+  recipientPhone String?
+  recipientEmail String?
+
+  amountMinor Int // what the customer's ATG Wallet was actually debited
+  currency    Currency
 
   // What was actually delivered to the recipient, in their own local
   // currency — often NOT one of ATG's own Currency enum values (Reloadly
@@ -592,6 +598,11 @@ model DigitalServiceOrder {
   // Reloadly's settlement currency) — from their response, for margin
   // tracking, not shown to the customer.
   providerCostMinor Int?
+
+  // Gift-card redeem code/PIN (and any other delivery metadata Reloadly
+  // returns) — stored as-is rather than guessing exact fields ahead of a
+  // live-verified response shape. Never used for airtime.
+  deliveryPayload Json?
 
   failureReason String?
   createdAt     DateTime @default(now())

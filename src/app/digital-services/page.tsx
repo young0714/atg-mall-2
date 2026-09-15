@@ -7,6 +7,7 @@ import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { Container, Section } from "@/components/ui/Section";
 import { StatusBadge } from "@/components/ui/Badge";
+import { RedeemCodeReveal } from "@/components/digital-services/RedeemCodeReveal";
 
 export const metadata: Metadata = { title: "Digital Services" };
 export const dynamic = "force-dynamic";
@@ -41,11 +42,11 @@ export default async function DigitalServicesPage() {
             <h3 className="font-semibold text-navy-900">Airtime &amp; Data</h3>
             <p className="mt-1 text-xs text-navy-500">Top up any network, in Nigeria, Gambia or abroad.</p>
           </Link>
-          <div className="card cursor-not-allowed p-5 opacity-60">
+          <Link href="/digital-services/gift-cards" className="card p-5">
             <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-gold-50 text-lg">🎁</div>
             <h3 className="font-semibold text-navy-900">Gift Cards</h3>
-            <p className="mt-1 text-xs text-navy-500">Coming soon.</p>
-          </div>
+            <p className="mt-1 text-xs text-navy-500">Gift cards from top brands, delivered instantly.</p>
+          </Link>
           <div className="card cursor-not-allowed p-5 opacity-60">
             <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-atggreen-50 text-lg">🧾</div>
             <h3 className="font-semibold text-navy-900">Pay a Bill</h3>
@@ -64,9 +65,12 @@ export default async function DigitalServicesPage() {
                   <div key={order.id} className="flex items-center justify-between gap-3 p-4">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-navy-800">
-                        {order.operatorName} — {order.recipientPhone}
+                        {order.operatorName} — {order.recipientPhone ?? order.recipientEmail}
                       </p>
                       <p className="text-xs text-navy-400">{formatDateTime(order.createdAt)}</p>
+                      {order.type === "GIFT_CARD" && order.status === "SUCCESSFUL" && (
+                        <RedeemCodeReveal deliveryPayload={order.deliveryPayload} />
+                      )}
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="font-mono text-sm font-semibold text-navy-800">{formatMoney(order.amountMinor, order.currency)}</p>

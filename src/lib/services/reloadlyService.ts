@@ -1,4 +1,5 @@
 import "server-only";
+import { getReloadlyAccessToken } from "./reloadlyAuth";
 
 /**
  * ReloadlyService — Airtime top-ups today; Gift Cards and Utility Payments
@@ -55,42 +56,10 @@ interface ReloadlyProvider {
   submitTopup(params: TopupParams): Promise<TopupResult>;
 }
 
-const AUTH_URL = "https://auth.reloadly.com/oauth/token";
-
 function topupsHost(): string {
   return process.env.RELOADLY_ENVIRONMENT === "production"
     ? "https://topups.reloadly.com"
     : "https://topups-sandbox.reloadly.com";
-}
-
-// Tokens last 24h (sandbox) / 60 days (production) per Reloadly's own docs —
-// caching per audience avoids re-authenticating on every request within a
-// warm serverless instance. Module-level, so it only helps within one
-// instance's lifetime, which is still a meaningful reduction in practice.
-const tokenCache = new Map<string, { token: string; expiresAt: number }>();
-
-async function getAccessToken(audience: string, clientId: string, clientSecret: string): Promise<string> {
-  const cached = tokenCache.get(audience);
-  if (cached && cached.expiresAt > Date.now() + 60_000) return cached.token;
-
-  const res = await fetch(AUTH_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      client_id: clientId,
-      client_secret: clientSecret,
-      grant_type: "client_credentials",
-      audience,
-    }),
-  });
-  const body = await res.json().catch(() => null);
-  if (!res.ok || !body?.access_token) {
-    throw new Error(body?.message || "Could not authenticate with Reloadly.");
-  }
-
-  const expiresAt = Date.now() + (typeof body.expires_in === "number" ? body.expires_in : 3600) * 1000;
-  tokenCache.set(audience, { token: body.access_token, expiresAt });
-  return body.access_token;
 }
 
 class LiveReloadlyProvider implements ReloadlyProvider {
@@ -102,7 +71,7 @@ class LiveReloadlyProvider implements ReloadlyProvider {
 
   private async authedFetch(path: string, init?: RequestInit): Promise<Response> {
     const host = topupsHost();
-    const token = await getAccessToken(host, this.clientId, this.clientSecret);
+    const token = await getReloadlyAccessToken(host, this.clientId, this.clientSecret);
     return fetch(`${host}${path}`, {
       ...init,
       headers: {

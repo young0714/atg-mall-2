@@ -110,6 +110,11 @@ export const SUPPORT_PHONE = "+234 704 394 5345";
 // the response, so a country without a matching Currency here has real
 // operators/prices but no correct way to convert them into a wallet charge.
 // AirtimeFlow shows "not available yet" for those rather than guessing.
+// The only currencies ATG can correctly charge a wallet in — any Reloadly
+// pricing (airtime local-currency, or a gift card's own currencyCode) that
+// isn't one of these can't be converted into a wallet charge.
+export const SUPPORTED_WALLET_CURRENCIES: Currency[] = ["NGN", "GMD", "USD", "EUR", "GBP", "CNY"];
+
 export interface AirtimeCountry {
   isoCode: string;
   name: string;
