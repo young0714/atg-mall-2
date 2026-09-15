@@ -89,6 +89,7 @@ model User {
   consolidations      Consolidation[]
   magicLinkTokens     MagicLinkToken[]
   walletDepositPayments Payment[]
+  digitalServiceOrders  DigitalServiceOrder[]
 
   @@index([role])
 }
@@ -550,6 +551,53 @@ model Payment {
   payerAccountName         String? // NIBSS originator name — the sender's own bank account name
   payerAccountNumberMasked String?
   nameMatchScore           Float?  // 0–1, share of the profile name found in payerAccountName
+}
+
+// ---------------------------------------------------------------------------
+// Digital Services (Reloadly) — airtime top-ups today, gift cards and bill
+// payments planned as later phases. Deliberately NOT an Order: there's no
+// shipping, no address, no package/tracking — it's paid instantly from the
+// ATG Wallet and delivered instantly via Reloadly's API response, the same
+// "money movement with no physical order" shape wallet deposits already use
+// (see Payment.userId above).
+// ---------------------------------------------------------------------------
+
+enum DigitalServiceType {
+  AIRTIME
+}
+
+model DigitalServiceOrder {
+  id             String             @id @default(cuid())
+  userId         String
+  user           User               @relation(fields: [userId], references: [id])
+  type           DigitalServiceType
+  status         PaymentStatus      @default(PENDING)
+  providerName   String             @default("RELOADLY")
+  providerRef    String? // Reloadly's transactionId
+  countryIso     String
+  operatorId     Int
+  operatorName   String // snapshot — order history stays readable even if the catalog changes later
+  recipientPhone String
+  amountMinor    Int // what the customer's ATG Wallet was actually debited
+  currency       Currency
+
+  // What was actually delivered to the recipient, in their own local
+  // currency — often NOT one of ATG's own Currency enum values (Reloadly
+  // covers 170+ countries), so stored as a raw ISO 4217 string rather than
+  // the Currency enum.
+  deliveredAmountMinor  Int?
+  deliveredCurrencyCode String?
+
+  // What this cost against the business's own Reloadly balance (USD,
+  // Reloadly's settlement currency) — from their response, for margin
+  // tracking, not shown to the customer.
+  providerCostMinor Int?
+
+  failureReason String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
 }
 
 // ---------------------------------------------------------------------------

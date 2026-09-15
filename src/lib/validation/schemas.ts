@@ -262,6 +262,17 @@ export const bvnVerificationSchema = z.object({
 });
 export type BvnVerificationInput = z.infer<typeof bvnVerificationSchema>;
 
+export const airtimePurchaseSchema = z.object({
+  countryIso: isoCountrySchema,
+  operatorId: z.coerce.number().int().positive(),
+  operatorName: z.string().min(1),
+  recipientPhone: z.string().trim().min(5, "Enter a valid phone number"),
+  useLocalAmount: z.coerce.boolean(),
+  amount: z.coerce.number().positive(),
+  chargeCurrency: z.enum(["NGN", "GMD", "USD", "EUR", "GBP", "CNY"]),
+});
+export type AirtimePurchaseInput = z.infer<typeof airtimePurchaseSchema>;
+
 export const deliveryZoneSchema = z.object({
   countryIso: isoCountrySchema,
   city: z.string().min(2, "Enter a city name"),

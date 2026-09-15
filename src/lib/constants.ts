@@ -97,4 +97,44 @@ export const APP_NAME = "ATG Mall";
 export const PARENT_COMPANY = "Apex Terra Global Limited";
 export const SUPPORT_EMAIL = "support@apexterraglobal.com";
 export const SUPPORT_PHONE = "+234 704 394 5345";
+
+// A representative slice for the Digital Services country picker, not the
+// full 170+ countries Reloadly actually covers — the picker's search still
+// works against whatever's here; reloadlyService.getOperators() is the real
+// source of truth for whether a given country has operators available.
+export interface AirtimeCountry {
+  isoCode: string;
+  name: string;
+  flag: string;
+}
+export const AIRTIME_COUNTRIES: AirtimeCountry[] = [
+  { isoCode: "NG", name: "Nigeria", flag: "🇳🇬" },
+  { isoCode: "GM", name: "Gambia", flag: "🇬🇲" },
+  { isoCode: "GH", name: "Ghana", flag: "🇬🇭" },
+  { isoCode: "KE", name: "Kenya", flag: "🇰🇪" },
+  { isoCode: "ZA", name: "South Africa", flag: "🇿🇦" },
+  { isoCode: "SN", name: "Senegal", flag: "🇸🇳" },
+  { isoCode: "CI", name: "Ivory Coast", flag: "🇨🇮" },
+  { isoCode: "CM", name: "Cameroon", flag: "🇨🇲" },
+  { isoCode: "EG", name: "Egypt", flag: "🇪🇬" },
+  { isoCode: "MA", name: "Morocco", flag: "🇲🇦" },
+  { isoCode: "GB", name: "United Kingdom", flag: "🇬🇧" },
+  { isoCode: "US", name: "United States", flag: "🇺🇸" },
+  { isoCode: "CA", name: "Canada", flag: "🇨🇦" },
+  { isoCode: "IN", name: "India", flag: "🇮🇳" },
+  { isoCode: "PK", name: "Pakistan", flag: "🇵🇰" },
+  { isoCode: "PH", name: "Philippines", flag: "🇵🇭" },
+  { isoCode: "ID", name: "Indonesia", flag: "🇮🇩" },
+  { isoCode: "FR", name: "France", flag: "🇫🇷" },
+  { isoCode: "DE", name: "Germany", flag: "🇩🇪" },
+  { isoCode: "ES", name: "Spain", flag: "🇪🇸" },
+  { isoCode: "IT", name: "Italy", flag: "🇮🇹" },
+  { isoCode: "AE", name: "United Arab Emirates", flag: "🇦🇪" },
+  { isoCode: "SA", name: "Saudi Arabia", flag: "🇸🇦" },
+  { isoCode: "CN", name: "China", flag: "🇨🇳" },
+  { isoCode: "BR", name: "Brazil", flag: "🇧🇷" },
+  { isoCode: "MX", name: "Mexico", flag: "🇲🇽" },
+  { isoCode: "JM", name: "Jamaica", flag: "🇯🇲" },
+  { isoCode: "AU", name: "Australia", flag: "🇦🇺" },
+];
 export const CORPORATE_SITE = "https://apexterraglobal.com";

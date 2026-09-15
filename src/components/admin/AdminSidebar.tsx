@@ -66,6 +66,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/admin/payments", label: "Payments", permission: PERMISSIONS.MANAGE_PAYMENTS },
       { href: "/admin/wallets", label: "Wallets", permission: PERMISSIONS.MANAGE_WALLETS },
       { href: "/admin/refunds", label: "Refunds", permission: PERMISSIONS.MANAGE_REFUNDS },
+      { href: "/admin/digital-services", label: "Digital Services", permission: PERMISSIONS.MANAGE_DIGITAL_SERVICES },
     ],
   },
   {

@@ -1,0 +1,73 @@
+import { db } from "@/lib/db";
+import { requirePermission } from "@/lib/auth/current-user";
+import { PERMISSIONS } from "@/lib/rbac";
+import { StatusBadge } from "@/components/ui/Badge";
+import { formatMoney } from "@/lib/money";
+import { formatDateTime } from "@/lib/utils";
+import { reloadlyService } from "@/lib/services/reloadlyService";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Admin — Digital Services" };
+export const dynamic = "force-dynamic";
+
+export default async function AdminDigitalServicesPage() {
+  await requirePermission(PERMISSIONS.MANAGE_DIGITAL_SERVICES);
+  const orders = await db.digitalServiceOrder.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { user: true },
+    take: 100,
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-display font-bold text-navy-900">Digital Services</h1>
+        <p className="text-sm text-navy-500">
+          {reloadlyService.isLive()
+            ? "Airtime top-ups are processed live via Reloadly, paid from the customer's ATG Wallet."
+            : "No live Reloadly credentials are configured — top-ups here are processed via the mock provider."}
+        </p>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl2 border border-navy-100 bg-white">
+        <table className="w-full min-w-[900px] text-sm">
+          <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
+            <tr>
+              <th className="p-3">Customer</th>
+              <th className="p-3">Type</th>
+              <th className="p-3">Network</th>
+              <th className="p-3">Recipient</th>
+              <th className="p-3">Charged</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Date</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-navy-100">
+            {orders.map((order) => (
+              <tr key={order.id}>
+                <td className="p-3">
+                  <p className="font-medium text-navy-800">{order.user.fullName}</p>
+                  <p className="text-xs text-navy-400">{order.user.email}</p>
+                </td>
+                <td className="p-3">{order.type.replaceAll("_", " ")}</td>
+                <td className="p-3">
+                  {order.operatorName} ({order.countryIso})
+                </td>
+                <td className="p-3 font-mono text-xs">{order.recipientPhone}</td>
+                <td className="p-3 font-mono">{formatMoney(order.amountMinor, order.currency)}</td>
+                <td className="p-3">
+                  <StatusBadge status={order.status} />
+                  {order.failureReason && <p className="mt-1 text-xs text-red-500">{order.failureReason}</p>}
+                </td>
+                <td className="p-3 text-xs text-navy-400">{formatDateTime(order.createdAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {orders.length === 0 && (
+          <p className="p-6 text-center text-sm text-navy-400">No digital service orders yet.</p>
+        )}
+      </div>
+    </div>
+  );
+}
