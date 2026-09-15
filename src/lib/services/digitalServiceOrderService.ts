@@ -89,9 +89,13 @@ export async function purchaseAirtime(params: PurchaseAirtimeParams): Promise<Pu
       referenceType: "DIGITAL_SERVICE_ORDER",
       referenceId: order.id,
     });
-    const failureReason = result.failureReason ?? "The top-up could not be completed.";
-    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason } });
-    return { ok: false, orderId: order.id, failureReason };
+    // Store Reloadly's actual message for admin (e.g. their own account
+    // balance being the real cause — "your wallet" there means THEIR
+    // balance with Reloadly, not the customer's ATG wallet) but never show
+    // that raw text to the customer, who'd misread it as their own problem.
+    const rawReason = result.failureReason ?? "The top-up could not be completed.";
+    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason: rawReason } });
+    return { ok: false, orderId: order.id, failureReason: "This top-up couldn't be completed right now. Please try again shortly." };
   }
 
   await db.digitalServiceOrder.update({
@@ -189,9 +193,11 @@ export async function purchaseGiftCard(params: PurchaseGiftCardParams): Promise<
       referenceType: "DIGITAL_SERVICE_ORDER",
       referenceId: order.id,
     });
-    const failureReason = result.failureReason ?? "The gift card order could not be completed.";
-    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason } });
-    return { ok: false, orderId: order.id, failureReason };
+    // Store Reloadly's actual message for admin, but never show that raw
+    // text to the customer — see the identical comment in purchaseAirtime().
+    const rawReason = result.failureReason ?? "The gift card order could not be completed.";
+    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason: rawReason } });
+    return { ok: false, orderId: order.id, failureReason: "This gift card order couldn't be completed right now. Please try again shortly." };
   }
 
   const redeemCode = result.providerRef ? await giftCardService.getRedeemCode(result.providerRef).catch(() => null) : null;
@@ -288,9 +294,11 @@ export async function purchaseUtilityBill(params: PurchaseUtilityBillParams): Pr
       referenceType: "DIGITAL_SERVICE_ORDER",
       referenceId: order.id,
     });
-    const failureReason = result.failureReason ?? "The bill payment could not be completed.";
-    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason } });
-    return { ok: false, orderId: order.id, failureReason };
+    // Store Reloadly's actual message for admin, but never show that raw
+    // text to the customer — see the identical comment in purchaseAirtime().
+    const rawReason = result.failureReason ?? "The bill payment could not be completed.";
+    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason: rawReason } });
+    return { ok: false, orderId: order.id, failureReason: "This bill payment couldn't be completed right now. Please try again shortly." };
   }
 
   await db.digitalServiceOrder.update({
