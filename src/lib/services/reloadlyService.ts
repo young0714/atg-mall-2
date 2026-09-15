@@ -50,10 +50,17 @@ export interface TopupResult {
   failureReason?: string;
 }
 
+export interface ReloadlyBalance {
+  balanceMinor: number;
+  currencyCode: string;
+  updatedAt?: string;
+}
+
 interface ReloadlyProvider {
   name: string;
   getOperators(countryIso: string): Promise<AirtimeOperator[]>;
   submitTopup(params: TopupParams): Promise<TopupResult>;
+  getBalance(): Promise<ReloadlyBalance | null>;
 }
 
 function topupsHost(): string {
@@ -129,6 +136,13 @@ class LiveReloadlyProvider implements ReloadlyProvider {
       costMinor: typeof body.balanceInfo?.cost === "number" ? Math.round(body.balanceInfo.cost * 100) : undefined,
     };
   }
+
+  async getBalance(): Promise<ReloadlyBalance | null> {
+    const res = await this.authedFetch("/accounts/balance");
+    const body = await res.json().catch(() => null);
+    if (!res.ok || typeof body?.balance !== "number") return null;
+    return { balanceMinor: Math.round(body.balance * 100), currencyCode: body.currencyCode ?? "USD", updatedAt: body.updatedAt };
+  }
 }
 
 class MockReloadlyProvider implements ReloadlyProvider {
@@ -155,12 +169,17 @@ class MockReloadlyProvider implements ReloadlyProvider {
       deliveredAmount: params.amount,
     };
   }
+
+  async getBalance(): Promise<ReloadlyBalance | null> {
+    return { balanceMinor: 100000, currencyCode: "USD" };
+  }
 }
 
 export interface DigitalServiceProvider {
   isLive(): boolean;
   getOperators(countryIso: string): Promise<AirtimeOperator[]>;
   submitTopup(params: TopupParams): Promise<TopupResult>;
+  getBalance(): Promise<ReloadlyBalance | null>;
 }
 
 class DefaultReloadlyService implements DigitalServiceProvider {
@@ -183,6 +202,10 @@ class DefaultReloadlyService implements DigitalServiceProvider {
 
   submitTopup(params: TopupParams): Promise<TopupResult> {
     return this.provider.submitTopup(params);
+  }
+
+  getBalance(): Promise<ReloadlyBalance | null> {
+    return this.provider.getBalance();
   }
 }
 

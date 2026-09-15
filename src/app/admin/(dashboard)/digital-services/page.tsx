@@ -14,21 +14,46 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDigitalServicesPage() {
   await requirePermission(PERMISSIONS.MANAGE_DIGITAL_SERVICES);
-  const orders = await db.digitalServiceOrder.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { user: true },
-    take: 100,
-  });
+  const [orders, balance] = await Promise.all([
+    db.digitalServiceOrder.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { user: true },
+      take: 100,
+    }),
+    reloadlyService.getBalance(),
+  ]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-navy-900">Digital Services</h1>
-        <p className="text-sm text-navy-500">
-          {reloadlyService.isLive() && giftCardService.isLive() && utilityService.isLive()
-            ? "Airtime, gift card, and bill payment orders are processed live via Reloadly, paid from the customer's ATG Wallet."
-            : "No live Reloadly credentials are configured for at least one product — orders here may be processed via the mock provider."}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-navy-900">Digital Services</h1>
+          <p className="text-sm text-navy-500">
+            {reloadlyService.isLive() && giftCardService.isLive() && utilityService.isLive()
+              ? "Airtime, gift card, and bill payment orders are processed live via Reloadly, paid from the customer's ATG Wallet."
+              : "No live Reloadly credentials are configured for at least one product — orders here may be processed via the mock provider."}
+          </p>
+        </div>
+
+        <div className="rounded-xl2 border border-navy-100 bg-white px-5 py-3 shadow-card">
+          <p className="text-[10px] uppercase tracking-wide text-navy-400">Reloadly account balance</p>
+          {balance ? (
+            <>
+              <p className="font-mono text-lg font-bold text-navy-900">
+                {balance.currencyCode === "USD"
+                  ? formatMoney(balance.balanceMinor, "USD")
+                  : `${(balance.balanceMinor / 100).toLocaleString()} ${balance.currencyCode}`}
+              </p>
+              <p className="text-[11px] text-navy-400">
+                This is the business&apos;s own float with Reloadly — fund it via their dashboard, not ATG&apos;s customer wallets.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-navy-400">
+              {reloadlyService.isLive() ? "Couldn't reach Reloadly to check the balance." : "Not available in mock mode."}
+            </p>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-xl2 border border-navy-100 bg-white">
