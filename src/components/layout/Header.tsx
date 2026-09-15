@@ -113,6 +113,7 @@ export async function Header() {
                 <Link href="/account/orders" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">My Orders</Link>
                 <Link href="/account/packages" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">My Packages</Link>
                 <Link href="/account/wallet" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">Wallet</Link>
+                <Link href="/digital-services" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">Digital Services</Link>
                 <Link href="/account/ship-package" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">Ship My Package</Link>
                 <Link href="/support" className="block rounded-lg px-3 py-2 text-sm text-navy-700 hover:bg-sand-100">Support</Link>
                 <form action="/api/v1/auth/logout" method="POST">
