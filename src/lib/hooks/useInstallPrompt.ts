@@ -7,6 +7,29 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+// Module-level (not React state), so every component using this hook shares
+// the same captured event and consumption state. beforeinstallprompt is a
+// one-shot native event — .prompt() can only be called on it once — but
+// InstallAppBanner and InstallAppButton can both be mounted at the same
+// time, each with its own hook call. If each held its own copy of the
+// event, whichever one the user clicked second would fail. A module-level
+// singleton plus a tiny subscriber list keeps every mounted instance in
+// sync instead.
+let sharedDeferredPrompt: BeforeInstallPromptEvent | null = null;
+const listeners = new Set<() => void>();
+
+function setSharedPrompt(evt: BeforeInstallPromptEvent | null) {
+  sharedDeferredPrompt = evt;
+  listeners.forEach((l) => l());
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    setSharedPrompt(e as BeforeInstallPromptEvent);
+  });
+}
+
 /**
  * Wraps the two very different ways a browser can "install" this PWA:
  * Chrome/Android fires `beforeinstallprompt`, which we capture so we can
@@ -17,7 +40,7 @@ interface BeforeInstallPromptEvent extends Event {
  * steps themselves (see isIOS).
  */
 export function useInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [, forceRender] = useState(0);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
 
@@ -28,23 +51,24 @@ export function useInstallPrompt() {
     );
     setIsIOS(/iphone|ipad|ipod/i.test(window.navigator.userAgent));
 
-    function handler(e: Event) {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    }
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    const listener = () => forceRender((n) => n + 1);
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
   }, []);
 
   const promptInstall = useCallback(async () => {
-    if (!deferredPrompt) return false;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
+    if (!sharedDeferredPrompt) return false;
+    const evt = sharedDeferredPrompt;
+    setSharedPrompt(null); // consume immediately so no other mounted caller can reuse it
+    await evt.prompt();
+    const { outcome } = await evt.userChoice;
+    if (outcome === "accepted") setIsStandalone(true);
     return outcome === "accepted";
-  }, [deferredPrompt]);
+  }, []);
 
-  const canInstall = !isStandalone && (!!deferredPrompt || isIOS);
+  const canInstall = !isStandalone && (!!sharedDeferredPrompt || isIOS);
 
   return { canInstall, isIOS, isStandalone, promptInstall };
 }
