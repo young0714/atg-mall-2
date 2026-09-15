@@ -12,6 +12,12 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Admin — Digital Services" };
 export const dynamic = "force-dynamic";
 
+// Used only when Reloadly's own account-level threshold (set on their
+// dashboard, read live via getBalance()) isn't configured — seen live as 0
+// on this account. Without a fallback the warning would just never fire
+// until the business configures one on Reloadly's side.
+const DEFAULT_LOW_BALANCE_THRESHOLD_MINOR = 5000; // $50.00
+
 export default async function AdminDigitalServicesPage() {
   await requirePermission(PERMISSIONS.MANAGE_DIGITAL_SERVICES);
   const [orders, balance] = await Promise.all([
@@ -22,6 +28,12 @@ export default async function AdminDigitalServicesPage() {
     }),
     reloadlyService.getBalance(),
   ]);
+
+  const lowBalanceThresholdMinor =
+    balance?.lowBalanceThresholdMinor && balance.lowBalanceThresholdMinor > 0
+      ? balance.lowBalanceThresholdMinor
+      : DEFAULT_LOW_BALANCE_THRESHOLD_MINOR;
+  const isLowBalance = !!balance && balance.balanceMinor < lowBalanceThresholdMinor;
 
   return (
     <div className="space-y-6">
@@ -35,18 +47,33 @@ export default async function AdminDigitalServicesPage() {
           </p>
         </div>
 
-        <div className="rounded-xl2 border border-navy-100 bg-white px-5 py-3 shadow-card">
-          <p className="text-[10px] uppercase tracking-wide text-navy-400">Reloadly account balance</p>
+        <div
+          className={`rounded-xl2 border px-5 py-3 shadow-card ${
+            isLowBalance ? "border-gold-300 bg-gold-50" : "border-navy-100 bg-white"
+          }`}
+        >
+          <p className={`text-[10px] uppercase tracking-wide ${isLowBalance ? "text-gold-700" : "text-navy-400"}`}>
+            Reloadly account balance
+          </p>
           {balance ? (
             <>
-              <p className="font-mono text-lg font-bold text-navy-900">
+              <p className={`font-mono text-lg font-bold ${isLowBalance ? "text-gold-800" : "text-navy-900"}`}>
                 {balance.currencyCode === "USD"
                   ? formatMoney(balance.balanceMinor, "USD")
                   : `${(balance.balanceMinor / 100).toLocaleString()} ${balance.currencyCode}`}
               </p>
-              <p className="text-[11px] text-navy-400">
-                This is the business&apos;s own float with Reloadly — fund it via their dashboard, not ATG&apos;s customer wallets.
-              </p>
+              {isLowBalance ? (
+                <p className="text-[11px] font-semibold text-gold-700">
+                  ⚠ Below your{" "}
+                  {balance.lowBalanceThresholdMinor && balance.lowBalanceThresholdMinor > 0 ? "Reloadly-configured" : "default"} warning
+                  threshold of {formatMoney(lowBalanceThresholdMinor, "USD")} — fund it via Reloadly&apos;s dashboard soon, or live
+                  purchases will start failing.
+                </p>
+              ) : (
+                <p className="text-[11px] text-navy-400">
+                  This is the business&apos;s own float with Reloadly — fund it via their dashboard, not ATG&apos;s customer wallets.
+                </p>
+              )}
             </>
           ) : (
             <p className="text-sm text-navy-400">

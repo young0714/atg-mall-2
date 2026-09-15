@@ -54,6 +54,11 @@ export interface ReloadlyBalance {
   balanceMinor: number;
   currencyCode: string;
   updatedAt?: string;
+  // Reloadly's own configured low-balance threshold (set on their
+  // dashboard, not ours) — 0/absent when the business hasn't configured
+  // one there. Callers should fall back to a sensible default in that case
+  // rather than never warning at all.
+  lowBalanceThresholdMinor?: number;
 }
 
 interface ReloadlyProvider {
@@ -141,7 +146,12 @@ class LiveReloadlyProvider implements ReloadlyProvider {
     const res = await this.authedFetch("/accounts/balance");
     const body = await res.json().catch(() => null);
     if (!res.ok || typeof body?.balance !== "number") return null;
-    return { balanceMinor: Math.round(body.balance * 100), currencyCode: body.currencyCode ?? "USD", updatedAt: body.updatedAt };
+    return {
+      balanceMinor: Math.round(body.balance * 100),
+      currencyCode: body.currencyCode ?? "USD",
+      updatedAt: body.updatedAt,
+      lowBalanceThresholdMinor: typeof body.lowBalanceThreshold === "number" ? Math.round(body.lowBalanceThreshold * 100) : undefined,
+    };
   }
 }
 
