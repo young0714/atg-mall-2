@@ -267,7 +267,6 @@ export const airtimePurchaseSchema = z.object({
   operatorId: z.coerce.number().int().positive(),
   operatorName: z.string().min(1),
   recipientPhone: z.string().trim().min(5, "Enter a valid phone number"),
-  useLocalAmount: z.coerce.boolean(),
   amount: z.coerce.number().positive(),
   chargeCurrency: z.enum(["NGN", "GMD", "USD", "EUR", "GBP", "CNY"]),
 });

@@ -102,14 +102,23 @@ export const SUPPORT_PHONE = "+234 704 394 5345";
 // full 170+ countries Reloadly actually covers — the picker's search still
 // works against whatever's here; reloadlyService.getOperators() is the real
 // source of truth for whether a given country has operators available.
+//
+// `currency` is set ONLY for countries whose local currency is one of ATG's
+// own 6 Currency enum values — confirmed via a live sandbox call that
+// Reloadly's operator pricing is always in the destination's own local
+// currency with no currency-code field and no USD-equivalent fallback in
+// the response, so a country without a matching Currency here has real
+// operators/prices but no correct way to convert them into a wallet charge.
+// AirtimeFlow shows "not available yet" for those rather than guessing.
 export interface AirtimeCountry {
   isoCode: string;
   name: string;
   flag: string;
+  currency?: Currency;
 }
 export const AIRTIME_COUNTRIES: AirtimeCountry[] = [
-  { isoCode: "NG", name: "Nigeria", flag: "🇳🇬" },
-  { isoCode: "GM", name: "Gambia", flag: "🇬🇲" },
+  { isoCode: "NG", name: "Nigeria", flag: "🇳🇬", currency: "NGN" },
+  { isoCode: "GM", name: "Gambia", flag: "🇬🇲", currency: "GMD" },
   { isoCode: "GH", name: "Ghana", flag: "🇬🇭" },
   { isoCode: "KE", name: "Kenya", flag: "🇰🇪" },
   { isoCode: "ZA", name: "South Africa", flag: "🇿🇦" },
@@ -118,20 +127,20 @@ export const AIRTIME_COUNTRIES: AirtimeCountry[] = [
   { isoCode: "CM", name: "Cameroon", flag: "🇨🇲" },
   { isoCode: "EG", name: "Egypt", flag: "🇪🇬" },
   { isoCode: "MA", name: "Morocco", flag: "🇲🇦" },
-  { isoCode: "GB", name: "United Kingdom", flag: "🇬🇧" },
-  { isoCode: "US", name: "United States", flag: "🇺🇸" },
+  { isoCode: "GB", name: "United Kingdom", flag: "🇬🇧", currency: "GBP" },
+  { isoCode: "US", name: "United States", flag: "🇺🇸", currency: "USD" },
   { isoCode: "CA", name: "Canada", flag: "🇨🇦" },
   { isoCode: "IN", name: "India", flag: "🇮🇳" },
   { isoCode: "PK", name: "Pakistan", flag: "🇵🇰" },
   { isoCode: "PH", name: "Philippines", flag: "🇵🇭" },
   { isoCode: "ID", name: "Indonesia", flag: "🇮🇩" },
-  { isoCode: "FR", name: "France", flag: "🇫🇷" },
-  { isoCode: "DE", name: "Germany", flag: "🇩🇪" },
-  { isoCode: "ES", name: "Spain", flag: "🇪🇸" },
-  { isoCode: "IT", name: "Italy", flag: "🇮🇹" },
+  { isoCode: "FR", name: "France", flag: "🇫🇷", currency: "EUR" },
+  { isoCode: "DE", name: "Germany", flag: "🇩🇪", currency: "EUR" },
+  { isoCode: "ES", name: "Spain", flag: "🇪🇸", currency: "EUR" },
+  { isoCode: "IT", name: "Italy", flag: "🇮🇹", currency: "EUR" },
   { isoCode: "AE", name: "United Arab Emirates", flag: "🇦🇪" },
   { isoCode: "SA", name: "Saudi Arabia", flag: "🇸🇦" },
-  { isoCode: "CN", name: "China", flag: "🇨🇳" },
+  { isoCode: "CN", name: "China", flag: "🇨🇳", currency: "CNY" },
   { isoCode: "BR", name: "Brazil", flag: "🇧🇷" },
   { isoCode: "MX", name: "Mexico", flag: "🇲🇽" },
   { isoCode: "JM", name: "Jamaica", flag: "🇯🇲" },

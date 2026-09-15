@@ -30,7 +30,6 @@ export async function purchaseAirtimeAction(input: AirtimePurchaseInput): Promis
     operatorId: parsed.data.operatorId,
     operatorName: parsed.data.operatorName,
     recipientPhone: parsed.data.recipientPhone,
-    useLocalAmount: parsed.data.useLocalAmount,
     amount: parsed.data.amount,
     chargeCurrency: parsed.data.chargeCurrency,
     walletCurrency: wallet.currency,

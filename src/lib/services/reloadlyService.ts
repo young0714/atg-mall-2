@@ -23,25 +23,21 @@ export interface AirtimeOperator {
   name: string;
   logoUrl?: string;
   denominationType: "FIXED" | "RANGE";
-  // Local-currency amounts (major units) — only meaningful for countries ATG
-  // also models as a first-class Currency (Nigeria/Gambia today).
-  localCurrencyCode?: string;
+  // Reloadly's operator pricing is always in that operator's own country's
+  // local currency — confirmed live, this endpoint returns no currency-code
+  // field and no separate USD-equivalent amounts. Callers must map
+  // countryIso -> Currency themselves (see AIRTIME_COUNTRIES) and only offer
+  // a purchase when that mapping exists.
   localFixedAmounts?: number[];
   localMinAmount?: number;
   localMaxAmount?: number;
-  // International (USD) amounts — used for every other country, since ATG
-  // doesn't model most of Reloadly's 170+ local currencies.
-  internationalFixedAmounts?: number[];
-  internationalMinAmount?: number;
-  internationalMaxAmount?: number;
 }
 
 export interface TopupParams {
   operatorId: number;
   countryIso: string;
   recipientPhone: string;
-  useLocalAmount: boolean;
-  amount: number; // major units, in whichever currency useLocalAmount implies
+  amount: number; // major units, in the operator's own local currency
 }
 
 export interface TopupResult {
@@ -124,19 +120,21 @@ class LiveReloadlyProvider implements ReloadlyProvider {
 
     return body
       .filter((op: Record<string, unknown>) => op?.data !== true) // airtime only — data-bundle operators are a later phase
-      .map((op: Record<string, unknown>) => ({
-        operatorId: op.operatorId as number,
-        name: op.name as string,
-        logoUrl: (op.logoUrls as string[] | undefined)?.[0],
-        denominationType: op.denominationType === "RANGE" ? "RANGE" : "FIXED",
-        localCurrencyCode: op.localTransactionCurrencyCode as string | undefined,
-        localFixedAmounts: op.localFixedAmounts as number[] | undefined,
-        localMinAmount: op.localMinAmount as number | undefined,
-        localMaxAmount: op.localMaxAmount as number | undefined,
-        internationalFixedAmounts: op.internationalFixedAmounts as number[] | undefined,
-        internationalMinAmount: op.internationalMinAmount as number | undefined,
-        internationalMaxAmount: op.internationalMaxAmount as number | undefined,
-      }));
+      .map(
+        (op: Record<string, unknown>): AirtimeOperator => ({
+          operatorId: op.operatorId as number,
+          name: op.name as string,
+          logoUrl: (op.logoUrls as string[] | undefined)?.[0],
+          denominationType: op.denominationType === "RANGE" ? "RANGE" : "FIXED",
+          localFixedAmounts: op.localFixedAmounts as number[] | undefined,
+          localMinAmount: op.localMinAmount as number | undefined,
+          localMaxAmount: op.localMaxAmount as number | undefined,
+        }),
+      )
+      // Some operators (seen live: a couple of Nigerian "Special Bundle"
+      // entries) come back with no usable pricing at all — empty fixed list
+      // AND no range — which can't be purchased through this flow.
+      .filter((op: AirtimeOperator) => (op.localFixedAmounts?.length ?? 0) > 0 || (op.localMinAmount != null && op.localMaxAmount != null));
   }
 
   async submitTopup(params: TopupParams): Promise<TopupResult> {
@@ -145,7 +143,7 @@ class LiveReloadlyProvider implements ReloadlyProvider {
       body: JSON.stringify({
         operatorId: params.operatorId,
         amount: params.amount,
-        useLocalAmount: params.useLocalAmount,
+        useLocalAmount: true, // Reloadly's operator pricing here is always local-currency — see AirtimeOperator's comment
         customIdentifier: `ATG-${Date.now().toString(36).toUpperCase()}`,
         recipientPhone: { countryCode: params.countryIso, number: params.recipientPhone },
       }),
@@ -170,14 +168,13 @@ class MockReloadlyProvider implements ReloadlyProvider {
   async getOperators(countryIso: string): Promise<AirtimeOperator[]> {
     const isNaira = countryIso === "NG";
     const isDalasi = countryIso === "GM";
+    if (!isNaira && !isDalasi) return [];
     return [
       {
         operatorId: 999,
         name: "Demo Network",
         denominationType: "FIXED",
-        localCurrencyCode: isNaira ? "NGN" : isDalasi ? "GMD" : undefined,
-        localFixedAmounts: isNaira ? [500, 1000, 2000, 5000] : isDalasi ? [50, 100, 200] : undefined,
-        internationalFixedAmounts: [1, 2, 5, 10],
+        localFixedAmounts: isNaira ? [500, 1000, 2000, 5000] : [50, 100, 200],
       },
     ];
   }
@@ -187,7 +184,6 @@ class MockReloadlyProvider implements ReloadlyProvider {
       ok: true,
       providerRef: `MOCK-${Date.now().toString(36).toUpperCase()}`,
       deliveredAmount: params.amount,
-      deliveredCurrencyCode: params.useLocalAmount ? undefined : "USD",
     };
   }
 }

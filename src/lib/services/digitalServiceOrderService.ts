@@ -11,17 +11,13 @@ export interface PurchaseAirtimeParams {
   operatorId: number;
   operatorName: string;
   recipientPhone: string;
-  // true when `amount` is in the recipient operator's own local currency;
-  // false means `amount` is in USD, the universal fallback used whenever
-  // the operator's local currency isn't one ATG models (see chargeCurrency).
-  useLocalAmount: boolean;
   amount: number; // major units, in `chargeCurrency`
-  // The currency `amount` is actually denominated in — the operator's own
-  // local currency when useLocalAmount, else "USD". Deliberately NOT
-  // inferred from countryIso or walletCurrency: a customer can top up a
-  // country other than the one their own wallet currency matches (e.g. a
-  // GMD-wallet customer topping up a Nigerian number), so this must be
-  // exactly what the operator quoted, not assumed.
+  // The currency `amount` is denominated in — Reloadly always quotes
+  // operator pricing in that operator's own local currency, so this is
+  // whatever AIRTIME_COUNTRIES maps the destination country to. Passed
+  // explicitly rather than inferred from countryIso or walletCurrency: a
+  // customer's wallet currency doesn't have to match the country they're
+  // topping up (e.g. a GMD-wallet customer topping up a Nigerian number).
   chargeCurrency: Currency;
   walletCurrency: Currency;
 }
@@ -77,7 +73,6 @@ export async function purchaseAirtime(params: PurchaseAirtimeParams): Promise<Pu
     operatorId: params.operatorId,
     countryIso: params.countryIso,
     recipientPhone: params.recipientPhone,
-    useLocalAmount: params.useLocalAmount,
     amount: params.amount,
   });
 

@@ -4,16 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AIRTIME_COUNTRIES, type AirtimeCountry } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
-import type { Currency } from "@prisma/client";
 import type { AirtimeOperator } from "@/lib/services/reloadlyService";
 import { purchaseAirtimeAction, previewAirtimeChargeAction, type WalletChargePreview } from "@/app/digital-services/airtime/actions";
-
-// Only offer "local amount" pricing when the operator's own local currency
-// is one ATG models as a first-class Currency (today: Nigeria/Gambia's
-// operators). Every other country's operators fall back to USD ("Reloadly's
-// international amount) — see digitalServiceOrderService.ts for why this
-// can't just be inferred from the destination country.
-const SUPPORTED_LOCAL_CURRENCIES: Currency[] = ["NGN", "GMD", "USD", "EUR", "GBP", "CNY"];
 
 type Step = 1 | 2 | 3 | "confirm" | "success";
 
@@ -40,7 +32,18 @@ export function AirtimeFlow() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
 
+  // Reloadly always quotes operator pricing in that country's own local
+  // currency — a country only has a `currency` here when that's also one of
+  // ATG's own Currency enum values (see the comment on AIRTIME_COUNTRIES),
+  // which is the only case we can correctly turn into a wallet charge.
+  const chargeCurrency = country.currency;
+
   useEffect(() => {
+    if (!chargeCurrency) {
+      setOperators(null);
+      setOperator(null);
+      return;
+    }
     let cancelled = false;
     setOperatorsLoading(true);
     setOperators(null);
@@ -61,16 +64,11 @@ export function AirtimeFlow() {
     return () => {
       cancelled = true;
     };
-  }, [country]);
+  }, [country, chargeCurrency]);
 
-  const useLocal =
-    !!operator?.localCurrencyCode &&
-    SUPPORTED_LOCAL_CURRENCIES.includes(operator.localCurrencyCode as Currency) &&
-    !!(operator.localFixedAmounts?.length || (operator.localMinAmount && operator.localMaxAmount));
-  const chargeCurrency: Currency = useLocal ? (operator!.localCurrencyCode as Currency) : "USD";
-  const fixedAmounts = useLocal ? operator?.localFixedAmounts : operator?.internationalFixedAmounts;
-  const minAmount = useLocal ? operator?.localMinAmount : operator?.internationalMinAmount;
-  const maxAmount = useLocal ? operator?.localMaxAmount : operator?.internationalMaxAmount;
+  const fixedAmounts = operator?.localFixedAmounts;
+  const minAmount = operator?.localMinAmount;
+  const maxAmount = operator?.localMaxAmount;
 
   const filteredCountries = countryQuery.trim()
     ? AIRTIME_COUNTRIES.filter((c) => c.name.toLowerCase().includes(countryQuery.trim().toLowerCase()))
@@ -83,11 +81,11 @@ export function AirtimeFlow() {
   }
 
   function displayAmount(v: number) {
-    return chargeCurrency === "USD" && !useLocal ? `$${v.toFixed(2)}` : formatMoney(Math.round(v * 100), chargeCurrency);
+    return chargeCurrency ? formatMoney(Math.round(v * 100), chargeCurrency) : String(v);
   }
 
   async function goToConfirm() {
-    if (!operator || !selectedAmount) return;
+    if (!operator || !selectedAmount || !chargeCurrency) return;
     setPreviewLoading(true);
     setErrorMsg(null);
     try {
@@ -102,7 +100,7 @@ export function AirtimeFlow() {
   }
 
   async function confirmAndPay() {
-    if (!operator || !selectedAmount) return;
+    if (!operator || !selectedAmount || !chargeCurrency) return;
     setSubmitting(true);
     setErrorMsg(null);
     const result = await purchaseAirtimeAction({
@@ -110,7 +108,6 @@ export function AirtimeFlow() {
       operatorId: operator.operatorId,
       operatorName: operator.name,
       recipientPhone: phone,
-      useLocalAmount: useLocal,
       amount: selectedAmount,
       chargeCurrency,
     });
@@ -185,31 +182,37 @@ export function AirtimeFlow() {
             </div>
           </div>
 
-          <div>
-            <p className="label mb-2">Network</p>
-            {operatorsLoading ? (
-              <p className="text-sm text-navy-400">Loading networks…</p>
-            ) : !operators || operators.length === 0 ? (
-              <p className="text-sm text-navy-400">No networks available for {country.name} right now.</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {operators.map((op) => (
-                  <button
-                    type="button"
-                    key={op.operatorId}
-                    onClick={() => setOperator(op)}
-                    className={`rounded-lg border px-3 py-2.5 text-center text-sm font-medium ${
-                      operator?.operatorId === op.operatorId
-                        ? "border-atgblue-500 bg-atgblue-50 text-atgblue-700"
-                        : "border-navy-100 text-navy-600 hover:border-atgblue-300"
-                    }`}
-                  >
-                    {op.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {!chargeCurrency ? (
+            <p className="rounded-lg bg-gold-50 p-3 text-sm text-gold-700">
+              Airtime top-ups for {country.name} aren&apos;t available yet — check back soon, or pick a different country.
+            </p>
+          ) : (
+            <div>
+              <p className="label mb-2">Network</p>
+              {operatorsLoading ? (
+                <p className="text-sm text-navy-400">Loading networks…</p>
+              ) : !operators || operators.length === 0 ? (
+                <p className="text-sm text-navy-400">No networks available for {country.name} right now.</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {operators.map((op) => (
+                    <button
+                      type="button"
+                      key={op.operatorId}
+                      onClick={() => setOperator(op)}
+                      className={`rounded-lg border px-3 py-2.5 text-center text-sm font-medium ${
+                        operator?.operatorId === op.operatorId
+                          ? "border-atgblue-500 bg-atgblue-50 text-atgblue-700"
+                          : "border-navy-100 text-navy-600 hover:border-atgblue-300"
+                      }`}
+                    >
+                      {op.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <button className="btn-primary w-full" disabled={!operator} onClick={() => setStep(2)}>
             Continue
