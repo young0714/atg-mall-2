@@ -130,7 +130,11 @@ class LiveGiftCardProvider implements GiftCardProvider {
       providerRef: String(body.transactionId),
       deliveredAmount: typeof product?.totalPrice === "number" ? product.totalPrice : undefined,
       deliveredCurrencyCode: (product?.currencyCode as string | undefined) ?? body.currencyCode,
-      costMinor: typeof body.fee === "number" ? Math.round(body.fee * 100) : undefined,
+      // NOT body.fee (that's just the small platform fee on top, ~$0.10 for
+      // a $10 card) — balanceInfo.cost is the actual total deducted from
+      // the Reloadly account balance, confirmed live by diffing the account
+      // balance before/after a real order (dropped by exactly this amount).
+      costMinor: typeof body.balanceInfo?.cost === "number" ? Math.round(body.balanceInfo.cost * 100) : undefined,
     };
   }
 
