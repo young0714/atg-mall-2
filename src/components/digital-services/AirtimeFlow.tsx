@@ -194,22 +194,23 @@ export function AirtimeFlow() {
               ) : !operators || operators.length === 0 ? (
                 <p className="text-sm text-navy-400">No networks available for {country.name} right now.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <select
+                  className="input"
+                  value={operator?.operatorId ?? ""}
+                  onChange={(e) => {
+                    const op = operators.find((o) => o.operatorId === Number(e.target.value));
+                    setOperator(op ?? null);
+                  }}
+                >
+                  <option value="" disabled>
+                    Select a network…
+                  </option>
                   {operators.map((op) => (
-                    <button
-                      type="button"
-                      key={op.operatorId}
-                      onClick={() => setOperator(op)}
-                      className={`rounded-lg border px-3 py-2.5 text-center text-sm font-medium ${
-                        operator?.operatorId === op.operatorId
-                          ? "border-atgblue-500 bg-atgblue-50 text-atgblue-700"
-                          : "border-navy-100 text-navy-600 hover:border-atgblue-300"
-                      }`}
-                    >
+                    <option key={op.operatorId} value={op.operatorId}>
                       {op.name}
-                    </button>
+                    </option>
                   ))}
-                </div>
+                </select>
               )}
             </div>
           )}
@@ -227,24 +228,25 @@ export function AirtimeFlow() {
           </p>
 
           {fixedAmounts && fixedAmounts.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2">
-              {fixedAmounts.map((v) => (
-                <button
-                  type="button"
-                  key={v}
-                  onClick={() => {
-                    setSelectedAmount(v);
-                    setCustomAmount("");
-                  }}
-                  className={`rounded-lg border px-3 py-2.5 text-center text-sm font-semibold ${
-                    selectedAmount === v
-                      ? "border-atgblue-500 bg-atgblue-50 text-atgblue-700"
-                      : "border-navy-100 text-navy-600 hover:border-atgblue-300"
-                  }`}
-                >
-                  {displayAmount(v)}
-                </button>
-              ))}
+            <div>
+              <p className="label mb-2">Amount</p>
+              <select
+                className="input"
+                value={selectedAmount ?? ""}
+                onChange={(e) => {
+                  setSelectedAmount(e.target.value ? Number(e.target.value) : null);
+                  setCustomAmount("");
+                }}
+              >
+                <option value="" disabled>
+                  Select an amount…
+                </option>
+                {fixedAmounts.map((v) => (
+                  <option key={v} value={v}>
+                    {displayAmount(v)}
+                  </option>
+                ))}
+              </select>
             </div>
           ) : (
             <div>

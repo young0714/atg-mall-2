@@ -184,23 +184,23 @@ export function BillPaymentFlow() {
               ) : !billers || billers.length === 0 ? (
                 <p className="text-sm text-navy-400">No billers available for {country.name} right now.</p>
               ) : (
-                <div className="space-y-1.5">
+                <select
+                  className="input"
+                  value={biller?.billerId ?? ""}
+                  onChange={(e) => {
+                    const b = billers.find((bl) => bl.billerId === Number(e.target.value));
+                    setBiller(b ?? null);
+                  }}
+                >
+                  <option value="" disabled>
+                    Select a biller…
+                  </option>
                   {billers.map((b) => (
-                    <button
-                      type="button"
-                      key={b.billerId}
-                      onClick={() => setBiller(b)}
-                      className={`flex w-full items-center justify-between rounded-lg border px-3.5 py-2.5 text-left text-sm font-medium ${
-                        biller?.billerId === b.billerId
-                          ? "border-atgblue-500 bg-atgblue-50 text-atgblue-700"
-                          : "border-navy-100 text-navy-600 hover:border-atgblue-300"
-                      }`}
-                    >
-                      <span>{b.name}</span>
-                      {b.serviceType && <span className="text-xs text-navy-400">{b.serviceType.replaceAll("_", " ")}</span>}
-                    </button>
+                    <option key={b.billerId} value={b.billerId}>
+                      {b.name}
+                    </option>
                   ))}
-                </div>
+                </select>
               )}
             </div>
           )}
