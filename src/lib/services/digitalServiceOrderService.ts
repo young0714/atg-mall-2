@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { walletService } from "./walletService";
 import { reloadlyService } from "./reloadlyService";
 import { giftCardService } from "./reloadlyGiftCardService";
+import { utilityService } from "./reloadlyUtilityService";
 import { currencyConversionService } from "./currencyConversionService";
 import type { Currency, Prisma } from "@prisma/client";
 
@@ -204,6 +205,101 @@ export async function purchaseGiftCard(params: PurchaseGiftCardParams): Promise<
       deliveredCurrencyCode: result.deliveredCurrencyCode,
       providerCostMinor: result.costMinor,
       deliveryPayload: (redeemCode as unknown as Prisma.InputJsonValue) ?? undefined,
+    },
+  });
+
+  return { ok: true, orderId: order.id };
+}
+
+export interface PurchaseUtilityBillParams {
+  userId: string;
+  countryIso: string;
+  billerId: number;
+  billerName: string;
+  subscriberAccountNumber: string;
+  amount: number; // major units, in `chargeCurrency`
+  chargeCurrency: Currency;
+  walletCurrency: Currency;
+}
+
+export interface PurchaseUtilityBillResult {
+  ok: boolean;
+  orderId: string;
+  failureReason?: string;
+}
+
+/**
+ * Same debit-first-then-reverse-on-failure shape as purchaseAirtime() and
+ * purchaseGiftCard(). Reloadly's /pay response includes a `status` that may
+ * mean "still processing" rather than a final result (per their docs'
+ * finalStatusAvailabilityAt field) — this first pass treats any response
+ * that returns a transaction id as SUCCESSFUL and records the raw status
+ * for admin visibility, without a reconciliation/polling step yet.
+ */
+export async function purchaseUtilityBill(params: PurchaseUtilityBillParams): Promise<PurchaseUtilityBillResult> {
+  const chargeAmountMinor = Math.round(params.amount * 100);
+  const debitAmountMinor =
+    params.chargeCurrency === params.walletCurrency
+      ? chargeAmountMinor
+      : currencyConversionService.convert(chargeAmountMinor, params.chargeCurrency, params.walletCurrency);
+
+  const order = await db.digitalServiceOrder.create({
+    data: {
+      userId: params.userId,
+      type: "UTILITY_BILL",
+      status: "PENDING",
+      countryIso: params.countryIso,
+      operatorId: params.billerId,
+      operatorName: params.billerName,
+      subscriberAccountNumber: params.subscriberAccountNumber,
+      amountMinor: debitAmountMinor,
+      currency: params.walletCurrency,
+    },
+  });
+
+  const debit = await walletService.debit({
+    userId: params.userId,
+    amountMinor: debitAmountMinor,
+    currency: params.walletCurrency,
+    description: `${params.billerName} bill payment — ${params.subscriberAccountNumber}`,
+    referenceType: "DIGITAL_SERVICE_ORDER",
+    referenceId: order.id,
+  });
+
+  if (!debit.success) {
+    const failureReason = "Insufficient wallet balance.";
+    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason } });
+    return { ok: false, orderId: order.id, failureReason };
+  }
+
+  const result = await utilityService.payBill({
+    billerId: params.billerId,
+    subscriberAccountNumber: params.subscriberAccountNumber,
+    amount: params.amount,
+  });
+
+  if (!result.ok) {
+    await walletService.credit({
+      userId: params.userId,
+      amountMinor: debitAmountMinor,
+      currency: params.walletCurrency,
+      type: "REFUND",
+      description: `Refund: ${params.billerName} bill payment failed`,
+      referenceType: "DIGITAL_SERVICE_ORDER",
+      referenceId: order.id,
+    });
+    const failureReason = result.failureReason ?? "The bill payment could not be completed.";
+    await db.digitalServiceOrder.update({ where: { id: order.id }, data: { status: "FAILED", failureReason } });
+    return { ok: false, orderId: order.id, failureReason };
+  }
+
+  await db.digitalServiceOrder.update({
+    where: { id: order.id },
+    data: {
+      status: "SUCCESSFUL",
+      providerRef: result.providerRef,
+      validatedCustomerName: result.validatedCustomerName,
+      deliveryPayload: result.rawStatus ? ({ rawStatus: result.rawStatus } as unknown as Prisma.InputJsonValue) : undefined,
     },
   });
 

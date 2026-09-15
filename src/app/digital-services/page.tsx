@@ -47,11 +47,11 @@ export default async function DigitalServicesPage() {
             <h3 className="font-semibold text-navy-900">Gift Cards</h3>
             <p className="mt-1 text-xs text-navy-500">Gift cards from top brands, delivered instantly.</p>
           </Link>
-          <div className="card cursor-not-allowed p-5 opacity-60">
+          <Link href="/digital-services/bills" className="card p-5">
             <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-atggreen-50 text-lg">🧾</div>
             <h3 className="font-semibold text-navy-900">Pay a Bill</h3>
-            <p className="mt-1 text-xs text-navy-500">Coming soon.</p>
-          </div>
+            <p className="mt-1 text-xs text-navy-500">Electricity, cable TV &amp; more.</p>
+          </Link>
         </div>
 
         <div className="mt-8">
@@ -65,7 +65,7 @@ export default async function DigitalServicesPage() {
                   <div key={order.id} className="flex items-center justify-between gap-3 p-4">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-navy-800">
-                        {order.operatorName} — {order.recipientPhone ?? order.recipientEmail}
+                        {order.operatorName} — {order.recipientPhone ?? order.recipientEmail ?? order.subscriberAccountNumber}
                       </p>
                       <p className="text-xs text-navy-400">{formatDateTime(order.createdAt)}</p>
                       {order.type === "GIFT_CARD" && order.status === "SUCCESSFUL" && (

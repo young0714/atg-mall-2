@@ -282,6 +282,16 @@ export const giftCardPurchaseSchema = z.object({
 });
 export type GiftCardPurchaseInput = z.infer<typeof giftCardPurchaseSchema>;
 
+export const utilityBillPurchaseSchema = z.object({
+  countryIso: isoCountrySchema,
+  billerId: z.coerce.number().int().positive(),
+  billerName: z.string().min(1),
+  subscriberAccountNumber: z.string().trim().min(3, "Enter a valid account/meter number"),
+  amount: z.coerce.number().positive(),
+  chargeCurrency: z.enum(["NGN", "GMD", "USD", "EUR", "GBP", "CNY"]),
+});
+export type UtilityBillPurchaseInput = z.infer<typeof utilityBillPurchaseSchema>;
+
 export const deliveryZoneSchema = z.object({
   countryIso: isoCountrySchema,
   city: z.string().min(2, "Enter a city name"),

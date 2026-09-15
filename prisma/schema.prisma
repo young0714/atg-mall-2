@@ -565,6 +565,7 @@ model Payment {
 enum DigitalServiceType {
   AIRTIME
   GIFT_CARD
+  UTILITY_BILL
 }
 
 model DigitalServiceOrder {
@@ -576,13 +577,19 @@ model DigitalServiceOrder {
   providerName   String             @default("RELOADLY")
   providerRef    String? // Reloadly's transactionId
   countryIso     String
-  operatorId     Int // reused as productId for gift cards — both are "the catalog item ordered"
-  operatorName   String // reused as brand/product name for gift cards — snapshot, stays readable even if the catalog changes later
+  operatorId     Int // reused as productId for gift cards, billerId for utility bills — all three are "the catalog item ordered"
+  operatorName   String // reused as brand/product name (gift cards) or biller name (utility bills) — snapshot, stays readable even if the catalog changes later
 
-  // Airtime delivers to a phone; gift cards deliver to an email. Exactly one
+  // Airtime delivers to a phone; gift cards deliver to an email; utility
+  // bills pay against a meter/smartcard number. Exactly one of these three
   // is set, depending on `type`.
-  recipientPhone String?
-  recipientEmail String?
+  recipientPhone         String?
+  recipientEmail         String?
+  subscriberAccountNumber String?
+  // The customer name Reloadly returned for subscriberAccountNumber, when a
+  // biller supports validating it — shown so the customer/admin can confirm
+  // the payment reached the right account before/after paying.
+  validatedCustomerName   String?
 
   amountMinor Int // what the customer's ATG Wallet was actually debited
   currency    Currency
