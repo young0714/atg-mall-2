@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const ITEMS = [
   { href: "/", label: "Home", icon: HomeIcon },
   { href: "/shop", label: "Shop", icon: ShopIcon },
+  { href: "/digital-services", label: "Recharge", icon: RechargeIcon },
   { href: "/account/orders", label: "Orders", icon: OrdersIcon },
   { href: "/account/packages", label: "Packages", icon: PackageIcon },
   { href: "/account", label: "Account", icon: AccountIcon },
@@ -18,7 +19,7 @@ export function MobileNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-navy-100 bg-white/95 backdrop-blur lg:hidden">
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-6">
         {ITEMS.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -52,6 +53,13 @@ function ShopIcon({ active }: { active: boolean }) {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
       <path d="M4 8l1.5-4h13L20 8M4 8h16M4 8v11a1 1 0 001 1h14a1 1 0 001-1V8M9 12a3 3 0 006 0" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function RechargeIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M13 3L4 14h6l-1 7 9-11h-6l1-7z" stroke="currentColor" strokeWidth={active ? 2 : 1.5} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
