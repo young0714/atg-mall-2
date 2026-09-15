@@ -78,29 +78,39 @@ export function AccountNav({ unreadNotifications = 0 }: { unreadNotifications?: 
         ))}
       </nav>
 
-      {/* Mobile: primary pills + a "More" dropdown for the rest. */}
-      <nav className="relative flex gap-1 overflow-x-auto whitespace-nowrap rounded-xl2 border border-navy-100 bg-white p-1.5 lg:hidden">
-        {primaryLinks.map((link) => (
-          <NavLinkPill key={link.href} link={link} active={isActive(pathname, link.href)} />
-        ))}
+      {/* Mobile: primary pills + a "More" dropdown for the rest. The
+          dropdown panel lives in this outer wrapper, NOT inside the
+          scrollable <nav> below — setting overflow-x on an element forces
+          its overflow-y to "auto" too (a CSS overflow-computation quirk),
+          which would silently clip an absolutely-positioned child that
+          extends past the nav's own box, even though the click that opens
+          it still fires normally. Keeping the panel a sibling of the
+          scrollable nav, inside this non-overflowing wrapper, avoids that
+          entirely. */}
+      <div className="relative lg:hidden">
+        <nav className="flex gap-1 overflow-x-auto whitespace-nowrap rounded-xl2 border border-navy-100 bg-white p-1.5">
+          {primaryLinks.map((link) => (
+            <NavLinkPill key={link.href} link={link} active={isActive(pathname, link.href)} />
+          ))}
 
-        <button
-          type="button"
-          onClick={() => setMoreOpen((v) => !v)}
-          aria-expanded={moreOpen}
-          aria-haspopup="menu"
-          className={cn(
-            "flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-2.5 text-sm font-medium",
-            moreActive ? "bg-navy-900 text-white" : "text-navy-600 hover:bg-sand-100",
-          )}
-        >
-          More
-          {unreadNotifications > 0 && (
-            <span className="rounded-full bg-gold-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-              {unreadNotifications}
-            </span>
-          )}
-        </button>
+          <button
+            type="button"
+            onClick={() => setMoreOpen((v) => !v)}
+            aria-expanded={moreOpen}
+            aria-haspopup="menu"
+            className={cn(
+              "flex shrink-0 items-center gap-1.5 rounded-lg px-3.5 py-2.5 text-sm font-medium",
+              moreActive ? "bg-navy-900 text-white" : "text-navy-600 hover:bg-sand-100",
+            )}
+          >
+            More
+            {unreadNotifications > 0 && (
+              <span className="rounded-full bg-gold-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                {unreadNotifications}
+              </span>
+            )}
+          </button>
+        </nav>
 
         {moreOpen && (
           <>
@@ -122,7 +132,7 @@ export function AccountNav({ unreadNotifications = 0 }: { unreadNotifications?: 
             </div>
           </>
         )}
-      </nav>
+      </div>
     </>
   );
 }
