@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
+import { InstallAppButton } from "@/components/pwa/InstallAppButton";
 
 const columns = [
   {
@@ -74,6 +75,11 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              {col.title === "Company" && (
+                <li className="empty:hidden">
+                  <InstallAppButton className="text-sm text-navy-300 hover:text-white" />
+                </li>
+              )}
             </ul>
           </div>
         ))}
