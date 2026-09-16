@@ -49,6 +49,49 @@ const columns = [
   },
 ];
 
+type Column = (typeof columns)[number];
+
+// Shared between the mobile <details> body and the always-open desktop
+// column — kept as one component so the two render paths can't drift.
+function ColumnLinks({ col }: { col: Column }) {
+  return (
+    <ul className="space-y-2">
+      {col.links.map((link) => (
+        <li key={link.href}>
+          <Link href={link.href} className="text-sm text-navy-300 hover:text-white">
+            {link.label}
+          </Link>
+        </li>
+      ))}
+      {col.title === "Company" && (
+        <>
+          <li>
+            <details className="group/faq">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-sm text-navy-300 hover:text-white">
+                FAQ
+                <span className="ml-2 shrink-0 text-navy-500 transition-transform group-open/faq:rotate-45">+</span>
+              </summary>
+              <div className="mt-3 space-y-3 border-l border-white/10 pl-3">
+                {faqs.map((f) => (
+                  <details key={f.q}>
+                    <summary className="cursor-pointer list-none text-xs font-medium text-navy-200 hover:text-white">
+                      {f.q}
+                    </summary>
+                    <p className="mt-1.5 text-xs leading-relaxed text-navy-400">{f.a}</p>
+                  </details>
+                ))}
+              </div>
+            </details>
+          </li>
+          <li className="empty:hidden">
+            <InstallAppButton className="text-sm text-navy-300 hover:text-white" />
+          </li>
+        </>
+      )}
+    </ul>
+  );
+}
+
 export function Footer() {
   return (
     <footer className="bg-navy-900 pb-16 text-navy-200 lg:pb-0">
@@ -66,52 +109,28 @@ export function Footer() {
           </div>
         </div>
         {columns.map((col) => (
-          // Native <details>/<summary> so this never needs client-side JS — a
-          // dropdown on mobile (collapsed by default, tap to expand) and a
-          // plain always-open column on desktop, forced via lg:!block below.
-          // The details/summary UA-stylesheet display:none on closed content
-          // is ordinary-specificity, so an author `block` utility overrides
-          // it, which is what makes the lg:!block desktop override work.
-          <details key={col.title} className="group/col">
-            <summary className="mb-3 flex cursor-pointer list-none items-center justify-between text-xs font-bold uppercase tracking-wider text-navy-400 lg:cursor-default lg:[&::-webkit-details-marker]:hidden">
-              {col.title}
-              <span className="text-sm text-navy-500 transition-transform group-open/col:rotate-45 lg:hidden">+</span>
-            </summary>
-            <ul className="hidden space-y-2 group-open/col:block lg:!block">
-              {col.links.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-navy-300 hover:text-white">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-              {col.title === "Company" && (
-                <>
-                  <li>
-                    <details className="group/faq">
-                      <summary className="flex cursor-pointer list-none items-center justify-between text-sm text-navy-300 hover:text-white">
-                        FAQ
-                        <span className="ml-2 shrink-0 text-navy-500 transition-transform group-open/faq:rotate-45">+</span>
-                      </summary>
-                      <div className="mt-3 space-y-3 border-l border-white/10 pl-3">
-                        {faqs.map((f) => (
-                          <details key={f.q}>
-                            <summary className="cursor-pointer list-none text-xs font-medium text-navy-200 hover:text-white">
-                              {f.q}
-                            </summary>
-                            <p className="mt-1.5 text-xs leading-relaxed text-navy-400">{f.a}</p>
-                          </details>
-                        ))}
-                      </div>
-                    </details>
-                  </li>
-                  <li className="empty:hidden">
-                    <InstallAppButton className="text-sm text-navy-300 hover:text-white" />
-                  </li>
-                </>
-              )}
-            </ul>
-          </details>
+          <div key={col.title}>
+            {/*
+              Two separate render paths rather than one <details> forced open
+              via CSS at the lg breakpoint: modern Chromium hides closed
+              <details> content with `content-visibility: hidden`, not plain
+              `display: none` — that collapses the box to 0x0 regardless of
+              any `display` override on descendants, so a CSS-only "force
+              open on desktop" trick doesn't actually work. A plain always-
+              visible column for desktop sidesteps the whole thing.
+            */}
+            <details className="group/col lg:hidden">
+              <summary className="mb-3 flex cursor-pointer list-none items-center justify-between text-xs font-bold uppercase tracking-wider text-navy-400">
+                {col.title}
+                <span className="text-sm text-navy-500 transition-transform group-open/col:rotate-45">+</span>
+              </summary>
+              <ColumnLinks col={col} />
+            </details>
+            <div className="hidden lg:block">
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-navy-400">{col.title}</h3>
+              <ColumnLinks col={col} />
+            </div>
+          </div>
         ))}
       </div>
 
