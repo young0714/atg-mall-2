@@ -68,6 +68,19 @@ model User {
   bvnVerifiedAt   DateTime?
   bvnVerifiedName String? // the name NIBSS returned, for cross-checking against fullName
 
+  // App-lock PIN — opt-in, gates the app locally on open/reopen. Deliberately
+  // separate from passwordHash: this never touches the real login session
+  // (JWT, idle timeout), it's a local checkpoint on top of an already-valid
+  // session. pinEnabled is the source of truth for whether the lock screen
+  // shows at all; pinHash/attempts/lockedUntil are meaningless when it's
+  // false and are cleared together when the customer disables the lock.
+  pinHash        String?
+  pinEnabled     Boolean   @default(false)
+  pinAttempts    Int       @default(0)
+  pinLockedUntil DateTime?
+
+  webAuthnCredentials WebAuthnCredential[]
+
   customerProfile CustomerProfile?
   seller          Seller?
   addresses       Address[]
@@ -1403,6 +1416,26 @@ enum OtpPurpose {
   DIGITAL_SERVICE_GIFT_CARD
   DIGITAL_SERVICE_UTILITY_BILL
   WALLET_TRANSFER
+  PIN_RESET
+}
+
+// One row per device/browser a customer has registered for biometric app
+// unlock (Face ID/Touch ID/fingerprint/Windows Hello, via WebAuthn) — never
+// the biometric data itself, which never leaves the device. publicKey +
+// counter are exactly what WebAuthn needs to verify a signature came from
+// that same enrolled authenticator without it being replayed.
+model WebAuthnCredential {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String   @unique
+  publicKey    Bytes
+  counter      BigInt   @default(0)
+  deviceLabel  String? // customer-facing label, e.g. "iPhone" — best-effort from the browser's user agent at enrollment time
+  createdAt    DateTime @default(now())
+  lastUsedAt   DateTime?
+
+  @@index([userId])
 }
 
 model CheckoutOtp {

@@ -22,6 +22,7 @@ const links: NavLink[] = [
   { href: "/account/wallet", label: "Wallet", group: "primary" },
   { href: "/account/notifications", label: "Notifications", group: "more" },
   { href: "/account/profile", label: "Profile & Addresses", group: "more" },
+  { href: "/account/security", label: "Security", group: "more" },
 ];
 
 function isActive(pathname: string, href: string) {

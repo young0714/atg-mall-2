@@ -6,6 +6,8 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { InstallAppBanner } from "@/components/pwa/InstallAppBanner";
+import { AppLockGate } from "@/components/account/AppLockGate";
+import { getCurrentUser } from "@/lib/auth/current-user";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const manrope = Manrope({ subsets: ["latin"], variable: "--font-manrope", display: "swap" });
@@ -81,7 +83,10 @@ const organizationJsonLd = {
   areaServed: "Worldwide",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getCurrentUser();
+  const pinLockActive = !!user?.pinEnabled;
+
   return (
     <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
       <body className="flex min-h-screen flex-col font-sans">
@@ -90,11 +95,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
         <ServiceWorkerRegister />
-        <InstallAppBanner />
-        <Header />
-        <main className="flex-1 pb-16 lg:pb-0">{children}</main>
-        <Footer />
-        <MobileNav />
+        <AppLockGate active={pinLockActive}>
+          <InstallAppBanner />
+          <Header />
+          <main className="flex-1 pb-16 lg:pb-0">{children}</main>
+          <Footer />
+          <MobileNav />
+        </AppLockGate>
       </body>
     </html>
   );

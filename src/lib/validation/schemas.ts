@@ -299,6 +299,8 @@ export const walletTransferSchema = z.object({
 });
 export type WalletTransferInput = z.infer<typeof walletTransferSchema>;
 
+export const pinSchema = z.string().trim().regex(/^\d{4}$/, "Enter a 4-digit PIN");
+
 export const deliveryZoneSchema = z.object({
   countryIso: isoCountrySchema,
   city: z.string().min(2, "Enter a city name"),
