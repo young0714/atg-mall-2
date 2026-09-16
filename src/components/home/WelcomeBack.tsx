@@ -31,8 +31,8 @@ export function WelcomeBack({
                 <p className="text-[11px] uppercase tracking-wide text-navy-300">Wallet balance</p>
                 <p className="font-display text-xl font-bold text-white">{formatMoney(wallet.balanceMinor, wallet.currency)}</p>
               </div>
-              <Link href="/account/wallet/send" className="btn-gold whitespace-nowrap">
-                Send
+              <Link href="/account/wallet" className="btn-gold whitespace-nowrap">
+                Deposit
               </Link>
             </div>
           )}
