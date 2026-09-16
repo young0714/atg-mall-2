@@ -91,6 +91,9 @@ model User {
   walletDepositPayments Payment[]
   digitalServiceOrders  DigitalServiceOrder[]
   checkoutOtps          CheckoutOtp[]
+  walletTransfersSent      WalletTransfer[] @relation("WalletTransferSender")
+  walletTransfersReceived  WalletTransfer[] @relation("WalletTransferRecipient")
+  walletTransfersReversed  WalletTransfer[] @relation("WalletTransferReversedBy")
 
   @@index([role])
 }
@@ -633,6 +636,7 @@ enum WalletTransactionType {
   PAYMENT
   REFUND
   ADJUSTMENT
+  TRANSFER
 }
 
 model Wallet {
@@ -641,10 +645,51 @@ model Wallet {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   currency  Currency @default(NGN)
   balanceMinor Int   @default(0) // cached projection of the ledger below
+  // Customer-facing identifier for wallet-to-wallet transfers — a 10-digit
+  // number, generated once at wallet creation, never reused. Deliberately
+  // NOT the user's email/phone: those are mutable and used for other
+  // purposes, so a stable purpose-built number avoids both enumeration
+  // risk and breakage if a customer later changes their email/phone.
+  accountNumber String @unique
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 
   transactions WalletTransaction[]
+}
+
+enum WalletTransferStatus {
+  COMPLETED
+  REVERSED
+}
+
+// A peer-to-peer wallet transfer — recorded as its own entity (not just a
+// pair of WalletTransaction rows) so it has a stable identity for the
+// admin reversal tool and a reversed/not-reversed status that can't drift
+// out of sync between the two ledger legs.
+model WalletTransfer {
+  id          String   @id @default(cuid())
+  senderId    String
+  sender      User     @relation("WalletTransferSender", fields: [senderId], references: [id])
+  recipientId String
+  recipient   User     @relation("WalletTransferRecipient", fields: [recipientId], references: [id])
+
+  // Always the SENDER's own currency — the recipient's actual credited
+  // amount (after FX conversion, if their wallet currency differs) lives
+  // on their own WalletTransaction row, not duplicated here.
+  amountMinor Int
+  currency    Currency
+  note        String?
+
+  status         WalletTransferStatus @default(COMPLETED)
+  reversedAt     DateTime?
+  reversedById   String?
+  reversedBy     User?    @relation("WalletTransferReversedBy", fields: [reversedById], references: [id])
+  reversalReason String?
+
+  createdAt DateTime @default(now())
+
+  @@index([senderId])
+  @@index([recipientId])
 }
 
 model WalletTransaction {
@@ -1357,6 +1402,7 @@ enum OtpPurpose {
   DIGITAL_SERVICE_AIRTIME
   DIGITAL_SERVICE_GIFT_CARD
   DIGITAL_SERVICE_UTILITY_BILL
+  WALLET_TRANSFER
 }
 
 model CheckoutOtp {

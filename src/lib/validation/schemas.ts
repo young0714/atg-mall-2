@@ -292,6 +292,13 @@ export const utilityBillPurchaseSchema = z.object({
 });
 export type UtilityBillPurchaseInput = z.infer<typeof utilityBillPurchaseSchema>;
 
+export const walletTransferSchema = z.object({
+  recipientAccountNumber: z.string().trim().regex(/^\d{10}$/, "Enter a valid 10-digit ATG account number"),
+  amount: z.coerce.number().positive(),
+  note: z.string().trim().max(140).optional(),
+});
+export type WalletTransferInput = z.infer<typeof walletTransferSchema>;
+
 export const deliveryZoneSchema = z.object({
   countryIso: isoCountrySchema,
   city: z.string().min(2, "Enter a city name"),

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { hashPassword, verifyPassword } from "./password";
 import type { RegisterInput, LoginInput } from "@/lib/validation/schemas";
 import { isActiveDestinationIso, currencyForDestinationIso } from "@/lib/services/destinationCountryService";
+import { generateUniqueAccountNumber } from "@/lib/services/walletAccountNumberService";
 
 export class AuthError extends Error {}
 
@@ -23,6 +24,7 @@ export async function registerUser(input: RegisterInput) {
 
   const passwordHash = await hashPassword(input.password);
   const currency = currencyForDestinationIso(input.countryIso);
+  const accountNumber = await generateUniqueAccountNumber();
 
   const user = await db.user.create({
     data: {
@@ -38,7 +40,7 @@ export async function registerUser(input: RegisterInput) {
         },
       },
       wallet: {
-        create: { currency, balanceMinor: 0 },
+        create: { currency, balanceMinor: 0, accountNumber },
       },
     },
   });
@@ -76,6 +78,7 @@ export async function provisionGuestUser(input: {
   const currency = currencyForDestinationIso(input.countryIso);
   const throwawayPassword = randomBytes(24).toString("hex");
   const passwordHash = await hashPassword(throwawayPassword);
+  const accountNumber = await generateUniqueAccountNumber();
 
   const user = await db.user.create({
     data: {
@@ -91,7 +94,7 @@ export async function provisionGuestUser(input: {
         },
       },
       wallet: {
-        create: { currency, balanceMinor: 0 },
+        create: { currency, balanceMinor: 0, accountNumber },
       },
     },
   });

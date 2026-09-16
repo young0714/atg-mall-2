@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { currencyConversionService } from "./currencyConversionService";
+import { generateUniqueAccountNumber } from "./walletAccountNumberService";
 import type { Currency, WalletTransactionType, Prisma } from "@prisma/client";
 
 /**
@@ -22,12 +23,15 @@ import type { Currency, WalletTransactionType, Prisma } from "@prisma/client";
  */
 
 export interface WalletService {
-  getOrCreateWallet(userId: string, currency: Currency): Promise<{ id: string; balanceMinor: number; currency: Currency }>;
+  getOrCreateWallet(
+    userId: string,
+    currency: Currency,
+  ): Promise<{ id: string; balanceMinor: number; currency: Currency; accountNumber: string }>;
   credit(params: {
     userId: string;
     amountMinor: number;
     currency: Currency;
-    type: Extract<WalletTransactionType, "DEPOSIT" | "REFUND" | "ADJUSTMENT">;
+    type: Extract<WalletTransactionType, "DEPOSIT" | "REFUND" | "ADJUSTMENT" | "TRANSFER">;
     description: string;
     referenceType?: string;
     referenceId?: string;
@@ -39,7 +43,7 @@ export interface WalletService {
     description: string;
     referenceType?: string;
     referenceId?: string;
-    type?: Extract<WalletTransactionType, "PAYMENT" | "ADJUSTMENT">;
+    type?: Extract<WalletTransactionType, "PAYMENT" | "ADJUSTMENT" | "TRANSFER">;
   }): Promise<{ success: boolean; reason?: string }>;
 }
 
@@ -47,7 +51,8 @@ class LedgerWalletService implements WalletService {
   async getOrCreateWallet(userId: string, currency: Currency) {
     const existing = await db.wallet.findUnique({ where: { userId } });
     if (existing) return existing;
-    return db.wallet.create({ data: { userId, currency, balanceMinor: 0 } });
+    const accountNumber = await generateUniqueAccountNumber();
+    return db.wallet.create({ data: { userId, currency, balanceMinor: 0, accountNumber } });
   }
 
   async credit({
@@ -62,7 +67,7 @@ class LedgerWalletService implements WalletService {
     userId: string;
     amountMinor: number;
     currency: Currency;
-    type: Extract<WalletTransactionType, "DEPOSIT" | "REFUND" | "ADJUSTMENT">;
+    type: Extract<WalletTransactionType, "DEPOSIT" | "REFUND" | "ADJUSTMENT" | "TRANSFER">;
     description: string;
     referenceType?: string;
     referenceId?: string;
@@ -103,7 +108,7 @@ class LedgerWalletService implements WalletService {
     description: string;
     referenceType?: string;
     referenceId?: string;
-    type?: Extract<WalletTransactionType, "PAYMENT" | "ADJUSTMENT">;
+    type?: Extract<WalletTransactionType, "PAYMENT" | "ADJUSTMENT" | "TRANSFER">;
   }): Promise<{ success: boolean; reason?: string }> {
     return db.$transaction(async (tx: Prisma.TransactionClient) => {
       const wallet = await tx.wallet.findUniqueOrThrow({ where: { userId } });

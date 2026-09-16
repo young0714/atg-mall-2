@@ -3,6 +3,7 @@
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { walletService } from "@/lib/services/walletService";
+import { reverseWalletTransfer } from "@/lib/services/walletTransferService";
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -40,4 +41,28 @@ export async function adjustWalletAction(formData: FormData) {
 
   revalidatePath("/admin/wallets");
   redirect("/admin/wallets?adjusted=1");
+}
+
+export async function reverseWalletTransferAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_WALLETS);
+  const transferId = String(formData.get("transferId"));
+  const reason = String(formData.get("reason") || "Reversed by finance team");
+
+  const result = await reverseWalletTransfer(transferId, staff.id, reason);
+  if (!result.ok) {
+    redirect("/admin/wallets?error=" + encodeURIComponent(result.error ?? "Could not reverse that transfer"));
+  }
+
+  await db.auditLog.create({
+    data: {
+      actorId: staff.id,
+      action: "WALLET_TRANSFER_REVERSED",
+      entityType: "WalletTransfer",
+      entityId: transferId,
+      summary: `Reversed wallet transfer ${transferId}: ${reason}`,
+    },
+  });
+
+  revalidatePath("/admin/wallets");
+  redirect("/admin/wallets?reversed=1");
 }

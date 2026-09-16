@@ -10,6 +10,8 @@ import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { BvnVerifyForm } from "@/components/account/BvnVerifyForm";
+import { CopyAccountNumberButton } from "@/components/account/CopyAccountNumberButton";
+import Link from "next/link";
 
 export const metadata: Metadata = { title: "Wallet" };
 export const dynamic = "force-dynamic";
@@ -43,7 +45,7 @@ export default async function WalletPage({
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
-        <div className="card order-last lg:order-none">
+        <div id="history" className="card order-last scroll-mt-6 lg:order-none">
           <div className="border-b border-navy-100 p-5">
             <h2 className="font-semibold text-navy-900">Transaction History</h2>
           </div>
@@ -75,6 +77,24 @@ export default async function WalletPage({
             <p className="mt-1 text-3xl font-display font-bold text-atggreen-600">
               {formatMoney(wallet.balanceMinor, wallet.currency)}
             </p>
+
+            <div className="mt-4 flex gap-2">
+              <Link href="/account/wallet/send" className="btn-primary flex-1">
+                Send
+              </Link>
+              <a href="#history" className="btn-outline flex-1">
+                History
+              </a>
+            </div>
+
+            <div className="mt-4 rounded-lg bg-sand-100 p-3">
+              <p className="text-[10px] uppercase tracking-wide text-navy-400">Your ATG account number</p>
+              <div className="mt-1 flex items-center justify-center gap-2">
+                <p className="font-mono text-sm font-semibold text-navy-800">{wallet.accountNumber}</p>
+                <CopyAccountNumberButton accountNumber={wallet.accountNumber} />
+              </div>
+              <p className="mt-1 text-[11px] text-navy-400">Share this so others can send you money.</p>
+            </div>
           </div>
 
           <form action={depositToWalletAction} className="card space-y-3 p-5">

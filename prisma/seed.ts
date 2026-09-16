@@ -500,7 +500,7 @@ async function main() {
       customerProfile: {
         create: { countryIso: "NG", state: "Lagos", city: "Lagos", preferredCurrency: "NGN" },
       },
-      wallet: { create: { currency: "NGN", balanceMinor: 0 } },
+      wallet: { create: { currency: "NGN", balanceMinor: 0, accountNumber: "1000000001" } },
       addresses: {
         create: {
           label: "Home",
@@ -529,7 +529,7 @@ async function main() {
       customerProfile: {
         create: { countryIso: "GM", state: "Kanifing", city: "Kanifing", preferredCurrency: "GMD" },
       },
-      wallet: { create: { currency: "GMD", balanceMinor: 0 } },
+      wallet: { create: { currency: "GMD", balanceMinor: 0, accountNumber: "1000000002" } },
       addresses: {
         create: {
           label: "Home",
