@@ -8,7 +8,6 @@ import { WelcomeBack } from "@/components/home/WelcomeBack";
 import { ServicesPromo } from "@/components/home/ServicesPromo";
 import { ShopTheWorld } from "@/components/home/ShopTheWorld";
 import { HowItWorks } from "@/components/home/HowItWorks";
-import { ShippingOptionsSection } from "@/components/home/ShippingOptionsSection";
 import { Testimonials } from "@/components/home/Testimonials";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { CategoryCard } from "@/components/shop/CategoryCard";
@@ -150,7 +149,6 @@ export default async function HomePage() {
       )}
 
       <HowItWorks />
-      <ShippingOptionsSection />
       <Testimonials />
     </PullToRefresh>
   );
