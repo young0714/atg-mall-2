@@ -52,19 +52,23 @@ interface DsProductSkuProperty {
 }
 
 interface DsProductSku {
-  id?: string | number;
-  sku_code?: string;
+  id?: string; // composite property key, e.g. "14:193" — not a stable external id
+  sku_id?: string | number; // the real, stable per-variant id
   sku_price?: string;
   sku_available_stock?: number;
-  s_k_u_available_stock?: number;
-  aeop_s_k_u_propertys?: DsProductSkuProperty[];
+  ae_sku_property_dtos?: { ae_sku_property_d_t_o?: DsProductSkuProperty[] };
+}
+
+interface DsProductEnvelope {
+  result?: DsProductResult;
+  rsp_code?: number;
+  rsp_msg?: string;
 }
 
 interface DsProductResult {
   ae_item_base_info_dto?: {
     product_id?: number;
     subject?: string;
-    currency_code?: string;
     detail?: string;
     category_id?: number;
   };
@@ -74,7 +78,13 @@ interface DsProductResult {
   package_info_dto?: {
     gross_weight?: string;
   };
-  ae_item_sku_info_dtos?: DsProductSku[];
+  // Nested one level deeper than you'd expect — {"ae_item_sku_info_dtos":
+  // {"ae_item_sku_info_d_t_o": [...]}} — verified against a real live call,
+  // not assumed from the (unofficial) SDK's own TypeScript types, which
+  // turned out to be wrong here (also claimed a "aeop_s_k_u_propertys"
+  // field on each SKU that doesn't exist — the real one is
+  // ae_sku_property_dtos.ae_sku_property_d_t_o).
+  ae_item_sku_info_dtos?: { ae_item_sku_info_d_t_o?: DsProductSku[] };
 }
 
 class LiveAliExpressService implements AliExpressService {
@@ -107,20 +117,39 @@ class LiveAliExpressService implements AliExpressService {
     this.requireConfigured();
     const accessToken = await getValidAliExpressAccessToken();
 
-    let response: { aliexpress_ds_product_get_response?: { result?: DsProductResult } };
+    let envelope: DsProductEnvelope;
     try {
-      response = await callAliExpressApi("aliexpress.ds.product.get", {
-        product_id: productId,
-        ship_to_country: "US",
-        target_currency: "USD",
-        target_language: "EN",
-      }, accessToken);
+      const response = await callAliExpressApi<{ aliexpress_ds_product_get_response?: DsProductEnvelope }>(
+        "aliexpress.ds.product.get",
+        {
+          product_id: productId,
+          // Not tied to any one customer's real delivery address — this is
+          // a catalog lookup, and AliExpress needs SOME ship-to country to
+          // return pricing/availability at all. NG matches ATG Mall's
+          // flagship market and is confirmed live to work; some individual
+          // listings still restrict shipping to specific countries, which
+          // shows up as rsp_code/rsp_msg below rather than a thrown error.
+          ship_to_country: "NG",
+          target_currency: "USD",
+          target_language: "EN",
+        },
+        accessToken,
+      );
+      envelope = response.aliexpress_ds_product_get_response ?? {};
     } catch (e) {
       if (e instanceof Error && /not exist|not found|invalid.*product/i.test(e.message)) return null;
       throw e;
     }
 
-    const data = response.aliexpress_ds_product_get_response?.result;
+    // AliExpress reports some failures (e.g. SHIP_TO_COUNTRY_PROHIBITED) as
+    // an HTTP 200 with an empty result rather than the error_response shape
+    // callAliExpressApi already throws on — verified live against a real
+    // product restricted to certain countries.
+    if (envelope.rsp_code != null && envelope.rsp_code !== 200) {
+      throw new Error(`AliExpress couldn't return this product: ${envelope.rsp_msg ?? envelope.rsp_code}`);
+    }
+
+    const data = envelope.result;
     if (!data?.ae_item_base_info_dto) return null;
 
     const base = data.ae_item_base_info_dto;
@@ -129,11 +158,11 @@ class LiveAliExpressService implements AliExpressService {
       .map((u) => u.trim())
       .filter(Boolean);
 
-    const skus = data.ae_item_sku_info_dtos ?? [];
+    const skus = data.ae_item_sku_info_dtos?.ae_item_sku_info_d_t_o ?? [];
     const skuPrices = skus.map((s) => parseFloat(s.sku_price ?? "")).filter((n) => Number.isFinite(n));
     const sellPriceMinorUsd = Math.round((skuPrices.length ? Math.min(...skuPrices) : 0) * 100);
 
-    const grossWeightKg = parseFloat(base ? (data.package_info_dto?.gross_weight ?? "") : "");
+    const grossWeightKg = parseFloat(data.package_info_dto?.gross_weight ?? "");
 
     return {
       productId,
@@ -141,25 +170,27 @@ class LiveAliExpressService implements AliExpressService {
       imageUrl: images[0] ?? "",
       images,
       sellPriceMinorUsd,
-      currency: base.currency_code ?? "USD",
+      // We always request target_currency: "USD" above, so every sku_price
+      // is already in USD regardless of the listing's own base currency
+      // (ae_item_base_info_dto.currency_code, which is often CNY).
+      currency: "USD",
       categoryId: base.category_id ?? null,
       description: base.detail ? stripHtml(base.detail) : null,
       weightGrams: Number.isFinite(grossWeightKg) && grossWeightKg > 0 ? Math.round(grossWeightKg * 1000) : null,
-      variants: skus.map((s) => ({
-        skuId: String(s.id ?? s.sku_code ?? ""),
-        name:
-          (s.aeop_s_k_u_propertys ?? [])
-            .map((p) => p.sku_property_value)
-            .filter(Boolean)
-            .join(" / ") || (s.sku_code ?? "Variant"),
-        priceMinorUsd: Math.round(parseFloat(s.sku_price ?? "0") * 100),
-        stock: s.sku_available_stock ?? s.s_k_u_available_stock ?? null,
-        attributes: Object.fromEntries(
-          (s.aeop_s_k_u_propertys ?? [])
-            .filter((p) => p.sku_property_name && p.sku_property_value)
-            .map((p) => [p.sku_property_name as string, p.sku_property_value as string]),
-        ),
-      })),
+      variants: skus.map((s) => {
+        const props = s.ae_sku_property_dtos?.ae_sku_property_d_t_o ?? [];
+        return {
+          skuId: String(s.sku_id ?? s.id ?? ""),
+          name: props.map((p) => p.sku_property_value).filter(Boolean).join(" / ") || "Variant",
+          priceMinorUsd: Math.round(parseFloat(s.sku_price ?? "0") * 100),
+          stock: s.sku_available_stock ?? null,
+          attributes: Object.fromEntries(
+            props
+              .filter((p) => p.sku_property_name && p.sku_property_value)
+              .map((p) => [p.sku_property_name as string, p.sku_property_value as string]),
+          ),
+        };
+      }),
       sourceUrl: `https://www.aliexpress.com/item/${productId}.html`,
     };
   }
