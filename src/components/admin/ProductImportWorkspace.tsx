@@ -26,6 +26,7 @@ interface Draft {
   basePriceMinorText: string;
   weightGramsText: string;
   importVariants: boolean;
+  includeVideo: boolean;
   removedImages: Set<string>;
   removedVariantIds: Set<string>;
 }
@@ -41,6 +42,7 @@ function toDraft(product: ImportableProduct, defaultCategoryId: string): Draft {
     basePriceMinorText: String(product.suggestedPriceMinorUsd || 0),
     weightGramsText: String(product.weightGrams ?? 500),
     importVariants: product.variants.length > 0,
+    includeVideo: !!product.videoUrl,
     removedImages: new Set(),
     removedVariantIds: new Set(),
   };
@@ -124,6 +126,7 @@ export function ProductImportWorkspace({
         basePriceMinor: Number(d.basePriceMinorText),
         weightGrams: Number(d.weightGramsText),
         importVariants: d.importVariants,
+        includeVideo: d.includeVideo,
         keptImageUrls: d.product.images.filter((url) => !d.removedImages.has(url)),
         keptVariantExternalIds: d.product.variants.map((v) => v.externalId).filter((id) => !d.removedVariantIds.has(id)),
       }));
@@ -410,6 +413,16 @@ function EditPanel({
                 onChange={(e) => onChange({ ...draft, importVariants: e.target.checked })}
               />{" "}
               Import variants
+            </label>
+          )}
+          {draft.product.videoUrl && (
+            <label className="flex items-center gap-2 text-sm sm:col-span-2">
+              <input
+                type="checkbox"
+                checked={draft.includeVideo}
+                onChange={(e) => onChange({ ...draft, includeVideo: e.target.checked })}
+              />{" "}
+              Include supplier video
             </label>
           )}
           <div className="flex gap-3 sm:col-span-2">

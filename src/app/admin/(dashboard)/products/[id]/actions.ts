@@ -4,8 +4,10 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { productSchema, productImageSchema, productVariantSchema } from "@/lib/validation/schemas";
+import { saveUploadedFile, saveUploadedVideo } from "@/lib/storage";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 export async function updateProductAction(formData: FormData) {
   const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
@@ -57,18 +59,78 @@ export async function updateProductAction(formData: FormData) {
 export async function addProductImageAction(formData: FormData) {
   const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
   const productId = String(formData.get("productId"));
+
+  let uploadedUrl: string | null = null;
+  const file = formData.get("imageFile");
+  if (file instanceof File && file.size > 0) {
+    try {
+      uploadedUrl = await saveUploadedFile(file, "products");
+    } catch (err) {
+      redirect(`/admin/products/${productId}?error=${encodeURIComponent((err as Error).message)}`);
+    }
+  }
+
   const raw = Object.fromEntries(formData);
-  const parsed = productImageSchema.safeParse(raw);
+  const parsed = productImageSchema
+    .extend({ url: productImageSchema.shape.url.optional().or(z.literal("")) })
+    .safeParse(raw);
   if (!parsed.success) {
     redirect(`/admin/products/${productId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid image")}`);
   }
   const data = parsed.data!;
+  const url = uploadedUrl ?? data.url;
+  if (!url) {
+    redirect(`/admin/products/${productId}?error=${encodeURIComponent("Upload a file or provide an image URL")}`);
+  }
 
   await db.productImage.create({
-    data: { productId, url: data.url, altText: data.altText || null, sortOrder: data.sortOrder },
+    data: { productId, url: url!, altText: data.altText || null, sortOrder: data.sortOrder },
   });
   await db.auditLog.create({
     data: { actorId: staff.id, action: "PRODUCT_IMAGE_ADDED", entityType: "Product", entityId: productId, summary: "Added product image" },
+  });
+
+  revalidatePath(`/admin/products/${productId}`);
+  redirect(`/admin/products/${productId}?updated=1`);
+}
+
+export async function updateProductVideoAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const productId = String(formData.get("productId"));
+  const urlInput = String(formData.get("videoUrl") || "").trim();
+
+  let videoUrl: string | null = null;
+  try {
+    const file = formData.get("videoFile");
+    if (file instanceof File && file.size > 0) {
+      videoUrl = await saveUploadedVideo(file, "products");
+    } else if (urlInput) {
+      videoUrl = urlInput;
+    }
+  } catch (err) {
+    redirect(`/admin/products/${productId}?error=${encodeURIComponent((err as Error).message)}`);
+  }
+
+  if (!videoUrl) {
+    redirect(`/admin/products/${productId}?error=${encodeURIComponent("Upload a file or provide a video URL")}`);
+  }
+
+  await db.product.update({ where: { id: productId }, data: { videoUrl } });
+  await db.auditLog.create({
+    data: { actorId: staff.id, action: "PRODUCT_VIDEO_UPDATED", entityType: "Product", entityId: productId, summary: "Set product video" },
+  });
+
+  revalidatePath(`/admin/products/${productId}`);
+  redirect(`/admin/products/${productId}?updated=1`);
+}
+
+export async function removeProductVideoAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const productId = String(formData.get("productId"));
+
+  await db.product.update({ where: { id: productId }, data: { videoUrl: null } });
+  await db.auditLog.create({
+    data: { actorId: staff.id, action: "PRODUCT_VIDEO_UPDATED", entityType: "Product", entityId: productId, summary: "Removed product video" },
   });
 
   revalidatePath(`/admin/products/${productId}`);

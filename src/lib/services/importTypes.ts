@@ -32,6 +32,7 @@ export interface ImportableProduct {
   categoryNameHint: string | null;
   variants: ImportableVariant[];
   sourceUrl: string;
+  videoUrl: string | null;
 }
 
 export function cjToImportable(d: CjProductDetail): ImportableProduct {
@@ -52,6 +53,7 @@ export function cjToImportable(d: CjProductDetail): ImportableProduct {
       attributes: v.attributes,
     })),
     sourceUrl: d.sourceUrl,
+    videoUrl: d.videoUrl,
   };
 }
 
@@ -73,5 +75,8 @@ export function aliexpressToImportable(d: AliExpressProductDetail): ImportablePr
       attributes: v.attributes,
     })),
     sourceUrl: d.sourceUrl,
+    // AliExpress's Dropshipping API doesn't expose a usable/resolvable video
+    // URL in what's available to this app — see aliexpressService.ts.
+    videoUrl: null,
   };
 }

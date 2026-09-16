@@ -45,6 +45,7 @@ export interface CjProductDetail extends CjProductSummary {
   images: string[];
   weightGrams: number | null;
   variants: CjProductVariant[];
+  videoUrl: string | null;
 }
 
 export interface CjDropshippingService {
@@ -200,6 +201,7 @@ class LiveCjDropshippingService implements CjDropshippingService {
       description?: string;
       categoryName?: string;
       productWeight?: string;
+      productVideo?: string | null;
       variants?: Array<{
         vid: string;
         variantNameEn: string;
@@ -224,6 +226,7 @@ class LiveCjDropshippingService implements CjDropshippingService {
       description: data.description ? stripHtml(data.description) : null,
       images: data.productImageSet?.length ? data.productImageSet : [data.bigImage],
       weightGrams: data.productWeight ? Math.round(parseFloat(data.productWeight)) : null,
+      videoUrl: data.productVideo || null,
       variants: (data.variants ?? []).map((v) => ({
         vid: v.vid,
         name: v.variantNameEn,

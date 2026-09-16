@@ -4,17 +4,35 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { productCreateSchema } from "@/lib/validation/schemas";
+import { saveUploadedFile, saveUploadedVideo } from "@/lib/storage";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 export async function createProductAction(formData: FormData) {
   const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+
+  let uploadedImageUrl: string | null = null;
+  let uploadedVideoUrl: string | null = null;
+  try {
+    const imageFile = formData.get("imageFile");
+    if (imageFile instanceof File && imageFile.size > 0) {
+      uploadedImageUrl = await saveUploadedFile(imageFile, "products");
+    }
+    const videoFile = formData.get("videoFile");
+    if (videoFile instanceof File && videoFile.size > 0) {
+      uploadedVideoUrl = await saveUploadedVideo(videoFile, "products");
+    }
+  } catch (err) {
+    redirect(`/admin/products?error=${encodeURIComponent((err as Error).message)}`);
+  }
+
   const raw = Object.fromEntries(formData);
   const parsed = productCreateSchema.safeParse(raw);
   if (!parsed.success) {
     redirect(`/admin/products?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid product")}`);
   }
   const data = parsed.data!;
+  const imageUrl = uploadedImageUrl ?? (data.imageUrl || null);
 
   const product = await db.product.create({
     data: {
@@ -40,7 +58,8 @@ export async function createProductAction(formData: FormData) {
       customsRequired: data.customsRequired,
       isFragile: data.isFragile,
       isHazardous: data.isHazardous,
-      images: data.imageUrl ? { create: [{ url: data.imageUrl, sortOrder: 0 }] } : undefined,
+      videoUrl: uploadedVideoUrl,
+      images: imageUrl ? { create: [{ url: imageUrl, sortOrder: 0 }] } : undefined,
     },
   });
 

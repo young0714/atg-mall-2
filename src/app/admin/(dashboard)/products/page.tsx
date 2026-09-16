@@ -38,7 +38,7 @@ export default async function AdminProductsPage({
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add New Product</summary>
-        <form action={createProductAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <form action={createProductAction} className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2" encType="multipart/form-data">
           <Field label="Name" htmlFor="name" required><Input id="name" name="name" required /></Field>
           <Field label="Slug" htmlFor="slug" required hint="lowercase-with-hyphens"><Input id="slug" name="slug" required /></Field>
           <Field label="Category" htmlFor="categoryId" required>
@@ -53,7 +53,15 @@ export default async function AdminProductsPage({
               ))}
             </Select>
           </Field>
-          <Field label="Image URL" htmlFor="imageUrl"><Input id="imageUrl" name="imageUrl" type="url" /></Field>
+          <Field label="Upload image" htmlFor="imageFile" hint="JPEG/PNG/WEBP/GIF, up to 8MB">
+            <input id="imageFile" name="imageFile" type="file" accept="image/*" className="input" />
+          </Field>
+          <Field label="or Image URL" htmlFor="imageUrl" hint="Used only if no file is uploaded above">
+            <Input id="imageUrl" name="imageUrl" type="url" />
+          </Field>
+          <Field label="Upload video" htmlFor="videoFile" hint="Optional — MP4/WEBM/MOV, up to 100MB">
+            <input id="videoFile" name="videoFile" type="file" accept="video/*" className="input" />
+          </Field>
           <Field label="Affiliate URL" htmlFor="affiliateUrl" hint="Only used when Source = Affiliate">
             <Input id="affiliateUrl" name="affiliateUrl" type="url" />
           </Field>

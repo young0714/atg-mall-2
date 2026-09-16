@@ -345,6 +345,11 @@ model Product {
   avgRating      Float    @default(0)
   reviewCount    Int      @default(0)
 
+  // Single optional product video — auto-pulled from a supplier (CJ's
+  // productVideo field) or uploaded directly by an admin. Most products have
+  // at most one, so a plain field rather than a whole ProductVideo model.
+  videoUrl String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

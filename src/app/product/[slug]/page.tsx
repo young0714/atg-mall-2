@@ -78,6 +78,10 @@ export default async function ProductPage({
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
           <div>
             <ProductImageGallery images={product.images} productName={product.name} />
+            {product.videoUrl && (
+              // eslint-disable-next-line jsx-a11y/media-has-caption -- supplier/admin-provided product video, no caption track available
+              <video src={product.videoUrl} controls playsInline className="mt-4 w-full rounded-xl2 border border-navy-100" />
+            )}
           </div>
 
           <div>

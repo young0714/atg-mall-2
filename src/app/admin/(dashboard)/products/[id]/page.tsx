@@ -12,6 +12,8 @@ import {
   addProductImageAction,
   deleteProductImageAction,
   addProductVariantAction,
+  updateProductVideoAction,
+  removeProductVideoAction,
 } from "./actions";
 import { VariantsTable } from "./VariantsTable";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -176,14 +178,50 @@ export default async function AdminProductDetailPage({
         )}
         <details>
           <summary className="cursor-pointer text-sm font-medium text-atgblue-600">+ Add image</summary>
-          <form action={addProductImageAction} className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <form action={addProductImageAction} className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3" encType="multipart/form-data">
             <input type="hidden" name="productId" value={product.id} />
-            <Field label="Image URL" htmlFor="url" required><Input id="url" name="url" type="url" required /></Field>
+            <Field label="Upload image" htmlFor="imageFile" hint="JPEG/PNG/WEBP/GIF, up to 8MB">
+              <input id="imageFile" name="imageFile" type="file" accept="image/*" className="input" />
+            </Field>
+            <Field label="or Image URL" htmlFor="url" hint="Used only if no file is uploaded">
+              <Input id="url" name="url" type="url" />
+            </Field>
             <Field label="Alt text" htmlFor="altText"><Input id="altText" name="altText" /></Field>
             <Field label="Sort order" htmlFor="sortOrder" hint="Lower shows first">
               <Input id="sortOrder" name="sortOrder" type="number" defaultValue={product.images.length} />
             </Field>
             <SubmitButton className="btn-primary sm:col-span-3 sm:w-fit">Add image</SubmitButton>
+          </form>
+        </details>
+      </section>
+
+      <section className="card space-y-4 p-5">
+        <h2 className="font-semibold text-navy-900">Video</h2>
+        {product.videoUrl ? (
+          <div className="max-w-md space-y-2">
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption -- admin-facing preview, not customer content */}
+            <video src={product.videoUrl} controls className="w-full rounded-lg border border-navy-100" />
+            <form action={removeProductVideoAction}>
+              <input type="hidden" name="productId" value={product.id} />
+              <SubmitButton className="text-xs font-medium text-red-600 hover:underline">Remove video</SubmitButton>
+            </form>
+          </div>
+        ) : (
+          <p className="text-sm text-navy-400">No video set for this product yet.</p>
+        )}
+        <details>
+          <summary className="cursor-pointer text-sm font-medium text-atgblue-600">
+            {product.videoUrl ? "+ Replace video" : "+ Add video"}
+          </summary>
+          <form action={updateProductVideoAction} className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2" encType="multipart/form-data">
+            <input type="hidden" name="productId" value={product.id} />
+            <Field label="Upload video" htmlFor="videoFile" hint="MP4/WEBM/MOV, up to 100MB">
+              <input id="videoFile" name="videoFile" type="file" accept="video/*" className="input" />
+            </Field>
+            <Field label="or Video URL" htmlFor="videoUrl" hint="Used only if no file is uploaded">
+              <Input id="videoUrl" name="videoUrl" type="url" />
+            </Field>
+            <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Save video</SubmitButton>
           </form>
         </details>
       </section>

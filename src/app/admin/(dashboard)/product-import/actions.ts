@@ -26,6 +26,7 @@ export async function searchCjProductsAction(query: string): Promise<ImportableP
     categoryNameHint: p.categoryName,
     variants: [],
     sourceUrl: p.sourceUrl,
+    videoUrl: null,
   }));
 }
 
@@ -62,6 +63,7 @@ export interface ImportDraftInput {
   basePriceMinor: number;
   weightGrams: number;
   importVariants: boolean;
+  includeVideo: boolean;
   keptImageUrls: string[];
   keptVariantExternalIds: string[];
 }
@@ -116,6 +118,7 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
           sourceUrl: fresh.sourceUrl,
           sourceProductId: fresh.externalId,
           storeId: store?.id,
+          videoUrl: draft.includeVideo ? fresh.videoUrl : null,
           images: { create: images.slice(0, 8).map((url, i) => ({ url, sortOrder: i })) },
           variants: draft.importVariants
             ? { create: variants.map((v) => ({ name: v.name, sku: v.sku ?? undefined, attributes: v.attributes })) }

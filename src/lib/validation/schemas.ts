@@ -136,6 +136,7 @@ export const productSchema = z.object({
       "UK_STORE",
       "INTERNATIONAL_STORE",
       "CJDROPSHIPPING",
+      "ALIEXPRESS",
     ])
     .default("ATG"),
   affiliateUrl: z.string().url().optional().or(z.literal("")),
