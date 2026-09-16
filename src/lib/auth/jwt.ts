@@ -21,9 +21,10 @@ export interface SessionPayload {
 // Sliding idle windows — a session's expiry is renewed on every active
 // request (see middleware.ts), so an engaged user never gets logged out
 // mid-visit; a session only lapses after this many seconds of no visits.
-// Staff/admin roles get a much shorter window since that access touches
-// payments and customer PII.
-export const CUSTOMER_IDLE_SECONDS = 60 * 60 * 24 * 14; // 14 days
+// Customers use a 1-hour window (security-first, deliberately no "remember
+// me" exception); staff/admin roles get a shorter window still since that
+// access touches payments and customer PII.
+export const CUSTOMER_IDLE_SECONDS = 60 * 60; // 1 hour
 export const ADMIN_IDLE_SECONDS = 60 * 60 * 24 * 1; // 24 hours
 
 export function idleWindowSecondsFor(role: Role): number {
