@@ -2,15 +2,32 @@ import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { StatusBadge } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/utils";
+import { WAREHOUSE_STATUSES, ACTIVE_SHIPMENT_STATUSES } from "@/lib/packageStatus";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "My Packages" };
 export const dynamic = "force-dynamic";
 
-export default async function PackagesPage() {
+const FILTERS = [
+  { key: undefined, label: "All" },
+  { key: "warehouse", label: "In Warehouse" },
+  { key: "shipments", label: "Active Shipments" },
+] as const;
+
+export default async function PackagesPage({
+  searchParams,
+}: {
+  searchParams: { filter?: string };
+}) {
   const user = await requireUser();
+  const filter = searchParams.filter === "warehouse" || searchParams.filter === "shipments" ? searchParams.filter : undefined;
+
+  const statusFilter =
+    filter === "warehouse" ? WAREHOUSE_STATUSES : filter === "shipments" ? ACTIVE_SHIPMENT_STATUSES : undefined;
+
   const packages = await db.package.findMany({
-    where: { userId: user.id },
+    where: { userId: user.id, ...(statusFilter && { status: { in: statusFilter } }) },
     orderBy: { createdAt: "desc" },
     include: { warehouse: true, order: true },
   });
@@ -20,9 +37,25 @@ export default async function PackagesPage() {
       <h1 className="text-2xl font-display font-bold text-navy-900">My Packages</h1>
       <p className="mt-1 text-sm text-navy-500">Every parcel received on your behalf at our China warehouse.</p>
 
+      <div className="mt-4 flex gap-2">
+        {FILTERS.map((f) => (
+          <Link
+            key={f.label}
+            href={f.key ? `/account/packages?filter=${f.key}` : "/account/packages"}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+              filter === f.key ? "bg-navy-900 text-white" : "bg-sand-100 text-navy-600 hover:bg-sand-200"
+            }`}
+          >
+            {f.label}
+          </Link>
+        ))}
+      </div>
+
       {packages.length === 0 ? (
         <div className="mt-8 rounded-xl2 border border-dashed border-navy-200 p-12 text-center text-navy-400">
-          No packages yet. Packages appear here once a supplier ships your order to our warehouse.
+          {filter
+            ? `No packages in this category right now.`
+            : "No packages yet. Packages appear here once a supplier ships your order to our warehouse."}
         </div>
       ) : (
         <div className="mt-6 overflow-x-auto">

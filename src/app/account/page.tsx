@@ -4,6 +4,7 @@ import { Stat } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
+import { WAREHOUSE_STATUSES, ACTIVE_SHIPMENT_STATUSES } from "@/lib/packageStatus";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -31,10 +32,10 @@ export default async function AccountOverviewPage({
   ]);
 
   const activeShipmentsCount = packageCounts
-    .filter((p) => ["SHIPPED", "IN_TRANSIT", "CUSTOMS", "OUT_FOR_DELIVERY"].includes(p.status))
+    .filter((p) => (ACTIVE_SHIPMENT_STATUSES as string[]).includes(p.status))
     .reduce((sum, p) => sum + p._count, 0);
   const inWarehouseCount = packageCounts
-    .filter((p) => ["RECEIVED", "INSPECTION", "AWAITING_CUSTOMER_INSTRUCTION", "CONSOLIDATION", "READY_TO_SHIP"].includes(p.status))
+    .filter((p) => (WAREHOUSE_STATUSES as string[]).includes(p.status))
     .reduce((sum, p) => sum + p._count, 0);
 
   return (
@@ -60,10 +61,18 @@ export default async function AccountOverviewPage({
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Wallet Balance" value={wallet ? formatMoney(wallet.balanceMinor, wallet.currency) : "—"} tone="green" />
-        <Stat label="Packages in Warehouse" value={inWarehouseCount} tone="blue" />
-        <Stat label="Active Shipments" value={activeShipmentsCount} tone="navy" />
-        <Stat label="Pending Quotations" value={pendingQuotations.length} tone="gold" />
+        <Link href="/account/wallet" className="block">
+          <Stat label="Wallet Balance" value={wallet ? formatMoney(wallet.balanceMinor, wallet.currency) : "—"} tone="green" />
+        </Link>
+        <Link href="/account/packages?filter=warehouse" className="block">
+          <Stat label="Packages in Warehouse" value={inWarehouseCount} tone="blue" />
+        </Link>
+        <Link href="/account/packages?filter=shipments" className="block">
+          <Stat label="Active Shipments" value={activeShipmentsCount} tone="navy" />
+        </Link>
+        <Link href="/account/quotations" className="block">
+          <Stat label="Pending Quotations" value={pendingQuotations.length} tone="gold" />
+        </Link>
       </div>
 
       {pendingQuotations.length > 0 && (
