@@ -1,6 +1,4 @@
-import { Section, SectionHeading, Container } from "@/components/ui/Section";
-
-const faqs = [
+export const faqs = [
   {
     q: "Which countries does ATG Mall deliver to?",
     a: "ATG Mall supports worldwide shopping with delivery available to supported destinations. Shipping availability and cost depend on the product's origin, destination, package size and selected shipping method. Enter your destination at checkout to see available options. Nigeria and Gambia remain fully supported, alongside a growing list of destinations worldwide.",
@@ -26,24 +24,3 @@ const faqs = [
     a: "No. ATG Mall is a separate consumer shopping platform. Apex Terra Global Limited is the parent company that operates it, and also runs apexterraglobal.com as its corporate site.",
   },
 ];
-
-export function FAQSection() {
-  return (
-    <Section tone="sand">
-      <Container className="max-w-4xl">
-        <SectionHeading eyebrow="FAQ" title="Frequently asked questions" align="center" />
-        <div className="mt-10 divide-y divide-navy-100 rounded-xl2 border border-navy-100 bg-white">
-          {faqs.map((f) => (
-            <details key={f.q} className="group p-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-navy-900">
-                {f.q}
-                <span className="ml-4 shrink-0 text-navy-400 transition-transform group-open:rotate-45">+</span>
-              </summary>
-              <p className="mt-3 text-sm text-navy-500">{f.a}</p>
-            </details>
-          ))}
-        </div>
-      </Container>
-    </Section>
-  );
-}
