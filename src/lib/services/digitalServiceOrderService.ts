@@ -5,6 +5,11 @@ import { reloadlyService } from "./reloadlyService";
 import { giftCardService } from "./reloadlyGiftCardService";
 import { utilityService } from "./reloadlyUtilityService";
 import { currencyConversionService } from "./currencyConversionService";
+import {
+  calculateAirtimeFeeMinor,
+  calculateGiftCardFeeMinor,
+  calculateUtilityBillFeeMinor,
+} from "./digitalServiceFeeService";
 import type { Currency, Prisma } from "@prisma/client";
 
 export interface PurchaseAirtimeParams {
@@ -37,10 +42,21 @@ export interface PurchaseAirtimeResult {
  */
 export async function purchaseAirtime(params: PurchaseAirtimeParams): Promise<PurchaseAirtimeResult> {
   const chargeAmountMinor = Math.round(params.amount * 100);
+  const feeAmountMinor = calculateAirtimeFeeMinor(chargeAmountMinor);
+  const totalChargeAmountMinor = chargeAmountMinor + feeAmountMinor;
+
+  // Convert face value and the fee-inclusive total separately (rather than
+  // converting the fee on its own) so feeMinor below is exact — the total
+  // minus face value, no compounding rounding drift from two conversions.
   const debitAmountMinor =
+    params.chargeCurrency === params.walletCurrency
+      ? totalChargeAmountMinor
+      : currencyConversionService.convert(totalChargeAmountMinor, params.chargeCurrency, params.walletCurrency);
+  const faceValueDebitMinor =
     params.chargeCurrency === params.walletCurrency
       ? chargeAmountMinor
       : currencyConversionService.convert(chargeAmountMinor, params.chargeCurrency, params.walletCurrency);
+  const feeMinor = debitAmountMinor - faceValueDebitMinor;
 
   const order = await db.digitalServiceOrder.create({
     data: {
@@ -52,6 +68,7 @@ export async function purchaseAirtime(params: PurchaseAirtimeParams): Promise<Pu
       operatorName: params.operatorName,
       recipientPhone: params.recipientPhone,
       amountMinor: debitAmountMinor,
+      feeMinor,
       currency: params.walletCurrency,
     },
   });
@@ -140,10 +157,18 @@ export interface PurchaseGiftCardResult {
  */
 export async function purchaseGiftCard(params: PurchaseGiftCardParams): Promise<PurchaseGiftCardResult> {
   const chargeAmountMinor = Math.round(params.amount * 100);
+  const feeAmountMinor = calculateGiftCardFeeMinor(chargeAmountMinor, params.chargeCurrency);
+  const totalChargeAmountMinor = chargeAmountMinor + feeAmountMinor;
+
   const debitAmountMinor =
+    params.chargeCurrency === params.walletCurrency
+      ? totalChargeAmountMinor
+      : currencyConversionService.convert(totalChargeAmountMinor, params.chargeCurrency, params.walletCurrency);
+  const faceValueDebitMinor =
     params.chargeCurrency === params.walletCurrency
       ? chargeAmountMinor
       : currencyConversionService.convert(chargeAmountMinor, params.chargeCurrency, params.walletCurrency);
+  const feeMinor = debitAmountMinor - faceValueDebitMinor;
 
   const order = await db.digitalServiceOrder.create({
     data: {
@@ -155,6 +180,7 @@ export async function purchaseGiftCard(params: PurchaseGiftCardParams): Promise<
       operatorName: params.brandName,
       recipientEmail: params.recipientEmail,
       amountMinor: debitAmountMinor,
+      feeMinor,
       currency: params.walletCurrency,
     },
   });
@@ -244,10 +270,18 @@ export interface PurchaseUtilityBillResult {
  */
 export async function purchaseUtilityBill(params: PurchaseUtilityBillParams): Promise<PurchaseUtilityBillResult> {
   const chargeAmountMinor = Math.round(params.amount * 100);
+  const feeAmountMinor = calculateUtilityBillFeeMinor(chargeAmountMinor);
+  const totalChargeAmountMinor = chargeAmountMinor + feeAmountMinor;
+
   const debitAmountMinor =
+    params.chargeCurrency === params.walletCurrency
+      ? totalChargeAmountMinor
+      : currencyConversionService.convert(totalChargeAmountMinor, params.chargeCurrency, params.walletCurrency);
+  const faceValueDebitMinor =
     params.chargeCurrency === params.walletCurrency
       ? chargeAmountMinor
       : currencyConversionService.convert(chargeAmountMinor, params.chargeCurrency, params.walletCurrency);
+  const feeMinor = debitAmountMinor - faceValueDebitMinor;
 
   const order = await db.digitalServiceOrder.create({
     data: {
@@ -259,6 +293,7 @@ export async function purchaseUtilityBill(params: PurchaseUtilityBillParams): Pr
       operatorName: params.billerName,
       subscriberAccountNumber: params.subscriberAccountNumber,
       amountMinor: debitAmountMinor,
+      feeMinor,
       currency: params.walletCurrency,
     },
   });

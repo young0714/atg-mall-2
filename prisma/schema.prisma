@@ -592,7 +592,12 @@ model DigitalServiceOrder {
   // the payment reached the right account before/after paying.
   validatedCustomerName   String?
 
-  amountMinor Int // what the customer's ATG Wallet was actually debited
+  amountMinor Int // what the customer's ATG Wallet was actually debited (face value + feeMinor)
+  // ATG's own service fee, included in amountMinor above — broken out
+  // separately for margin reporting. Reloadly is only ever charged face
+  // value; this is pure margin (see digitalServiceFeeService.ts for why
+  // each type's rate/flat-fee was chosen).
+  feeMinor    Int      @default(0)
   currency    Currency
 
   // What was actually delivered to the recipient, in their own local

@@ -349,6 +349,10 @@ export function AirtimeFlow() {
               <span className="text-navy-500">Amount</span>
               <span className="font-semibold">{displayAmount(selectedAmount)}</span>
             </div>
+            <div className="flex justify-between py-1.5">
+              <span className="text-navy-500">Service fee</span>
+              <span className="font-semibold">{formatMoney(preview.feeMinor, preview.walletCurrency)}</span>
+            </div>
             <div className="flex justify-between border-t border-dashed border-navy-200 py-1.5 pt-3">
               <span className="text-navy-500">Charged from wallet</span>
               <span className="font-bold text-atgblue-600">{formatMoney(preview.debitAmountMinor, preview.walletCurrency)}</span>

@@ -7,6 +7,7 @@ import { formatDateTime } from "@/lib/utils";
 import { reloadlyService } from "@/lib/services/reloadlyService";
 import { giftCardService } from "@/lib/services/reloadlyGiftCardService";
 import { utilityService } from "@/lib/services/reloadlyUtilityService";
+import type { Currency } from "@prisma/client";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Digital Services" };
@@ -35,6 +36,15 @@ export default async function AdminDigitalServicesPage() {
       : DEFAULT_LOW_BALANCE_THRESHOLD_MINOR;
   const isLowBalance = !!balance && balance.balanceMinor < lowBalanceThresholdMinor;
 
+  // Service fee is ATG's own margin, always in each order's own currency —
+  // only meaningful to sum within a single currency, so group rather than
+  // add across orders that may be priced in NGN, USD, etc.
+  const feeTotalsByCurrency = new Map<Currency, number>();
+  for (const order of orders) {
+    if (order.status !== "SUCCESSFUL") continue;
+    feeTotalsByCurrency.set(order.currency, (feeTotalsByCurrency.get(order.currency) ?? 0) + order.feeMinor);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -46,6 +56,15 @@ export default async function AdminDigitalServicesPage() {
               : "No live Reloadly credentials are configured for at least one product — orders here may be processed via the mock provider."}
           </p>
         </div>
+
+        {feeTotalsByCurrency.size > 0 && (
+          <div className="rounded-xl2 border border-navy-100 bg-white px-5 py-3 shadow-card">
+            <p className="text-[10px] uppercase tracking-wide text-navy-400">Service fee earned (last 100 orders)</p>
+            <p className="font-mono text-lg font-bold text-atggreen-600">
+              {[...feeTotalsByCurrency.entries()].map(([currency, total]) => formatMoney(total, currency)).join(" + ")}
+            </p>
+          </div>
+        )}
 
         <div
           className={`rounded-xl2 border px-5 py-3 shadow-card ${
@@ -92,6 +111,7 @@ export default async function AdminDigitalServicesPage() {
               <th className="p-3">Item</th>
               <th className="p-3">Recipient</th>
               <th className="p-3">Charged</th>
+              <th className="p-3">Fee</th>
               <th className="p-3">Status</th>
               <th className="p-3">Date</th>
             </tr>
@@ -112,6 +132,7 @@ export default async function AdminDigitalServicesPage() {
                   {order.validatedCustomerName && <p className="text-navy-400">{order.validatedCustomerName}</p>}
                 </td>
                 <td className="p-3 font-mono">{formatMoney(order.amountMinor, order.currency)}</td>
+                <td className="p-3 font-mono text-atggreen-600">{formatMoney(order.feeMinor, order.currency)}</td>
                 <td className="p-3">
                   <StatusBadge status={order.status} />
                   {order.failureReason && <p className="mt-1 text-xs text-red-500">{order.failureReason}</p>}

@@ -1,0 +1,1 @@
+ALTER TABLE "DigitalServiceOrder" ADD COLUMN "feeMinor" INTEGER NOT NULL DEFAULT 0;

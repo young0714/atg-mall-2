@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { walletService } from "@/lib/services/walletService";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import { purchaseGiftCard } from "@/lib/services/digitalServiceOrderService";
+import { calculateGiftCardFeeMinor } from "@/lib/services/digitalServiceFeeService";
 import { createCheckoutOtp, verifyCheckoutOtp } from "@/lib/services/otpService";
 import { giftCardPurchaseSchema, type GiftCardPurchaseInput } from "@/lib/validation/schemas";
 import type { Currency } from "@prisma/client";
@@ -74,6 +75,7 @@ export interface WalletChargePreview {
   walletCurrency: Currency;
   walletBalanceMinor: number;
   debitAmountMinor: number;
+  feeMinor: number;
 }
 
 /** Used by the Review step to show what a purchase would actually debit from the customer's wallet, before they confirm. */
@@ -86,10 +88,22 @@ export async function previewGiftCardChargeAction(params: {
   const wallet = await walletService.getOrCreateWallet(user.id, profile?.preferredCurrency ?? "NGN");
 
   const chargeAmountMinor = Math.round(params.amount * 100);
+  const feeAmountMinor = calculateGiftCardFeeMinor(chargeAmountMinor, params.chargeCurrency);
+  const totalChargeAmountMinor = chargeAmountMinor + feeAmountMinor;
+
   const debitAmountMinor =
+    params.chargeCurrency === wallet.currency
+      ? totalChargeAmountMinor
+      : currencyConversionService.convert(totalChargeAmountMinor, params.chargeCurrency, wallet.currency);
+  const faceValueDebitMinor =
     params.chargeCurrency === wallet.currency
       ? chargeAmountMinor
       : currencyConversionService.convert(chargeAmountMinor, params.chargeCurrency, wallet.currency);
 
-  return { walletCurrency: wallet.currency, walletBalanceMinor: wallet.balanceMinor, debitAmountMinor };
+  return {
+    walletCurrency: wallet.currency,
+    walletBalanceMinor: wallet.balanceMinor,
+    debitAmountMinor,
+    feeMinor: debitAmountMinor - faceValueDebitMinor,
+  };
 }
