@@ -26,6 +26,7 @@ const NAV: { section: string; items: NavItem[] }[] = [
       { href: "/admin/suppliers", label: "Suppliers", permission: PERMISSIONS.MANAGE_SUPPLIERS },
       { href: "/admin/international-stores", label: "International Stores", permission: PERMISSIONS.MANAGE_STORES },
       { href: "/admin/cj-import", label: "Import from CJdropshipping", permission: PERMISSIONS.MANAGE_PRODUCTS },
+      { href: "/admin/aliexpress-import", label: "Import from AliExpress", permission: PERMISSIONS.MANAGE_PRODUCTS },
     ],
   },
   {

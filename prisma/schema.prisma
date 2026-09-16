@@ -173,6 +173,7 @@ enum SourcePlatform {
   UK_STORE
   INTERNATIONAL_STORE
   CJDROPSHIPPING
+  ALIEXPRESS
 }
 
 // Sourcing/origin country for a Store — distinct from
@@ -1454,4 +1455,18 @@ model CheckoutOtp {
   createdAt  DateTime  @default(now())
 
   @@index([userId])
+}
+
+// Single-row table holding ATG Mall's own OAuth session with AliExpress's
+// Open Platform (this app authenticates as the business itself, not
+// per-customer — there is exactly one row, created once via the admin
+// "Connect AliExpress" flow and refreshed automatically thereafter).
+model AliExpressAuthToken {
+  id                    String   @id @default(cuid())
+  accessToken           String
+  refreshToken          String
+  accessTokenExpiresAt  DateTime
+  refreshTokenExpiresAt DateTime
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }

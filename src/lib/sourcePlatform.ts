@@ -15,6 +15,7 @@ export const SOURCE_PLATFORM_LABELS: Record<SourcePlatform, string> = {
   UK_STORE: "UK Store",
   INTERNATIONAL_STORE: "International Store",
   CJDROPSHIPPING: "CJdropshipping",
+  ALIEXPRESS: "AliExpress",
 };
 
 export const FULFILLMENT_TYPE_LABELS: Record<FulfillmentType, string> = {
@@ -37,7 +38,7 @@ export function sourcePlatformLabel(platform: SourcePlatform): string {
 // specific competing supplier. Admin pages should keep using
 // sourcePlatformLabel directly; this is only for customer-visible pages.
 export function customerFacingSourceLabel(platform: SourcePlatform): string {
-  if (platform === "CJDROPSHIPPING") return "ATG Sourced";
+  if (platform === "CJDROPSHIPPING" || platform === "ALIEXPRESS") return "ATG Sourced";
   return sourcePlatformLabel(platform);
 }
 

@@ -250,7 +250,7 @@ class LiveCjDropshippingService implements CjDropshippingService {
 // that structure away and leaves one giant run-on line. This preserves it
 // as real line breaks, and as a fallback also breaks before "Label:"
 // patterns for listings where CJ didn't mark up line boundaries at all.
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   const withBreaks = html
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n")
