@@ -7,9 +7,12 @@ import type { Currency } from "@prisma/client";
  * flow — sized against real Reloadly cost data pulled live on 2026-09-16:
  *
  * - Airtime carries a built-in wholesale discount that varies by operator
- *   (roughly 2-6% across the markets ATG serves). A flat percentage fee
- *   here stacks on top of that and guarantees a margin floor even on the
- *   thinnest-discount operators.
+ *   (roughly 2-6% across the markets ATG serves, never negative) — a
+ *   deliberate decision (2026-09-16) leaves this at 0% and lets that
+ *   built-in discount be the entire margin, since even the thinnest
+ *   operators are breakeven rather than a loss at face-value pricing.
+ *   The "no fees on airtime top-ups" angle is worth more than the extra
+ *   margin a fee would add — revisit if Reloadly's rates ever go negative.
  * - Gift cards often cost MORE than face value — Reloadly charges a flat
  *   ~$1 "sender fee" on most brands, which is a real loss on small
  *   denominations if sold at face value. The flat component here is sized
@@ -20,7 +23,7 @@ import type { Currency } from "@prisma/client";
  *   a price-sensitive recurring necessity, not a discretionary purchase.
  */
 
-const AIRTIME_FEE_RATE = 0.03; // 3%
+const AIRTIME_FEE_RATE = 0; // no fee — see comment above
 const UTILITY_BILL_FEE_RATE = 0.015; // 1.5%
 const GIFT_CARD_FEE_RATE = 0.04; // 4%
 const GIFT_CARD_FLAT_FEE_USD_MINOR = 150; // $1.50 — covers Reloadly's own flat sender fee
