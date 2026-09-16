@@ -5,12 +5,18 @@ import Link from "next/link";
 import { AIRTIME_COUNTRIES, type AirtimeCountry } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import type { GiftCardProduct } from "@/lib/services/reloadlyGiftCardService";
-import { purchaseGiftCardAction, previewGiftCardChargeAction, type WalletChargePreview } from "@/app/digital-services/gift-cards/actions";
+import {
+  initiateGiftCardOtpAction,
+  confirmGiftCardOtpAction,
+  previewGiftCardChargeAction,
+  type WalletChargePreview,
+} from "@/app/digital-services/gift-cards/actions";
+import { OtpVerificationStep } from "./OtpVerificationStep";
 import type { Currency } from "@prisma/client";
 
 const SUPPORTED_WALLET_CURRENCIES = ["NGN", "GMD", "USD", "EUR", "GBP", "CNY"];
 
-type Step = 1 | 2 | 3 | "confirm" | "success";
+type Step = 1 | 2 | 3 | "confirm" | "otp" | "success";
 
 export function GiftCardFlow() {
   const [step, setStep] = useState<Step>(1);
@@ -34,6 +40,9 @@ export function GiftCardFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
+
+  const [otpId, setOtpId] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -94,11 +103,11 @@ export function GiftCardFlow() {
     }
   }
 
-  async function confirmAndPay() {
+  async function initiateOtp() {
     if (!product || !selectedAmount || !chargeCurrency) return;
     setSubmitting(true);
     setErrorMsg(null);
-    const result = await purchaseGiftCardAction({
+    const result = await initiateGiftCardOtpAction({
       countryIso: country.isoCode,
       productId: product.productId,
       brandName: product.brandName,
@@ -106,6 +115,20 @@ export function GiftCardFlow() {
       amount: selectedAmount,
       chargeCurrency,
     });
+    setSubmitting(false);
+    if (result.ok && result.otpId && result.email) {
+      setOtpId(result.otpId);
+      setOtpEmail(result.email);
+      setStep("otp");
+    } else {
+      setErrorMsg(result.error ?? "Could not start verification. Please try again.");
+    }
+  }
+
+  async function verifyOtpAndPay(code: string) {
+    setSubmitting(true);
+    setErrorMsg(null);
+    const result = await confirmGiftCardOtpAction(otpId, code);
     setSubmitting(false);
     if (result.ok) {
       setOrderId(result.orderId ?? null);
@@ -124,6 +147,8 @@ export function GiftCardFlow() {
     setPreview(null);
     setErrorMsg(null);
     setOrderId(null);
+    setOtpId("");
+    setOtpEmail("");
   }
 
   return (
@@ -330,11 +355,23 @@ export function GiftCardFlow() {
             <button className="btn-outline" onClick={() => setStep(3)}>
               Back
             </button>
-            <button className="btn-primary flex-1" disabled={submitting} onClick={confirmAndPay}>
-              {submitting ? "Processing…" : "Confirm & Pay"}
+            <button className="btn-primary flex-1" disabled={submitting} onClick={initiateOtp}>
+              {submitting ? "Sending code…" : "Confirm & Pay"}
             </button>
           </div>
         </>
+      )}
+
+      {step === "otp" && (
+        <OtpVerificationStep
+          email={otpEmail}
+          otpId={otpId}
+          onOtpIdChange={setOtpId}
+          onVerify={verifyOtpAndPay}
+          onBack={() => setStep("confirm")}
+          submitting={submitting}
+          errorMsg={errorMsg}
+        />
       )}
 
       {step === "success" && product && selectedAmount && (

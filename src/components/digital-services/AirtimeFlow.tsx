@@ -5,9 +5,15 @@ import Link from "next/link";
 import { AIRTIME_COUNTRIES, type AirtimeCountry } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import type { AirtimeOperator } from "@/lib/services/reloadlyService";
-import { purchaseAirtimeAction, previewAirtimeChargeAction, type WalletChargePreview } from "@/app/digital-services/airtime/actions";
+import {
+  initiateAirtimeOtpAction,
+  confirmAirtimeOtpAction,
+  previewAirtimeChargeAction,
+  type WalletChargePreview,
+} from "@/app/digital-services/airtime/actions";
+import { OtpVerificationStep } from "./OtpVerificationStep";
 
-type Step = 1 | 2 | 3 | "confirm" | "success";
+type Step = 1 | 2 | 3 | "confirm" | "otp" | "success";
 
 export function AirtimeFlow() {
   const [step, setStep] = useState<Step>(1);
@@ -31,6 +37,9 @@ export function AirtimeFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
+
+  const [otpId, setOtpId] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
 
   // Reloadly always quotes operator pricing in that country's own local
   // currency — a country only has a `currency` here when that's also one of
@@ -99,11 +108,11 @@ export function AirtimeFlow() {
     }
   }
 
-  async function confirmAndPay() {
+  async function initiateOtp() {
     if (!operator || !selectedAmount || !chargeCurrency) return;
     setSubmitting(true);
     setErrorMsg(null);
-    const result = await purchaseAirtimeAction({
+    const result = await initiateAirtimeOtpAction({
       countryIso: country.isoCode,
       operatorId: operator.operatorId,
       operatorName: operator.name,
@@ -111,6 +120,20 @@ export function AirtimeFlow() {
       amount: selectedAmount,
       chargeCurrency,
     });
+    setSubmitting(false);
+    if (result.ok && result.otpId && result.email) {
+      setOtpId(result.otpId);
+      setOtpEmail(result.email);
+      setStep("otp");
+    } else {
+      setErrorMsg(result.error ?? "Could not start verification. Please try again.");
+    }
+  }
+
+  async function verifyOtpAndPay(code: string) {
+    setSubmitting(true);
+    setErrorMsg(null);
+    const result = await confirmAirtimeOtpAction(otpId, code);
     setSubmitting(false);
     if (result.ok) {
       setOrderId(result.orderId ?? null);
@@ -129,6 +152,8 @@ export function AirtimeFlow() {
     setPreview(null);
     setErrorMsg(null);
     setOrderId(null);
+    setOtpId("");
+    setOtpEmail("");
   }
 
   return (
@@ -342,11 +367,23 @@ export function AirtimeFlow() {
             <button className="btn-outline" onClick={() => setStep(3)}>
               Back
             </button>
-            <button className="btn-primary flex-1" disabled={submitting} onClick={confirmAndPay}>
-              {submitting ? "Processing…" : "Confirm & Pay"}
+            <button className="btn-primary flex-1" disabled={submitting} onClick={initiateOtp}>
+              {submitting ? "Sending code…" : "Confirm & Pay"}
             </button>
           </div>
         </>
+      )}
+
+      {step === "otp" && (
+        <OtpVerificationStep
+          email={otpEmail}
+          otpId={otpId}
+          onOtpIdChange={setOtpId}
+          onVerify={verifyOtpAndPay}
+          onBack={() => setStep("confirm")}
+          submitting={submitting}
+          errorMsg={errorMsg}
+        />
       )}
 
       {step === "success" && operator && selectedAmount && (

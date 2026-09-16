@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { walletService } from "@/lib/services/walletService";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import { purchaseGiftCard } from "@/lib/services/digitalServiceOrderService";
+import { createCheckoutOtp, verifyCheckoutOtp } from "@/lib/services/otpService";
 import { giftCardPurchaseSchema, type GiftCardPurchaseInput } from "@/lib/validation/schemas";
 import type { Currency } from "@prisma/client";
 
@@ -14,25 +15,53 @@ export interface PurchaseGiftCardActionResult {
   orderId?: string;
 }
 
-export async function purchaseGiftCardAction(input: GiftCardPurchaseInput): Promise<PurchaseGiftCardActionResult> {
+export interface InitiateOtpResult {
+  ok: boolean;
+  otpId?: string;
+  email?: string;
+  error?: string;
+}
+
+/** Validates the order and emails a verification code — nothing is charged yet. */
+export async function initiateGiftCardOtpAction(input: GiftCardPurchaseInput): Promise<InitiateOtpResult> {
   const user = await requireUser();
   const parsed = giftCardPurchaseSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid request" };
   }
 
+  const { otpId } = await createCheckoutOtp({
+    userId: user.id,
+    email: user.email,
+    purpose: "DIGITAL_SERVICE_GIFT_CARD",
+    payload: parsed.data,
+    actionDescription: "complete your gift card order",
+  });
+
+  return { ok: true, otpId, email: user.email };
+}
+
+/** Verifies the code, then — only then — actually debits the wallet and orders the gift card. */
+export async function confirmGiftCardOtpAction(otpId: string, code: string): Promise<PurchaseGiftCardActionResult> {
+  const user = await requireUser();
+  const verified = await verifyCheckoutOtp({ otpId, code, userId: user.id });
+  if (!verified.ok) {
+    return { ok: false, error: verified.error };
+  }
+
+  const payload = verified.payload as GiftCardPurchaseInput;
   const profile = await db.customerProfile.findUnique({ where: { userId: user.id } });
   const wallet = await walletService.getOrCreateWallet(user.id, profile?.preferredCurrency ?? "NGN");
 
   const result = await purchaseGiftCard({
     userId: user.id,
-    countryIso: parsed.data.countryIso,
-    productId: parsed.data.productId,
-    brandName: parsed.data.brandName,
-    recipientEmail: parsed.data.recipientEmail,
+    countryIso: payload.countryIso,
+    productId: payload.productId,
+    brandName: payload.brandName,
+    recipientEmail: payload.recipientEmail,
     senderName: user.fullName,
-    amount: parsed.data.amount,
-    chargeCurrency: parsed.data.chargeCurrency,
+    amount: payload.amount,
+    chargeCurrency: payload.chargeCurrency,
     walletCurrency: wallet.currency,
   });
 

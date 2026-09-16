@@ -90,6 +90,7 @@ model User {
   magicLinkTokens     MagicLinkToken[]
   walletDepositPayments Payment[]
   digitalServiceOrders  DigitalServiceOrder[]
+  checkoutOtps          CheckoutOtp[]
 
   @@index([role])
 }
@@ -1334,4 +1335,39 @@ model OrderShipment {
   items OrderItem[]
 
   @@index([orderId])
+}
+
+// ---------------------------------------------------------------------------
+// Checkout OTP — email verification code required before ANY purchase
+// completes (main checkout, quotation acceptance, digital services). The
+// action that would previously execute immediately now only validates
+// inputs and stashes them here as `payload`; the actual purchase only runs
+// once the emailed code is verified. Single-purpose, short-lived, always
+// tied to the (possibly guest) User who's checking out.
+// ---------------------------------------------------------------------------
+
+enum OtpPurpose {
+  CHECKOUT
+  QUOTATION_ACCEPT
+  DIGITAL_SERVICE_AIRTIME
+  DIGITAL_SERVICE_GIFT_CARD
+  DIGITAL_SERVICE_UTILITY_BILL
+}
+
+model CheckoutOtp {
+  id      String     @id @default(cuid())
+  userId  String
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email   String
+  purpose OtpPurpose
+
+  codeHash String // sha256 of the 6-digit code — never store the code itself
+  payload  Json // the validated inputs needed to actually execute the purchase once verified
+
+  attempts   Int       @default(0)
+  verifiedAt DateTime?
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }

@@ -9,7 +9,7 @@ import { formatMoney } from "@/lib/money";
 import { Container, Section } from "@/components/ui/Section";
 import { Field, Input, Select } from "@/components/ui/Form";
 import { paymentService } from "@/lib/services/paymentService";
-import { addAddressAction, placeOrderAction } from "./actions";
+import { addAddressAction, initiateCheckoutOtpAction } from "./actions";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { CheckoutShippingSummary } from "@/components/checkout/CheckoutShippingSummary";
@@ -166,7 +166,7 @@ export default async function CheckoutPage({
             </form>
           </section>
 
-          <form action={placeOrderAction} className="space-y-8">
+          <form action={initiateCheckoutOtpAction} className="space-y-8">
             {addresses.length > 0 && (
               <section className="card p-5">
                 <h2 className="mb-3 font-semibold text-navy-900">Choose Address</h2>

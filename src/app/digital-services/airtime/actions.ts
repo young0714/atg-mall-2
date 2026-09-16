@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { walletService } from "@/lib/services/walletService";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import { purchaseAirtime } from "@/lib/services/digitalServiceOrderService";
+import { createCheckoutOtp, verifyCheckoutOtp } from "@/lib/services/otpService";
 import { airtimePurchaseSchema, type AirtimePurchaseInput } from "@/lib/validation/schemas";
 import type { Currency } from "@prisma/client";
 
@@ -14,24 +15,52 @@ export interface PurchaseAirtimeActionResult {
   orderId?: string;
 }
 
-export async function purchaseAirtimeAction(input: AirtimePurchaseInput): Promise<PurchaseAirtimeActionResult> {
+export interface InitiateOtpResult {
+  ok: boolean;
+  otpId?: string;
+  email?: string;
+  error?: string;
+}
+
+/** Validates the purchase and emails a verification code — nothing is charged yet. */
+export async function initiateAirtimeOtpAction(input: AirtimePurchaseInput): Promise<InitiateOtpResult> {
   const user = await requireUser();
   const parsed = airtimePurchaseSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid request" };
   }
 
+  const { otpId } = await createCheckoutOtp({
+    userId: user.id,
+    email: user.email,
+    purpose: "DIGITAL_SERVICE_AIRTIME",
+    payload: parsed.data,
+    actionDescription: "complete your airtime top-up",
+  });
+
+  return { ok: true, otpId, email: user.email };
+}
+
+/** Verifies the code, then — only then — actually debits the wallet and delivers the top-up. */
+export async function confirmAirtimeOtpAction(otpId: string, code: string): Promise<PurchaseAirtimeActionResult> {
+  const user = await requireUser();
+  const verified = await verifyCheckoutOtp({ otpId, code, userId: user.id });
+  if (!verified.ok) {
+    return { ok: false, error: verified.error };
+  }
+
+  const payload = verified.payload as AirtimePurchaseInput;
   const profile = await db.customerProfile.findUnique({ where: { userId: user.id } });
   const wallet = await walletService.getOrCreateWallet(user.id, profile?.preferredCurrency ?? "NGN");
 
   const result = await purchaseAirtime({
     userId: user.id,
-    countryIso: parsed.data.countryIso,
-    operatorId: parsed.data.operatorId,
-    operatorName: parsed.data.operatorName,
-    recipientPhone: parsed.data.recipientPhone,
-    amount: parsed.data.amount,
-    chargeCurrency: parsed.data.chargeCurrency,
+    countryIso: payload.countryIso,
+    operatorId: payload.operatorId,
+    operatorName: payload.operatorName,
+    recipientPhone: payload.recipientPhone,
+    amount: payload.amount,
+    chargeCurrency: payload.chargeCurrency,
     walletCurrency: wallet.currency,
   });
 

@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { StatusBadge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
-import { acceptQuotationAction, declineQuotationAction } from "./actions";
+import { initiateQuotationOtpAction, declineQuotationAction } from "./actions";
 import type { Metadata } from "next";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
@@ -64,7 +64,7 @@ export default async function QuotationsPage({
 
                 {q.status === "PENDING" && (
                   <div className="mt-4 flex gap-2">
-                    <form action={acceptQuotationAction}>
+                    <form action={initiateQuotationOtpAction}>
                       <input type="hidden" name="quotationId" value={q.id} />
                       <SubmitButton className="btn-primary btn-sm">Accept &amp; Pay</SubmitButton>
                     </form>

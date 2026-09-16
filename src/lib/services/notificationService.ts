@@ -82,6 +82,20 @@ class ResendEmailTransport implements Transport {
   }
 }
 
+const emailTransport: Transport = process.env.RESEND_API_KEY
+  ? new ResendEmailTransport(process.env.RESEND_API_KEY)
+  : new ConsoleMockTransport("EMAIL");
+
+/**
+ * A raw, EMAIL-ONLY send that bypasses notify()'s unconditional IN_APP
+ * `Notification` row entirely — for anything that must never sit in a
+ * customer's persistent notification history (e.g. a one-time verification
+ * code). Reuses the same Resend-or-mock transport notify() uses.
+ */
+export async function sendTransactionalEmail(params: { to: string; subject: string; body: string }): Promise<void> {
+  await emailTransport.send({ to: params.to, title: params.subject, body: params.body });
+}
+
 export interface NotificationService {
   notify(params: {
     userId: string;
@@ -95,9 +109,7 @@ export interface NotificationService {
 
 class DefaultNotificationService implements NotificationService {
   private transports: Record<NotificationChannel, Transport> = {
-    EMAIL: process.env.RESEND_API_KEY
-      ? new ResendEmailTransport(process.env.RESEND_API_KEY)
-      : new ConsoleMockTransport("EMAIL"),
+    EMAIL: emailTransport,
     SMS: new ConsoleMockTransport("SMS"),
     WHATSAPP: new ConsoleMockTransport("WHATSAPP"),
     PUSH: new ConsoleMockTransport("PUSH"),

@@ -5,9 +5,15 @@ import Link from "next/link";
 import { AIRTIME_COUNTRIES, type AirtimeCountry } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import type { UtilityBiller } from "@/lib/services/reloadlyUtilityService";
-import { purchaseUtilityBillAction, previewUtilityBillChargeAction, type WalletChargePreview } from "@/app/digital-services/bills/actions";
+import {
+  initiateUtilityBillOtpAction,
+  confirmUtilityBillOtpAction,
+  previewUtilityBillChargeAction,
+  type WalletChargePreview,
+} from "@/app/digital-services/bills/actions";
+import { OtpVerificationStep } from "./OtpVerificationStep";
 
-type Step = 1 | 2 | "confirm" | "success";
+type Step = 1 | 2 | "confirm" | "otp" | "success";
 
 export function BillPaymentFlow() {
   const [step, setStep] = useState<Step>(1);
@@ -29,6 +35,9 @@ export function BillPaymentFlow() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
+
+  const [otpId, setOtpId] = useState("");
+  const [otpEmail, setOtpEmail] = useState("");
 
   // Reloadly's biller pricing (like Airtime) is in that country's own local
   // currency — only offer this where that's one of ATG's Currency values.
@@ -90,11 +99,11 @@ export function BillPaymentFlow() {
     }
   }
 
-  async function confirmAndPay() {
+  async function initiateOtp() {
     if (!biller || !amount || !chargeCurrency) return;
     setSubmitting(true);
     setErrorMsg(null);
-    const result = await purchaseUtilityBillAction({
+    const result = await initiateUtilityBillOtpAction({
       countryIso: country.isoCode,
       billerId: biller.billerId,
       billerName: biller.name,
@@ -102,6 +111,20 @@ export function BillPaymentFlow() {
       amount,
       chargeCurrency,
     });
+    setSubmitting(false);
+    if (result.ok && result.otpId && result.email) {
+      setOtpId(result.otpId);
+      setOtpEmail(result.email);
+      setStep("otp");
+    } else {
+      setErrorMsg(result.error ?? "Could not start verification. Please try again.");
+    }
+  }
+
+  async function verifyOtpAndPay(code: string) {
+    setSubmitting(true);
+    setErrorMsg(null);
+    const result = await confirmUtilityBillOtpAction(otpId, code);
     setSubmitting(false);
     if (result.ok) {
       setOrderId(result.orderId ?? null);
@@ -119,6 +142,8 @@ export function BillPaymentFlow() {
     setPreview(null);
     setErrorMsg(null);
     setOrderId(null);
+    setOtpId("");
+    setOtpEmail("");
   }
 
   return (
@@ -290,11 +315,23 @@ export function BillPaymentFlow() {
             <button className="btn-outline" onClick={() => setStep(2)}>
               Back
             </button>
-            <button className="btn-primary flex-1" disabled={submitting} onClick={confirmAndPay}>
-              {submitting ? "Processing…" : "Confirm & Pay"}
+            <button className="btn-primary flex-1" disabled={submitting} onClick={initiateOtp}>
+              {submitting ? "Sending code…" : "Confirm & Pay"}
             </button>
           </div>
         </>
+      )}
+
+      {step === "otp" && (
+        <OtpVerificationStep
+          email={otpEmail}
+          otpId={otpId}
+          onOtpIdChange={setOtpId}
+          onVerify={verifyOtpAndPay}
+          onBack={() => setStep("confirm")}
+          submitting={submitting}
+          errorMsg={errorMsg}
+        />
       )}
 
       {step === "success" && biller && amount && (
