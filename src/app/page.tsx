@@ -1,8 +1,10 @@
 import { db } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { getDestination } from "@/lib/destination";
 import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { toProductCard } from "@/lib/product-view";
 import { Hero } from "@/components/home/Hero";
+import { WelcomeBack } from "@/components/home/WelcomeBack";
 import { ServicesPromo } from "@/components/home/ServicesPromo";
 import { ShopTheWorld } from "@/components/home/ShopTheWorld";
 import { HowItWorks } from "@/components/home/HowItWorks";
@@ -17,7 +19,11 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [destination, countries] = await Promise.all([getDestination(), getActiveDestinationCountries()]);
+  const [destination, countries, user] = await Promise.all([
+    getDestination(),
+    getActiveDestinationCountries(),
+    getCurrentUser(),
+  ]);
 
   const [featuredProducts, categories, wholesaleProducts] = await Promise.all([
     db.product.findMany({
@@ -39,11 +45,68 @@ export default async function HomePage() {
     Promise.all(wholesaleProducts.map((p) => toProductCard(p, destination))),
   ]);
 
+  // Logged-in-only content: wallet balance, the most recent shipment worth a
+  // nudge, and up to 3 previously-bought (still-active) products for "Buy It
+  // Again" — every visitor gets the same Trending/Categories/Wholesale below
+  // regardless, this is purely what's ADDED for a signed-in customer.
+  let wallet: { balanceMinor: number; currency: (typeof featuredCards)[number]["currency"] } | null = null;
+  let recentOrder: { orderNumber: string } | null = null;
+  let buyAgainCards: Awaited<ReturnType<typeof toProductCard>>[] = [];
+
+  if (user) {
+    const [walletRow, activeOrder, pastItems] = await Promise.all([
+      db.wallet.findUnique({ where: { userId: user.id }, select: { balanceMinor: true, currency: true } }),
+      db.order.findFirst({
+        where: { userId: user.id, status: { in: ["SHIPPED", "IN_TRANSIT", "CUSTOMS", "OUT_FOR_DELIVERY"] } },
+        orderBy: { updatedAt: "desc" },
+        select: { orderNumber: true },
+      }),
+      db.orderItem.findMany({
+        where: { order: { userId: user.id }, productId: { not: null } },
+        include: { product: { include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } } } },
+        orderBy: { order: { createdAt: "desc" } },
+        take: 12, // over-fetched, then deduped by product below
+      }),
+    ]);
+
+    wallet = walletRow;
+    recentOrder = activeOrder;
+
+    const seenProductIds = new Set<string>();
+    const dedupedProducts = [];
+    for (const item of pastItems) {
+      if (!item.product || !item.product.isActive || seenProductIds.has(item.product.id)) continue;
+      seenProductIds.add(item.product.id);
+      dedupedProducts.push(item.product);
+      if (dedupedProducts.length >= 3) break;
+    }
+    buyAgainCards = await Promise.all(dedupedProducts.map((p) => toProductCard(p, destination)));
+  }
+
   return (
     <PullToRefresh>
-      <Hero destination={destination.isoCode} countries={countries} />
-      <ServicesPromo />
-      <ShopTheWorld />
+      {user ? (
+        <WelcomeBack firstName={user.fullName.split(" ")[0]} wallet={wallet} recentOrder={recentOrder} />
+      ) : (
+        <>
+          <Hero destination={destination.isoCode} countries={countries} />
+          <ServicesPromo />
+          <ShopTheWorld />
+        </>
+      )}
+
+      {buyAgainCards.length > 0 && (
+        <Section>
+          <Container>
+            <SectionHeading eyebrow="Pick up where you left off" title="Buy It Again" />
+            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {buyAgainCards.map((p) => (
+                <ProductCard key={p.slug} product={p} />
+              ))}
+            </div>
+          </Container>
+        </Section>
+      )}
 
       <Section tone="sand">
         <Container>
