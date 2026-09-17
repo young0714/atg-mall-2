@@ -61,6 +61,14 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Set when a customer requests deletion via /account/security (also
+  // immediately flips isActive to false, blocking login). Order/Payment/
+  // Review rows are deliberately NOT deleted — retained for accounting/legal
+  // reasons — an admin instead anonymizes this row's own PII fields
+  // (fullName/email/phone/whatsapp/bvnVerifiedName/passwordHash) once
+  // processed, then clears this field.
+  deletionRequestedAt DateTime?
+
   // BVN identity verification (Nigeria only — see depositLimitService.ts).
   // Null until the customer completes the BVN/NIBSS consent flow, which
   // removes the monthly wallet-deposit cap for unverified accounts. Never

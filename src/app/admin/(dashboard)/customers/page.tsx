@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/utils";
 import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { isoToFlagEmoji } from "@/lib/constants";
+import { completeAccountDeletionAction } from "./actions";
+import { SubmitButton } from "@/components/ui/SubmitButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Customers" };
@@ -40,6 +42,7 @@ export default async function AdminCustomersPage() {
               <th className="p-3">Orders</th>
               <th className="p-3">Status</th>
               <th className="p-3">Joined</th>
+              <th className="p-3"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-navy-100">
@@ -57,9 +60,20 @@ export default async function AdminCustomersPage() {
                   <div className="flex flex-wrap gap-1.5">
                     <Badge tone={c.isActive ? "green" : "red"}>{c.isActive ? "Active" : "Disabled"}</Badge>
                     {c.isGuest && <Badge tone="gold">Guest</Badge>}
+                    {c.deletionRequestedAt && <Badge tone="red">Pending Deletion</Badge>}
                   </div>
                 </td>
                 <td className="p-3 text-navy-400">{formatDate(c.createdAt)}</td>
+                <td className="p-3 text-right">
+                  {c.deletionRequestedAt && (
+                    <form action={completeAccountDeletionAction}>
+                      <input type="hidden" name="userId" value={c.id} />
+                      <SubmitButton className="text-xs font-medium text-red-600 hover:underline">
+                        Complete deletion
+                      </SubmitButton>
+                    </form>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

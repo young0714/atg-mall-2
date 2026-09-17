@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth/current-user";
 import { listCredentials } from "@/lib/services/webauthnService";
 import { SecuritySettings } from "@/components/account/SecuritySettings";
+import { AccountDeletionSection } from "@/components/account/AccountDeletionSection";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Security" };
@@ -28,6 +29,10 @@ export default async function SecurityPage() {
             lastUsedAt: d.lastUsedAt?.toISOString() ?? null,
           }))}
         />
+      </div>
+
+      <div className="mt-8">
+        <AccountDeletionSection />
       </div>
     </div>
   );

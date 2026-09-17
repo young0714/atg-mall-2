@@ -1,6 +1,9 @@
 "use server";
 
 import { requireUser } from "@/lib/auth/current-user";
+import { db } from "@/lib/db";
+import { destroySession } from "@/lib/auth/session";
+import { sendTransactionalEmail } from "@/lib/services/notificationService";
 import { setPin, disablePin, verifyPin } from "@/lib/services/pinService";
 import {
   getRegistrationOptions,
@@ -126,5 +129,35 @@ export async function confirmPinResetOtpAction(otpId: string, code: string, newP
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Enter a 4-digit PIN" };
 
   await setPin(user.id, parsed.data);
+  return { ok: true };
+}
+
+/**
+ * Disables the account immediately (blocks login right away, per
+ * requireUser()/getCurrentUser() both checking isActive) and flags it for
+ * an admin to complete the actual PII anonymization — see the comment on
+ * User.deletionRequestedAt for exactly what that second step does and
+ * doesn't touch. Signs the browser out in the same request, since the
+ * session cookie would otherwise still look "logged in" until it expires.
+ */
+export async function requestAccountDeletionAction(): Promise<ActionResult> {
+  const user = await requireUser();
+
+  await db.user.update({
+    where: { id: user.id },
+    data: { isActive: false, deletionRequestedAt: new Date() },
+  });
+
+  await sendTransactionalEmail({
+    to: "support@apexterraglobal.com",
+    subject: `Account deletion requested — ${user.email}`,
+    body: `${user.fullName} (${user.email}) requested account deletion via /account/security. Their account has already been disabled. Complete the deletion from Admin → Customers within 7 business days.`,
+  }).catch(() => {
+    // Best-effort notification — the account is already disabled regardless
+    // of whether this email goes through, so a delivery failure here
+    // shouldn't block the customer's request from taking effect.
+  });
+
+  destroySession();
   return { ok: true };
 }
