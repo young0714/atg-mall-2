@@ -16,6 +16,16 @@ import type { OtpPurpose, Prisma } from "@prisma/client";
 const OTP_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 
+// Google Play (and, later, App Store) review accounts can't receive real
+// emails, and reviewers are explicitly unable to contact us during review —
+// so this one account gets a fixed, long-lived code instead of a random
+// emailed one, letting a reviewer complete a real purchase unassisted. Never
+// applies to any other account; the email must match exactly. Approved
+// explicitly by the business owner, since it touches OTP verification.
+const REVIEWER_EMAIL = "playstore-reviewer@atg-mall.com";
+const REVIEWER_FIXED_CODE = "482915";
+const REVIEWER_OTP_TTL_MINUTES = 60 * 24 * 30; // 30 days — comfortably outlives any review pass
+
 function generateCode(): string {
   return crypto.randomInt(100000, 1000000).toString(); // always 6 digits
 }
@@ -34,7 +44,8 @@ export interface CreateOtpParams {
 }
 
 export async function createCheckoutOtp(params: CreateOtpParams): Promise<{ otpId: string }> {
-  const code = generateCode();
+  const isReviewerAccount = params.email.toLowerCase() === REVIEWER_EMAIL;
+  const code = isReviewerAccount ? REVIEWER_FIXED_CODE : generateCode();
 
   const otp = await db.checkoutOtp.create({
     data: {
@@ -43,15 +54,17 @@ export async function createCheckoutOtp(params: CreateOtpParams): Promise<{ otpI
       purpose: params.purpose,
       codeHash: hashCode(code),
       payload: params.payload as Prisma.InputJsonValue,
-      expiresAt: new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000),
+      expiresAt: new Date(Date.now() + (isReviewerAccount ? REVIEWER_OTP_TTL_MINUTES : OTP_TTL_MINUTES) * 60 * 1000),
     },
   });
 
-  await sendTransactionalEmail({
-    to: params.email,
-    subject: `Your ATG Mall verification code: ${code}`,
-    body: `Use this code to ${params.actionDescription}: ${code}\n\nThis code expires in ${OTP_TTL_MINUTES} minutes. If you didn't request this, you can safely ignore this email.`,
-  });
+  if (!isReviewerAccount) {
+    await sendTransactionalEmail({
+      to: params.email,
+      subject: `Your ATG Mall verification code: ${code}`,
+      body: `Use this code to ${params.actionDescription}: ${code}\n\nThis code expires in ${OTP_TTL_MINUTES} minutes. If you didn't request this, you can safely ignore this email.`,
+    });
+  }
 
   return { otpId: otp.id };
 }
@@ -63,21 +76,24 @@ export async function resendCheckoutOtp(otpId: string, userId: string): Promise<
     return { error: "This verification session is no longer valid." };
   }
 
-  const code = generateCode();
+  const isReviewerAccount = existing.email.toLowerCase() === REVIEWER_EMAIL;
+  const code = isReviewerAccount ? REVIEWER_FIXED_CODE : generateCode();
   const otp = await db.checkoutOtp.update({
     where: { id: otpId },
     data: {
       codeHash: hashCode(code),
       attempts: 0,
-      expiresAt: new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000),
+      expiresAt: new Date(Date.now() + (isReviewerAccount ? REVIEWER_OTP_TTL_MINUTES : OTP_TTL_MINUTES) * 60 * 1000),
     },
   });
 
-  await sendTransactionalEmail({
-    to: otp.email,
-    subject: `Your ATG Mall verification code: ${code}`,
-    body: `Here's your new code: ${code}\n\nThis code expires in ${OTP_TTL_MINUTES} minutes. If you didn't request this, you can safely ignore this email.`,
-  });
+  if (!isReviewerAccount) {
+    await sendTransactionalEmail({
+      to: otp.email,
+      subject: `Your ATG Mall verification code: ${code}`,
+      body: `Here's your new code: ${code}\n\nThis code expires in ${OTP_TTL_MINUTES} minutes. If you didn't request this, you can safely ignore this email.`,
+    });
+  }
 
   return { otpId: otp.id };
 }
