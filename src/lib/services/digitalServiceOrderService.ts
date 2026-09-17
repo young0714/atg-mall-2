@@ -10,7 +10,7 @@ import {
   calculateGiftCardFeeMinor,
   calculateUtilityBillFeeMinor,
 } from "./digitalServiceFeeService";
-import type { Currency, Prisma } from "@prisma/client";
+import type { Currency, DigitalServiceType, Prisma } from "@prisma/client";
 
 export interface PurchaseAirtimeParams {
   userId: string;
@@ -27,6 +27,10 @@ export interface PurchaseAirtimeParams {
   // topping up (e.g. a GMD-wallet customer topping up a Nigerian number).
   chargeCurrency: Currency;
   walletCurrency: Currency;
+  // "BUNDLE" (data-only or mixed voice+data+SMS) goes through the exact
+  // same Reloadly /topups call as plain "AIRTIME" — only the DB record type
+  // and customer-facing wording differ.
+  serviceType?: DigitalServiceType;
 }
 
 export interface PurchaseAirtimeResult {
@@ -41,6 +45,8 @@ export interface PurchaseAirtimeResult {
  * the customer is never left having paid for a top-up that didn't arrive.
  */
 export async function purchaseAirtime(params: PurchaseAirtimeParams): Promise<PurchaseAirtimeResult> {
+  const serviceType = params.serviceType ?? "AIRTIME";
+  const kindLabel = serviceType === "BUNDLE" ? "bundle" : "airtime";
   const chargeAmountMinor = Math.round(params.amount * 100);
   const feeAmountMinor = calculateAirtimeFeeMinor(chargeAmountMinor);
   const totalChargeAmountMinor = chargeAmountMinor + feeAmountMinor;
@@ -61,7 +67,7 @@ export async function purchaseAirtime(params: PurchaseAirtimeParams): Promise<Pu
   const order = await db.digitalServiceOrder.create({
     data: {
       userId: params.userId,
-      type: "AIRTIME",
+      type: serviceType,
       status: "PENDING",
       countryIso: params.countryIso,
       operatorId: params.operatorId,
@@ -77,7 +83,7 @@ export async function purchaseAirtime(params: PurchaseAirtimeParams): Promise<Pu
     userId: params.userId,
     amountMinor: debitAmountMinor,
     currency: params.walletCurrency,
-    description: `${params.operatorName} airtime — ${params.recipientPhone}`,
+    description: `${params.operatorName} ${kindLabel} — ${params.recipientPhone}`,
     referenceType: "DIGITAL_SERVICE_ORDER",
     referenceId: order.id,
   });
@@ -102,7 +108,7 @@ export async function purchaseAirtime(params: PurchaseAirtimeParams): Promise<Pu
       amountMinor: debitAmountMinor,
       currency: params.walletCurrency,
       type: "REFUND",
-      description: `Refund: ${params.operatorName} airtime failed`,
+      description: `Refund: ${params.operatorName} ${kindLabel} failed`,
       referenceType: "DIGITAL_SERVICE_ORDER",
       referenceId: order.id,
     });

@@ -270,6 +270,7 @@ export const airtimePurchaseSchema = z.object({
   recipientPhone: z.string().trim().min(5, "Enter a valid phone number"),
   amount: z.coerce.number().positive(),
   chargeCurrency: z.enum(["NGN", "GMD", "USD", "EUR", "GBP", "CNY"]),
+  serviceType: z.enum(["AIRTIME", "BUNDLE"]).default("AIRTIME"),
 });
 export type AirtimePurchaseInput = z.infer<typeof airtimePurchaseSchema>;
 

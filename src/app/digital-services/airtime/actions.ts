@@ -31,12 +31,13 @@ export async function initiateAirtimeOtpAction(input: AirtimePurchaseInput): Pro
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid request" };
   }
 
+  const isBundle = parsed.data.serviceType === "BUNDLE";
   const { otpId } = await createCheckoutOtp({
     userId: user.id,
     email: user.email,
-    purpose: "DIGITAL_SERVICE_AIRTIME",
+    purpose: isBundle ? "DIGITAL_SERVICE_BUNDLE" : "DIGITAL_SERVICE_AIRTIME",
     payload: parsed.data,
-    actionDescription: "complete your airtime top-up",
+    actionDescription: isBundle ? "complete your data bundle purchase" : "complete your airtime top-up",
   });
 
   return { ok: true, otpId, email: user.email };
@@ -63,6 +64,7 @@ export async function confirmAirtimeOtpAction(otpId: string, code: string): Prom
     amount: payload.amount,
     chargeCurrency: payload.chargeCurrency,
     walletCurrency: wallet.currency,
+    serviceType: payload.serviceType,
   });
 
   return result.ok

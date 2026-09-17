@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "OtpPurpose" ADD VALUE 'DIGITAL_SERVICE_BUNDLE';

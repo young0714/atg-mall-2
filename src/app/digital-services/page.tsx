@@ -39,7 +39,7 @@ export default async function DigitalServicesPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Link href="/digital-services/airtime" className="card p-5">
             <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-atgblue-50 text-lg">📱</div>
-            <h3 className="font-semibold text-navy-900">Airtime &amp; Data</h3>
+            <h3 className="font-semibold text-navy-900">Airtime &amp; Bundles</h3>
             <p className="mt-1 text-xs text-navy-500">Top up any network, in Nigeria, Gambia or abroad.</p>
           </Link>
           <Link href="/digital-services/gift-cards" className="card p-5">

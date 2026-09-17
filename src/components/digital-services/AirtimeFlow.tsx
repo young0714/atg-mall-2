@@ -14,9 +14,11 @@ import {
 import { OtpVerificationStep } from "./OtpVerificationStep";
 
 type Step = 1 | 2 | 3 | "confirm" | "otp" | "success";
+type ServiceKind = "AIRTIME" | "BUNDLE";
 
 export function AirtimeFlow() {
   const [step, setStep] = useState<Step>(1);
+  const [serviceType, setServiceType] = useState<ServiceKind>("AIRTIME");
 
   const [countryQuery, setCountryQuery] = useState("");
   const [countryOpen, setCountryOpen] = useState(false);
@@ -59,7 +61,7 @@ export function AirtimeFlow() {
     setOperator(null);
     setSelectedAmount(null);
     setCustomAmount("");
-    fetch(`/api/v1/digital-services/operators?country=${country.isoCode}`)
+    fetch(`/api/v1/digital-services/operators?country=${country.isoCode}&kind=${serviceType}`)
       .then((r) => r.json())
       .then((body) => {
         if (!cancelled) setOperators(Array.isArray(body?.data) ? body.data : []);
@@ -73,11 +75,21 @@ export function AirtimeFlow() {
     return () => {
       cancelled = true;
     };
-  }, [country, chargeCurrency]);
+  }, [country, chargeCurrency, serviceType]);
 
   const fixedAmounts = operator?.localFixedAmounts;
   const minAmount = operator?.localMinAmount;
   const maxAmount = operator?.localMaxAmount;
+  const fixedAmountsDescriptions = operator?.localFixedAmountsDescriptions;
+
+  // Reloadly keys these by its own 2-decimal string form of the amount
+  // ("8.00", "99.93") — try that before the plain number, since a bundle's
+  // description ("1GB", "100mins + 12GB + 5 SMS") is the actual point of
+  // what's being bought, not decoration.
+  function bundleDescription(v: number): string | null {
+    if (!fixedAmountsDescriptions) return null;
+    return fixedAmountsDescriptions[v.toFixed(2)] ?? fixedAmountsDescriptions[String(v)] ?? null;
+  }
 
   const filteredCountries = countryQuery.trim()
     ? AIRTIME_COUNTRIES.filter((c) => c.name.toLowerCase().includes(countryQuery.trim().toLowerCase()))
@@ -87,6 +99,14 @@ export function AirtimeFlow() {
     setCountry(c);
     setCountryOpen(false);
     setCountryQuery("");
+  }
+
+  function selectServiceType(kind: ServiceKind) {
+    if (kind === serviceType) return;
+    setServiceType(kind);
+    setOperator(null);
+    setSelectedAmount(null);
+    setCustomAmount("");
   }
 
   function displayAmount(v: number) {
@@ -119,6 +139,7 @@ export function AirtimeFlow() {
       recipientPhone: phone,
       amount: selectedAmount,
       chargeCurrency,
+      serviceType,
     });
     setSubmitting(false);
     if (result.ok && result.otpId && result.email) {
@@ -160,6 +181,27 @@ export function AirtimeFlow() {
     <div className="card max-w-lg space-y-5 p-6">
       {step === 1 && (
         <>
+          <div className="grid grid-cols-2 gap-2 rounded-xl2 bg-sand-100 p-1">
+            <button
+              type="button"
+              onClick={() => selectServiceType("AIRTIME")}
+              className={`rounded-lg py-2 text-sm font-semibold transition ${
+                serviceType === "AIRTIME" ? "bg-white text-atgblue-600 shadow-card" : "text-navy-500"
+              }`}
+            >
+              Airtime
+            </button>
+            <button
+              type="button"
+              onClick={() => selectServiceType("BUNDLE")}
+              className={`rounded-lg py-2 text-sm font-semibold transition ${
+                serviceType === "BUNDLE" ? "bg-white text-atgblue-600 shadow-card" : "text-navy-500"
+              }`}
+            >
+              Bundles
+            </button>
+          </div>
+
           <div>
             <p className="label mb-2">Country</p>
             <div className="relative">
@@ -209,7 +251,8 @@ export function AirtimeFlow() {
 
           {!chargeCurrency ? (
             <p className="rounded-lg bg-gold-50 p-3 text-sm text-gold-700">
-              Airtime top-ups for {country.name} aren&apos;t available yet — check back soon, or pick a different country.
+              {serviceType === "BUNDLE" ? "Bundles" : "Airtime top-ups"} for {country.name} aren&apos;t available yet —
+              check back soon, or pick a different country.
             </p>
           ) : (
             <div>
@@ -217,7 +260,9 @@ export function AirtimeFlow() {
               {operatorsLoading ? (
                 <p className="text-sm text-navy-400">Loading networks…</p>
               ) : !operators || operators.length === 0 ? (
-                <p className="text-sm text-navy-400">No networks available for {country.name} right now.</p>
+                <p className="text-sm text-navy-400">
+                  No {serviceType === "BUNDLE" ? "bundles" : "networks"} available for {country.name} right now.
+                </p>
               ) : (
                 <select
                   className="input"
@@ -268,7 +313,7 @@ export function AirtimeFlow() {
                 </option>
                 {fixedAmounts.map((v) => (
                   <option key={v} value={v}>
-                    {displayAmount(v)}
+                    {bundleDescription(v) ? `${bundleDescription(v)} — ${displayAmount(v)}` : displayAmount(v)}
                   </option>
                 ))}
               </select>
@@ -345,6 +390,12 @@ export function AirtimeFlow() {
               <span className="text-navy-500">Recipient</span>
               <span className="font-semibold">{phone}</span>
             </div>
+            {serviceType === "BUNDLE" && bundleDescription(selectedAmount) && (
+              <div className="flex justify-between py-1.5">
+                <span className="text-navy-500">Bundle</span>
+                <span className="font-semibold">{bundleDescription(selectedAmount)}</span>
+              </div>
+            )}
             <div className="flex justify-between py-1.5">
               <span className="text-navy-500">Amount</span>
               <span className="font-semibold">{displayAmount(selectedAmount)}</span>
@@ -395,9 +446,12 @@ export function AirtimeFlow() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-atggreen-50 text-2xl text-atggreen-600">
             ✓
           </div>
-          <h3 className="text-lg font-bold text-navy-900">Top-up delivered</h3>
+          <h3 className="text-lg font-bold text-navy-900">
+            {serviceType === "BUNDLE" ? "Bundle delivered" : "Top-up delivered"}
+          </h3>
           <p className="mt-1 text-sm text-navy-500">
-            {displayAmount(selectedAmount)} {operator.name} airtime sent to {phone}.
+            {bundleDescription(selectedAmount) ?? displayAmount(selectedAmount)} {operator.name}{" "}
+            {serviceType === "BUNDLE" ? "bundle" : "airtime"} sent to {phone}.
           </p>
           {orderId && <p className="mt-1 text-xs text-navy-400">Order {orderId}</p>}
           <div className="mt-5 flex justify-center gap-2">

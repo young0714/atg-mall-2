@@ -32,7 +32,16 @@ export interface AirtimeOperator {
   localFixedAmounts?: number[];
   localMinAmount?: number;
   localMaxAmount?: number;
+  // Present for "bundle" operators (data-only or mixed voice+data+SMS
+  // combos) — keyed by the matching localFixedAmounts value (as Reloadly
+  // formats it, e.g. "99.93"), describing what that amount actually buys
+  // (e.g. "1GB" or "100mins + 12GB + 5 SMS - 30days"). Essential to show,
+  // not decorative — "₦2000" alone doesn't tell a customer what they're
+  // buying the way it does for plain airtime.
+  localFixedAmountsDescriptions?: Record<string, string>;
 }
+
+export type AirtimeKind = "AIRTIME" | "BUNDLE";
 
 export interface TopupParams {
   operatorId: number;
@@ -63,7 +72,7 @@ export interface ReloadlyBalance {
 
 interface ReloadlyProvider {
   name: string;
-  getOperators(countryIso: string): Promise<AirtimeOperator[]>;
+  getOperators(countryIso: string, kind?: AirtimeKind): Promise<AirtimeOperator[]>;
   submitTopup(params: TopupParams): Promise<TopupResult>;
   getBalance(): Promise<ReloadlyBalance | null>;
 }
@@ -94,13 +103,19 @@ class LiveReloadlyProvider implements ReloadlyProvider {
     });
   }
 
-  async getOperators(countryIso: string): Promise<AirtimeOperator[]> {
+  async getOperators(countryIso: string, kind: AirtimeKind = "AIRTIME"): Promise<AirtimeOperator[]> {
     const res = await this.authedFetch(`/operators/countries/${encodeURIComponent(countryIso)}`);
     const body = await res.json().catch(() => null);
     if (!res.ok || !Array.isArray(body)) return [];
 
     return body
-      .filter((op: Record<string, unknown>) => op?.data !== true) // airtime only — data-bundle operators are a later phase
+      // Reloadly marks data-only and mixed voice+data+SMS bundle products
+      // with `data: true` on the SAME per-country operator list plain
+      // airtime comes from — verified live. "Bundle" (not "Data") is the
+      // accurate label for these on the customer-facing side, since several
+      // of them (e.g. several Nigerian operators) mix minutes and SMS in
+      // with the data, not just data alone.
+      .filter((op: Record<string, unknown>) => (kind === "BUNDLE" ? op?.data === true : op?.data !== true))
       .map(
         (op: Record<string, unknown>): AirtimeOperator => ({
           operatorId: op.operatorId as number,
@@ -108,6 +123,7 @@ class LiveReloadlyProvider implements ReloadlyProvider {
           logoUrl: (op.logoUrls as string[] | undefined)?.[0],
           denominationType: op.denominationType === "RANGE" ? "RANGE" : "FIXED",
           localFixedAmounts: op.localFixedAmounts as number[] | undefined,
+          localFixedAmountsDescriptions: op.localFixedAmountsDescriptions as Record<string, string> | undefined,
           localMinAmount: op.localMinAmount as number | undefined,
           localMaxAmount: op.localMaxAmount as number | undefined,
         }),
@@ -158,10 +174,23 @@ class LiveReloadlyProvider implements ReloadlyProvider {
 class MockReloadlyProvider implements ReloadlyProvider {
   name = "MOCK";
 
-  async getOperators(countryIso: string): Promise<AirtimeOperator[]> {
+  async getOperators(countryIso: string, kind: AirtimeKind = "AIRTIME"): Promise<AirtimeOperator[]> {
     const isNaira = countryIso === "NG";
     const isDalasi = countryIso === "GM";
     if (!isNaira && !isDalasi) return [];
+    if (kind === "BUNDLE") {
+      return [
+        {
+          operatorId: 998,
+          name: "Demo Network Bundle",
+          denominationType: "FIXED",
+          localFixedAmounts: isNaira ? [500, 1500] : [50, 150],
+          localFixedAmountsDescriptions: isNaira
+            ? { "500": "1GB - 30 days", "1500": "3GB - 30 days" }
+            : { "50": "500MB - 30 days", "150": "1.5GB - 30 days" },
+        },
+      ];
+    }
     return [
       {
         operatorId: 999,
@@ -187,7 +216,7 @@ class MockReloadlyProvider implements ReloadlyProvider {
 
 export interface DigitalServiceProvider {
   isLive(): boolean;
-  getOperators(countryIso: string): Promise<AirtimeOperator[]>;
+  getOperators(countryIso: string, kind?: AirtimeKind): Promise<AirtimeOperator[]>;
   submitTopup(params: TopupParams): Promise<TopupResult>;
   getBalance(): Promise<ReloadlyBalance | null>;
 }
@@ -206,8 +235,8 @@ class DefaultReloadlyService implements DigitalServiceProvider {
     return this.provider.name !== "MOCK";
   }
 
-  getOperators(countryIso: string): Promise<AirtimeOperator[]> {
-    return this.provider.getOperators(countryIso);
+  getOperators(countryIso: string, kind: AirtimeKind = "AIRTIME"): Promise<AirtimeOperator[]> {
+    return this.provider.getOperators(countryIso, kind);
   }
 
   submitTopup(params: TopupParams): Promise<TopupResult> {
