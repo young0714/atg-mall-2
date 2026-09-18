@@ -129,6 +129,7 @@ export function SecuritySettings({
             <div>
               <p className="label mb-1.5">New 4-digit PIN</p>
               <input
+                type="password"
                 className="input text-center tracking-[0.5em]"
                 inputMode="numeric"
                 maxLength={4}
@@ -139,6 +140,7 @@ export function SecuritySettings({
             <div>
               <p className="label mb-1.5">Confirm PIN</p>
               <input
+                type="password"
                 className="input text-center tracking-[0.5em]"
                 inputMode="numeric"
                 maxLength={4}

@@ -141,6 +141,7 @@ export function AppLockScreen({ onUnlocked }: { onUnlocked: () => void }) {
             <p className="mt-1 text-center text-sm text-navy-500">ATG Mall is locked. Enter your 4-digit PIN to continue.</p>
 
             <input
+              type="password"
               className="input mt-5 text-center text-2xl tracking-[0.5em]"
               inputMode="numeric"
               maxLength={4}
@@ -196,6 +197,7 @@ export function AppLockScreen({ onUnlocked }: { onUnlocked: () => void }) {
                   <div>
                     <p className="label mb-1.5">New PIN</p>
                     <input
+                      type="password"
                       className="input text-center tracking-[0.5em]"
                       inputMode="numeric"
                       maxLength={4}
@@ -206,6 +208,7 @@ export function AppLockScreen({ onUnlocked }: { onUnlocked: () => void }) {
                   <div>
                     <p className="label mb-1.5">Confirm new PIN</p>
                     <input
+                      type="password"
                       className="input text-center tracking-[0.5em]"
                       inputMode="numeric"
                       maxLength={4}
