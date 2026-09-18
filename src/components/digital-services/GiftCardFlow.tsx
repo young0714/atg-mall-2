@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AIRTIME_COUNTRIES, type AirtimeCountry } from "@/lib/constants";
+import { AIRTIME_COUNTRIES, type AirtimeCountry, isPrepaidCardProduct, isEsimProduct } from "@/lib/constants";
 import { formatMoney } from "@/lib/money";
 import type { GiftCardProduct } from "@/lib/services/reloadlyGiftCardService";
 import {
@@ -18,20 +18,49 @@ const SUPPORTED_WALLET_CURRENCIES = ["NGN", "GMD", "USD", "EUR", "GBP", "CNY"];
 
 type Step = 1 | 2 | 3 | "confirm" | "otp" | "success";
 
+type Variant = "gift-card" | "prepaid" | "esim";
+
 interface GiftCardFlowProps {
-  // Narrows the fetched catalog to a subset (e.g. prepaid cards, eSIMs)
-  // instead of showing every gift card. Filtering happens client-side over
-  // the same /gift-card-products endpoint the plain Gift Cards flow uses.
-  productFilter?: (product: GiftCardProduct) => boolean;
-  // Overrides the raw Reloadly productName (which is often unpolished, e.g.
-  // "Visa Prepaid US $1 to $150") for display in the brand list and step 2.
-  displayName?: (product: GiftCardProduct) => string;
-  brandLabel?: string;
-  emptyMessage?: (countryName: string) => string;
-  emptyAction?: { label: string; href: string };
+  // A plain string, not a function — this component is "use client", so a
+  // server page rendering it can only pass serializable props across the
+  // RSC boundary. Prepaid/eSIM are the same Reloadly gift card catalog,
+  // narrowed to a subset by product/brand name (Reloadly has no
+  // product-type field); the filter + display-name logic lives here,
+  // keyed off this prop, instead of being passed in as closures.
+  variant?: Variant;
 }
 
-export function GiftCardFlow({ productFilter, displayName, brandLabel = "Brand", emptyMessage, emptyAction }: GiftCardFlowProps = {}) {
+const VARIANT_CONFIG: Record<
+  Variant,
+  {
+    productFilter?: (product: GiftCardProduct) => boolean;
+    displayName?: (product: GiftCardProduct) => string;
+    brandLabel: string;
+    emptyMessage: (countryName: string) => string;
+    emptyAction?: { label: string; href: string };
+  }
+> = {
+  "gift-card": {
+    brandLabel: "Brand",
+    emptyMessage: (name) => `No gift cards available for ${name} right now.`,
+  },
+  prepaid: {
+    productFilter: (p) => isPrepaidCardProduct(p.brandName),
+    displayName: (p) => p.brandName,
+    brandLabel: "Card",
+    emptyMessage: (name) => `Prepaid cards aren't available in ${name} yet.`,
+    emptyAction: { label: "Try eSIM instead", href: "/digital-services/prepaid-esim/esim" },
+  },
+  esim: {
+    productFilter: (p) => isEsimProduct(p.productName),
+    displayName: (p) => `${p.brandName} eSIM`,
+    brandLabel: "Plan",
+    emptyMessage: (name) => `No eSIM plans available for ${name} right now.`,
+  },
+};
+
+export function GiftCardFlow({ variant = "gift-card" }: GiftCardFlowProps = {}) {
+  const { productFilter, displayName, brandLabel, emptyMessage, emptyAction } = VARIANT_CONFIG[variant];
   const [step, setStep] = useState<Step>(1);
 
   const [countryQuery, setCountryQuery] = useState("");

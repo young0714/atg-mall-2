@@ -3,7 +3,6 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth/current-user";
 import { Container, Section } from "@/components/ui/Section";
 import { GiftCardFlow } from "@/components/digital-services/GiftCardFlow";
-import { isPrepaidCardProduct } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Prepaid Cards" };
 export const dynamic = "force-dynamic";
@@ -19,13 +18,7 @@ export default async function PrepaidCardsPage() {
         </Link>
         <h1 className="mb-1 mt-2 text-2xl font-display font-bold text-navy-900">Prepaid Cards</h1>
         <p className="mb-6 text-sm text-navy-500">Open-loop cards, usable online or in-store — not tied to one retailer.</p>
-        <GiftCardFlow
-          productFilter={(p) => isPrepaidCardProduct(p.brandName)}
-          displayName={(p) => p.brandName}
-          brandLabel="Card"
-          emptyMessage={(countryName) => `Prepaid cards aren't available in ${countryName} yet.`}
-          emptyAction={{ label: "Try eSIM instead", href: "/digital-services/prepaid-esim/esim" }}
-        />
+        <GiftCardFlow variant="prepaid" />
       </Container>
     </Section>
   );
