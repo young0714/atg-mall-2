@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { currencyConversionService } from "./currencyConversionService";
 import { checkTransferLimit } from "./walletTransferLimitService";
+import { debitWithinTx, creditWithinTx } from "./walletService";
 import { walletTransferSchema, type WalletTransferInput } from "@/lib/validation/schemas";
 import type { Prisma } from "@prisma/client";
 
@@ -102,15 +102,6 @@ export async function executeWalletTransfer(senderId: string, payload: unknown):
     const limit = await checkTransferLimit({ userId: senderId, amountMinor, currency: senderWallet.currency });
     if (!limit.allowed) return { ok: false, error: limit.reason ?? "This transfer exceeds your monthly sending limit." };
 
-    if (senderWallet.balanceMinor < amountMinor) {
-      return { ok: false, error: "Insufficient wallet balance." };
-    }
-
-    const recipientAmountMinor =
-      senderWallet.currency === recipientWallet.currency
-        ? amountMinor
-        : currencyConversionService.convert(amountMinor, senderWallet.currency, recipientWallet.currency);
-
     const [sender, recipient] = await Promise.all([
       tx.user.findUniqueOrThrow({ where: { id: senderId }, select: { fullName: true } }),
       tx.user.findUniqueOrThrow({ where: { id: recipientWallet.userId }, select: { fullName: true } }),
@@ -127,34 +118,33 @@ export async function executeWalletTransfer(senderId: string, payload: unknown):
       },
     });
 
-    const senderBalanceAfter = senderWallet.balanceMinor - amountMinor;
-    await tx.wallet.update({ where: { id: senderWallet.id }, data: { balanceMinor: senderBalanceAfter } });
-    await tx.walletTransaction.create({
-      data: {
-        walletId: senderWallet.id,
-        type: "TRANSFER",
-        amountMinor: -amountMinor,
-        currency: senderWallet.currency,
-        balanceAfterMinor: senderBalanceAfter,
-        referenceType: "WALLET_TRANSFER",
-        referenceId: transfer.id,
-        description: `Sent to ${recipient.fullName} (${input.recipientAccountNumber})`,
-      },
+    // debitWithinTx does the real, atomic "is there enough?" check — the
+    // balance read above is only used for currency/id lookups, never to
+    // decide whether this transfer is allowed.
+    const debited = await debitWithinTx(tx, {
+      userId: senderId,
+      amountMinor,
+      currency: senderWallet.currency,
+      type: "TRANSFER",
+      description: `Sent to ${recipient.fullName} (${input.recipientAccountNumber})`,
+      referenceType: "WALLET_TRANSFER",
+      referenceId: transfer.id,
     });
+    if (!debited.success) {
+      return { ok: false, error: "Insufficient wallet balance." };
+    }
 
-    const recipientBalanceAfter = recipientWallet.balanceMinor + recipientAmountMinor;
-    await tx.wallet.update({ where: { id: recipientWallet.id }, data: { balanceMinor: recipientBalanceAfter } });
-    await tx.walletTransaction.create({
-      data: {
-        walletId: recipientWallet.id,
-        type: "TRANSFER",
-        amountMinor: recipientAmountMinor,
-        currency: recipientWallet.currency,
-        balanceAfterMinor: recipientBalanceAfter,
-        referenceType: "WALLET_TRANSFER",
-        referenceId: transfer.id,
-        description: `Received from ${sender.fullName}`,
-      },
+    // creditWithinTx converts amountMinor (in the sender's currency) into
+    // the recipient's own wallet currency itself — no separate conversion
+    // needed here.
+    await creditWithinTx(tx, {
+      userId: recipientWallet.userId,
+      amountMinor,
+      currency: senderWallet.currency,
+      type: "TRANSFER",
+      description: `Received from ${sender.fullName}`,
+      referenceType: "WALLET_TRANSFER",
+      referenceId: transfer.id,
     });
 
     return { ok: true, transferId: transfer.id };
@@ -182,7 +172,6 @@ export async function reverseWalletTransfer(
     if (!transfer) return { ok: false, error: "Transfer not found." };
     if (transfer.status === "REVERSED") return { ok: false, error: "This transfer has already been reversed." };
 
-    const senderWallet = await tx.wallet.findUniqueOrThrow({ where: { userId: transfer.senderId } });
     const recipientWallet = await tx.wallet.findUniqueOrThrow({ where: { userId: transfer.recipientId } });
 
     const recipientLeg = await tx.walletTransaction.findFirst({
@@ -191,38 +180,29 @@ export async function reverseWalletTransfer(
     if (!recipientLeg) return { ok: false, error: "Could not find the recipient's ledger entry for this transfer." };
     const recipientCreditedMinor = recipientLeg.amountMinor; // positive, what the recipient actually received
 
-    if (recipientWallet.balanceMinor < recipientCreditedMinor) {
+    // Same atomic guard as a normal debit — if the recipient has since
+    // spent some of it, this fails cleanly instead of pushing them negative.
+    const clawedBack = await debitWithinTx(tx, {
+      userId: transfer.recipientId,
+      amountMinor: recipientCreditedMinor,
+      currency: recipientWallet.currency,
+      type: "TRANSFER",
+      description: `Reversal: wallet transfer #${transfer.id.slice(-8)} reversed by admin`,
+      referenceType: "WALLET_TRANSFER_REVERSAL",
+      referenceId: transfer.id,
+    });
+    if (!clawedBack.success) {
       return { ok: false, error: "The recipient's wallet balance is too low to reverse this transfer — they've likely already spent it." };
     }
 
-    const recipientBalanceAfter = recipientWallet.balanceMinor - recipientCreditedMinor;
-    await tx.wallet.update({ where: { id: recipientWallet.id }, data: { balanceMinor: recipientBalanceAfter } });
-    await tx.walletTransaction.create({
-      data: {
-        walletId: recipientWallet.id,
-        type: "TRANSFER",
-        amountMinor: -recipientCreditedMinor,
-        currency: recipientWallet.currency,
-        balanceAfterMinor: recipientBalanceAfter,
-        referenceType: "WALLET_TRANSFER_REVERSAL",
-        referenceId: transfer.id,
-        description: `Reversal: wallet transfer #${transfer.id.slice(-8)} reversed by admin`,
-      },
-    });
-
-    const senderBalanceAfter = senderWallet.balanceMinor + transfer.amountMinor;
-    await tx.wallet.update({ where: { id: senderWallet.id }, data: { balanceMinor: senderBalanceAfter } });
-    await tx.walletTransaction.create({
-      data: {
-        walletId: senderWallet.id,
-        type: "TRANSFER",
-        amountMinor: transfer.amountMinor,
-        currency: senderWallet.currency,
-        balanceAfterMinor: senderBalanceAfter,
-        referenceType: "WALLET_TRANSFER_REVERSAL",
-        referenceId: transfer.id,
-        description: `Reversal: wallet transfer #${transfer.id.slice(-8)} returned to you`,
-      },
+    await creditWithinTx(tx, {
+      userId: transfer.senderId,
+      amountMinor: transfer.amountMinor,
+      currency: transfer.currency,
+      type: "TRANSFER",
+      description: `Reversal: wallet transfer #${transfer.id.slice(-8)} returned to you`,
+      referenceType: "WALLET_TRANSFER_REVERSAL",
+      referenceId: transfer.id,
     });
 
     await tx.walletTransfer.update({
