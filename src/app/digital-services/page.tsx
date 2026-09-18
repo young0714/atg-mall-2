@@ -36,7 +36,7 @@ export default async function DigitalServicesPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Link href="/digital-services/airtime" className="card p-5">
             <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-atgblue-50 text-lg">📱</div>
             <h3 className="font-semibold text-navy-900">Airtime &amp; Bundles</h3>
@@ -46,6 +46,14 @@ export default async function DigitalServicesPage() {
             <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-gold-50 text-lg">🎁</div>
             <h3 className="font-semibold text-navy-900">Gift Cards</h3>
             <p className="mt-1 text-xs text-navy-500">Gift cards from top brands, delivered instantly.</p>
+          </Link>
+          <Link href="/digital-services/prepaid-esim" className="card relative p-5">
+            <span className="absolute -top-2 right-4 rounded-full bg-gold-400 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-navy-900">
+              New
+            </span>
+            <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-atgblue-50 text-lg">💳</div>
+            <h3 className="font-semibold text-navy-900">Prepaid &amp; eSIM</h3>
+            <p className="mt-1 text-xs text-navy-500">Visa &amp; Mastercard prepaid cards, and instant travel eSIMs.</p>
           </Link>
           <Link href="/digital-services/bills" className="card p-5">
             <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-atggreen-50 text-lg">🧾</div>

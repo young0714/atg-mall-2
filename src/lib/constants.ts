@@ -151,4 +151,21 @@ export const AIRTIME_COUNTRIES: AirtimeCountry[] = [
   { isoCode: "JM", name: "Jamaica", flag: "🇯🇲" },
   { isoCode: "AU", name: "Australia", flag: "🇦🇺" },
 ];
+// Reloadly's Gift Cards API has no product-type field, so prepaid cards and
+// eSIMs are identified by matching known brand/product name patterns within
+// the same gift card catalog. Keep these updated if Reloadly adds new
+// prepaid card or eSIM brands.
+const PREPAID_CARD_BRAND_KEYWORDS = ["visa", "mastercard", "rewarble"];
+const ESIM_NAME_KEYWORDS = ["esim"];
+
+export function isPrepaidCardProduct(brandName: string): boolean {
+  const b = brandName.toLowerCase();
+  return PREPAID_CARD_BRAND_KEYWORDS.some((k) => b.includes(k));
+}
+
+export function isEsimProduct(productName: string): boolean {
+  const n = productName.toLowerCase();
+  return ESIM_NAME_KEYWORDS.some((k) => n.includes(k));
+}
+
 export const CORPORATE_SITE = "https://apexterraglobal.com";

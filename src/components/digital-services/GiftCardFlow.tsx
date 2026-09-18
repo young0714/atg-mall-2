@@ -18,7 +18,20 @@ const SUPPORTED_WALLET_CURRENCIES = ["NGN", "GMD", "USD", "EUR", "GBP", "CNY"];
 
 type Step = 1 | 2 | 3 | "confirm" | "otp" | "success";
 
-export function GiftCardFlow() {
+interface GiftCardFlowProps {
+  // Narrows the fetched catalog to a subset (e.g. prepaid cards, eSIMs)
+  // instead of showing every gift card. Filtering happens client-side over
+  // the same /gift-card-products endpoint the plain Gift Cards flow uses.
+  productFilter?: (product: GiftCardProduct) => boolean;
+  // Overrides the raw Reloadly productName (which is often unpolished, e.g.
+  // "Visa Prepaid US $1 to $150") for display in the brand list and step 2.
+  displayName?: (product: GiftCardProduct) => string;
+  brandLabel?: string;
+  emptyMessage?: (countryName: string) => string;
+  emptyAction?: { label: string; href: string };
+}
+
+export function GiftCardFlow({ productFilter, displayName, brandLabel = "Brand", emptyMessage, emptyAction }: GiftCardFlowProps = {}) {
   const [step, setStep] = useState<Step>(1);
 
   const [countryQuery, setCountryQuery] = useState("");
@@ -54,7 +67,13 @@ export function GiftCardFlow() {
     fetch(`/api/v1/digital-services/gift-card-products?country=${country.isoCode}`)
       .then((r) => r.json())
       .then((body) => {
-        if (!cancelled) setProducts(Array.isArray(body?.data) ? body.data : []);
+        if (cancelled) return;
+        const all: GiftCardProduct[] = Array.isArray(body?.data) ? body.data : [];
+        const filtered = productFilter ? all.filter(productFilter) : all;
+        setProducts(filtered);
+        // Only one match (e.g. a single eSIM brand) — pick it automatically
+        // so the customer isn't forced through a one-option dropdown.
+        if (filtered.length === 1) setProduct(filtered[0]);
       })
       .catch(() => {
         if (!cancelled) setProducts([]);
@@ -65,6 +84,7 @@ export function GiftCardFlow() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [country]);
 
   const chargeCurrency = (product?.currencyCode ?? undefined) as Currency | undefined;
@@ -203,11 +223,20 @@ export function GiftCardFlow() {
           </div>
 
           <div>
-            <p className="label mb-2">Brand</p>
+            <p className="label mb-2">{brandLabel}</p>
             {productsLoading ? (
-              <p className="text-sm text-navy-400">Loading gift cards…</p>
+              <p className="text-sm text-navy-400">Loading…</p>
             ) : !products || products.length === 0 ? (
-              <p className="text-sm text-navy-400">No gift cards available for {country.name} right now.</p>
+              <div>
+                <p className="text-sm text-navy-400">
+                  {emptyMessage ? emptyMessage(country.name) : `No gift cards available for ${country.name} right now.`}
+                </p>
+                {emptyAction && (
+                  <Link href={emptyAction.href} className="mt-2 inline-block text-sm font-semibold text-atgblue-600">
+                    {emptyAction.label} →
+                  </Link>
+                )}
+              </div>
             ) : (
               <select
                 className="input"
@@ -218,11 +247,11 @@ export function GiftCardFlow() {
                 }}
               >
                 <option value="" disabled>
-                  Select a brand…
+                  Select…
                 </option>
                 {products.map((p) => (
                   <option key={p.productId} value={p.productId}>
-                    {p.productName}
+                    {displayName ? displayName(p) : p.productName}
                   </option>
                 ))}
               </select>
@@ -237,9 +266,7 @@ export function GiftCardFlow() {
 
       {step === 2 && product && (
         <>
-          <p className="text-sm text-navy-500">
-            {product.brandName} · {product.productName}
-          </p>
+          <p className="text-sm text-navy-500">{displayName ? displayName(product) : `${product.brandName} · ${product.productName}`}</p>
 
           {fixedAmounts && fixedAmounts.length > 0 ? (
             <div>
