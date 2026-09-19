@@ -32,7 +32,11 @@ export default async function CartPage() {
   // the customer's own destination currency is calculated at checkout.
   const itemsInUsd = items.map((item) => ({
     item,
-    unitPriceUsdMinor: currencyConversionService.convert(item.product.basePriceMinor, item.product.baseCurrency, "USD"),
+    unitPriceUsdMinor: currencyConversionService.convert(
+      item.product.basePriceMinor + (item.variant?.priceDeltaMinor ?? 0),
+      item.product.baseCurrency,
+      "USD",
+    ),
   }));
   const subtotalMinor = itemsInUsd.reduce((sum, { item, unitPriceUsdMinor }) => sum + unitPriceUsdMinor * item.quantity, 0);
 

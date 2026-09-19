@@ -110,7 +110,7 @@ export default async function ProductPage({
               <ProductPurchasePanel
                 productId={product.id}
                 slug={product.slug}
-                variants={product.variants.map((v) => ({ id: v.id, name: v.name }))}
+                variants={product.variants.map((v) => ({ id: v.id, name: v.name, priceDeltaMinor: v.priceDeltaMinor }))}
                 moq={product.moq}
                 baseCurrency={product.baseCurrency}
                 basePriceMinor={product.basePriceMinor}

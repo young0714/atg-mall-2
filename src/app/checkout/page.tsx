@@ -31,7 +31,7 @@ export default async function CheckoutPage({
   if (!user) redirect("/login?next=/checkout");
 
   const [cart, addresses, profile, countries] = await Promise.all([
-    db.cart.findUnique({ where: { userId: user.id }, include: { items: { include: { product: true } } } }),
+    db.cart.findUnique({ where: { userId: user.id }, include: { items: { include: { product: true, variant: true } } } }),
     db.address.findMany({ where: { userId: user.id }, orderBy: { isDefault: "desc" } }),
     db.customerProfile.findUnique({ where: { userId: user.id } }),
     getActiveDestinationCountries(),
@@ -47,7 +47,10 @@ export default async function CheckoutPage({
   // Convert each item from its OWN base currency (CNY, USD, etc.) — not
   // hardcoded as if every product were CNY-priced.
   const subtotalMinor = cart.items.reduce(
-    (sum, i) => sum + currencyConversionService.convert(i.product.basePriceMinor, i.product.baseCurrency, orderCurrency) * i.quantity,
+    (sum, i) =>
+      sum +
+      currencyConversionService.convert(i.product.basePriceMinor + (i.variant?.priceDeltaMinor ?? 0), i.product.baseCurrency, orderCurrency) *
+        i.quantity,
     0,
   );
   const serviceFeeMinor = Math.round(subtotalMinor * 0.01);

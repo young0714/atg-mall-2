@@ -87,14 +87,13 @@ class DefaultOrderService implements OrderService {
     // almost always CNY. Convert every line into the order's currency before
     // summing, so subtotal/shipping/fees/total are never a mix of currencies.
     const itemsInOrderCurrency = cart.items.map((item) => {
-      // Flat pricing: every variant sells at the product's own price —
-      // variants are a choice (color/size/etc.), not a price adjustment.
+      const priceMinorInBaseCurrency = item.product.basePriceMinor + (item.variant?.priceDeltaMinor ?? 0);
       const unitPriceMinor = currencyConversionService.convert(
-        item.product.basePriceMinor,
+        priceMinorInBaseCurrency,
         item.product.baseCurrency,
         params.currency,
       );
-      return { item, unitPriceMinor };
+      return { item, unitPriceMinor, priceMinorInBaseCurrency };
     });
 
     const subtotalMinor = sumMinor(
@@ -135,7 +134,10 @@ class DefaultOrderService implements OrderService {
       });
 
       const itemByProductVariant = new Map(
-        itemsInOrderCurrency.map(({ item, unitPriceMinor }) => [`${item.productId}_${item.variantId ?? ""}`, { item, unitPriceMinor }]),
+        itemsInOrderCurrency.map(({ item, unitPriceMinor, priceMinorInBaseCurrency }) => [
+          `${item.productId}_${item.variantId ?? ""}`,
+          { item, unitPriceMinor, priceMinorInBaseCurrency },
+        ]),
       );
 
       for (const shipment of params.shipments) {
@@ -167,7 +169,7 @@ class DefaultOrderService implements OrderService {
         for (const line of shipment.lines) {
           const matched = itemByProductVariant.get(`${line.productId}_${line.variantId ?? ""}`);
           if (!matched) continue; // defensive — every line should have a matching cart item
-          const { item, unitPriceMinor } = matched;
+          const { item, unitPriceMinor, priceMinorInBaseCurrency } = matched;
           await tx.orderItem.create({
             data: {
               orderId: order.id,
@@ -179,11 +181,11 @@ class DefaultOrderService implements OrderService {
               unitPriceMinor,
               currency: params.currency,
               fulfillmentType: fulfillmentTypeForSourcePlatform(item.product.sourcePlatform, item.product.sellerId),
-              // The product's own base price *is* its cost basis for ATG's own
+              // The variant-adjusted price *is* its cost basis for ATG's own
               // catalog; for vendor/sourced items this is a placeholder until
               // a dedicated vendor-cost field exists — not a fabricated figure,
-              // just the same number already shown as the product's price.
-              costBasisMinor: item.product.basePriceMinor,
+              // just the same number already shown as the item's price.
+              costBasisMinor: priceMinorInBaseCurrency,
               costCurrency: item.product.baseCurrency,
               sourcePlatformSnapshot: item.product.sourcePlatform,
               sellerIdSnapshot: item.product.sellerId,
