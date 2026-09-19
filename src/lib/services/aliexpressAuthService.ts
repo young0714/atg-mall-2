@@ -66,7 +66,7 @@ async function refreshAliExpressToken(refreshToken: string): Promise<void> {
 
 export async function isAliExpressConnected(): Promise<boolean> {
   const token = await db.aliExpressAuthToken.findFirst();
-  return !!token;
+  return !!token && token.refreshTokenExpiresAt.getTime() > Date.now();
 }
 
 /** Returns a currently-valid access token, refreshing first if it's about to expire. Throws if never connected. */
