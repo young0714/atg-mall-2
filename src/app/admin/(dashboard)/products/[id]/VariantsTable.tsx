@@ -55,9 +55,14 @@ export function VariantsTable({
     }
   }
 
+  // Deliberately NOT one big <form> wrapping the whole table — each row's
+  // VariantPriceEditor renders its own <form> for its inline price edit,
+  // and a <form> nested inside another <form> is invalid HTML that browsers
+  // handle unpredictably (this used to be a single wrapping form and price
+  // edits silently failed to submit because of exactly that). The bulk-
+  // delete "form" below is its own separate, unnested form instead.
   return (
-    <form action={deleteProductVariantsAction} onSubmit={handleSubmit}>
-      <input type="hidden" name="productId" value={productId} />
+    <div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-sm">
           <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
@@ -93,7 +98,6 @@ export function VariantsTable({
                         isSelected ? "border-atgblue-600 bg-atgblue-600" : "border-navy-300"
                       }`}
                     />
-                    {isSelected && <input type="hidden" name="variantIds" value={v.id} />}
                   </td>
                   <td className="p-2 font-medium text-navy-800">{v.name}</td>
                   <td className="p-2 text-navy-500">{v.sku ?? "—"}</td>
@@ -116,13 +120,19 @@ export function VariantsTable({
           </tbody>
         </table>
       </div>
-      <SubmitButton
-        disabled={selected.size === 0}
-        className="btn-outline btn-sm mt-3 !text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        Delete selected {selected.size > 0 ? `(${selected.size})` : ""}
-      </SubmitButton>
-    </form>
+      <form action={deleteProductVariantsAction} onSubmit={handleSubmit} className="mt-3">
+        <input type="hidden" name="productId" value={productId} />
+        {Array.from(selected).map((id) => (
+          <input key={id} type="hidden" name="variantIds" value={id} />
+        ))}
+        <SubmitButton
+          disabled={selected.size === 0}
+          className="btn-outline btn-sm !text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Delete selected {selected.size > 0 ? `(${selected.size})` : ""}
+        </SubmitButton>
+      </form>
+    </div>
   );
 }
 
@@ -148,20 +158,23 @@ function VariantPriceEditor({
   }
 
   return (
-    <form action={updateVariantPriceAction} className="flex items-center gap-1.5">
-      <input type="hidden" name="productId" value={productId} />
-      <input type="hidden" name="variantId" value={variantId} />
-      <input
-        type="number"
-        name="price"
-        defaultValue={priceMinor}
-        autoFocus
-        className="w-24 rounded-lg border border-navy-200 px-2 py-1 text-sm"
-      />
-      <SubmitButton className="btn-primary btn-sm !px-2 !py-1">Save</SubmitButton>
-      <button type="button" onClick={() => setEditing(false)} className="text-xs text-navy-400 hover:underline">
-        Cancel
-      </button>
-    </form>
+    <div>
+      <form action={updateVariantPriceAction} className="flex items-center gap-1.5">
+        <input type="hidden" name="productId" value={productId} />
+        <input type="hidden" name="variantId" value={variantId} />
+        <input
+          type="number"
+          name="price"
+          defaultValue={priceMinor}
+          autoFocus
+          className="w-24 rounded-lg border border-navy-200 px-2 py-1 text-sm"
+        />
+        <SubmitButton className="btn-primary btn-sm !px-2 !py-1">Save</SubmitButton>
+        <button type="button" onClick={() => setEditing(false)} className="text-xs text-navy-400 hover:underline">
+          Cancel
+        </button>
+      </form>
+      <p className="mt-0.5 text-xs text-navy-400">Minor units — e.g. {priceMinor} = {formatMoney(priceMinor, currency)}</p>
+    </div>
   );
 }
