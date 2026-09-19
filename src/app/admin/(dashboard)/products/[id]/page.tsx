@@ -16,6 +16,7 @@ import {
   removeProductVideoAction,
 } from "./actions";
 import { VariantsTable } from "./VariantsTable";
+import { CopyLinkButton } from "./CopyLinkButton";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Admin — Edit Product" };
@@ -81,6 +82,12 @@ export default async function AdminProductDetailPage({
               ))}
             </Select>
           </Field>
+          {product.sourceUrl && (
+            <div className="sm:col-span-2">
+              <p className="label mb-2">Original supplier link</p>
+              <CopyLinkButton url={product.sourceUrl} />
+            </div>
+          )}
           <Field label="Affiliate URL" htmlFor="affiliateUrl" hint="Only used when Source = Affiliate">
             <Input id="affiliateUrl" name="affiliateUrl" type="url" defaultValue={product.affiliateUrl ?? ""} />
           </Field>
