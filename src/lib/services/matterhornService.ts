@@ -124,7 +124,11 @@ class LiveMatterhornService implements MatterhornService {
 
     const weightGrams = data.weight != null ? Math.round(Number(data.weight)) : null;
 
-    const images = data.images ?? [];
+    // Their API returns image URLs as plain http:// — upgraded to https so
+    // they actually match the https-only remotePatterns entry in
+    // next.config.mjs (an http:// image URL silently fails to render
+    // otherwise, since Next's image allowlist is protocol-specific).
+    const images = (data.images ?? []).map((url) => url.replace(/^http:\/\//, "https://"));
 
     return {
       id: String(data.id),
