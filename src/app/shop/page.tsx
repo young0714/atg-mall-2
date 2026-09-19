@@ -97,29 +97,11 @@ export default async function ShopPage({
 
             <div>
               <p className="label mb-2">Categories</p>
-              <ul className="flex gap-2 overflow-x-auto pb-1 text-sm lg:hidden">
-                <li className="shrink-0">
-                  <a
-                    href="/shop"
-                    className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 ${!category ? "bg-navy-900 text-white" : "bg-sand-100 text-navy-600 hover:bg-sand-200"}`}
-                  >
-                    All categories
-                  </a>
-                </li>
-                {categories.map((c) => (
-                  <li key={c.id} className="shrink-0">
-                    <a
-                      href={`/shop?category=${c.slug}`}
-                      className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 ${category === c.slug ? "bg-navy-900 text-white" : "bg-sand-100 text-navy-600 hover:bg-sand-200"}`}
-                    >
-                      {c.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-
-              {/* Desktop: a real nested tree, expanded down to whichever category is active */}
-              <ul className="hidden text-sm lg:block lg:space-y-1">
+              {/* Same nested tree on every screen size — a mobile-only flat pill
+                  row used to sit here, but it listed parent and child
+                  categories side by side with no indication either way,
+                  which just looked like nesting was broken on phones. */}
+              <ul className="space-y-1 text-sm">
                 <li>
                   <a
                     href="/shop"
