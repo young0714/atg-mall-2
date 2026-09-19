@@ -318,6 +318,14 @@ model Product {
   sourceUrl      String?
   sourceProductId String?
 
+  // The supplier's own price (always USD minor units) at the moment this was
+  // imported — captured once, frozen forever, admin-facing only (never
+  // shown to customers). Null for anything not imported through the
+  // CJ/AliExpress batch importer, including products created before this
+  // field existed — there's no way to retroactively know what a supplier
+  // charged for an import that already happened.
+  supplierCostMinor Int?
+
   // Set when sourcePlatform = AFFILIATE: an approved affiliate program's
   // tracking link and display name. Affiliate products never go through
   // cart/checkout — see ProductPurchasePanel and orderService guards.
@@ -389,6 +397,10 @@ model ProductVariant {
   name           String  // e.g. "Color / Size"
   sku            String?
   priceDeltaMinor Int    @default(0) // added to base price, same currency as product
+  // This variant's own supplier price (USD minor units) at import time — see
+  // Product.supplierCostMinor for the same reasoning. Null for anything not
+  // imported, or imported before this field existed.
+  supplierCostMinor Int?
   stock          Int     @default(999)
   attributes     Json    // { color: "Black", size: "XL" }
 

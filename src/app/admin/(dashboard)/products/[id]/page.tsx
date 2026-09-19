@@ -87,7 +87,16 @@ export default async function AdminProductDetailPage({
           <Field label="Affiliate provider name" htmlFor="affiliateProvider" hint="e.g. Amazon, Jumia — shown on the Buy button">
             <Input id="affiliateProvider" name="affiliateProvider" defaultValue={product.affiliateProvider ?? ""} />
           </Field>
-          <Field label="Base price (minor units)" htmlFor="basePriceMinor" required hint="e.g. 3500 = ¥35.00">
+          <Field
+            label="Base price (minor units)"
+            htmlFor="basePriceMinor"
+            required
+            hint={
+              product.supplierCostMinor != null
+                ? `Supplier price at import: ${formatMoney(product.supplierCostMinor, "USD")}`
+                : "e.g. 3500 = ¥35.00"
+            }
+          >
             <Input id="basePriceMinor" name="basePriceMinor" type="number" defaultValue={product.basePriceMinor} required />
           </Field>
           <Field label="Base currency" htmlFor="baseCurrency" required>

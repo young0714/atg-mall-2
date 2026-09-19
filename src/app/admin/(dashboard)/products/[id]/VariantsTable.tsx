@@ -13,6 +13,7 @@ interface VariantRow {
   stock: number;
   attributes: unknown;
   priceDeltaMinor: number;
+  supplierCostMinor: number | null;
 }
 
 export function VariantsTable({
@@ -103,6 +104,9 @@ export function VariantsTable({
                       priceMinor={basePriceMinor + v.priceDeltaMinor}
                       currency={baseCurrency}
                     />
+                    {v.supplierCostMinor != null && (
+                      <p className="mt-0.5 text-xs text-navy-400">Supplier: {formatMoney(v.supplierCostMinor, "USD")}</p>
+                    )}
                   </td>
                   <td className="p-2 text-navy-500">{v.stock}</td>
                   <td className="p-2 text-navy-400">{JSON.stringify(v.attributes)}</td>

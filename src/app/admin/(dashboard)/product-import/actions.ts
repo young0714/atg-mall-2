@@ -224,6 +224,7 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
           sourcePlatform: draft.source === "CJ" ? "CJDROPSHIPPING" : "ALIEXPRESS",
           sourceUrl: fresh.sourceUrl,
           sourceProductId: fresh.externalId,
+          supplierCostMinor: fresh.suggestedPriceMinorUsd,
           storeId: store?.id,
           videoUrl: draft.includeVideo ? fresh.videoUrl : null,
           images: { create: images.slice(0, 8).map((url, i) => ({ url, sortOrder: i })) },
@@ -234,6 +235,7 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
                   sku: v.sku ?? undefined,
                   attributes: v.attributes,
                   priceDeltaMinor: (draft.variantPrices[v.externalId] ?? draft.basePriceMinor) - draft.basePriceMinor,
+                  supplierCostMinor: v.supplierPriceMinorUsd,
                 })),
               }
             : undefined,

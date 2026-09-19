@@ -458,7 +458,10 @@ function EditPanel({
                 const removed = draft.removedVariantIds.has(v.externalId);
                 return (
                   <li key={v.externalId} className="flex items-center justify-between gap-2">
-                    <span className={cn("text-navy-600", removed && "text-navy-300 line-through")}>{v.name}</span>
+                    <div>
+                      <span className={cn("text-navy-600", removed && "text-navy-300 line-through")}>{v.name}</span>
+                      <p className="text-xs text-navy-400">Supplier: {formatMoney(v.supplierPriceMinorUsd, "USD")}</p>
+                    </div>
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
