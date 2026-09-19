@@ -1,4 +1,5 @@
 import "server-only";
+import { slugify } from "@/lib/utils";
 
 /**
  * CjDropshippingService — a REAL, LIVE integration against CJdropshipping's
@@ -183,7 +184,10 @@ class LiveCjDropshippingService implements CjDropshippingService {
       sellPriceMinorUsd: Math.round(parseFloat(p.sellPrice) * 100),
       categoryName: p.threeCategoryName ?? null,
       warehouseInventory: p.warehouseInventoryNum ?? null,
-      sourceUrl: `https://cjdropshipping.com/product/${p.id}.html`,
+      // CJ's real product URLs are /product/{seo-slug}-p-{pid}.html — the
+      // slug is derived from the name to match that pattern; a bare pid
+      // (what this used to be) 404s on CJ's site.
+      sourceUrl: `https://cjdropshipping.com/product/${slugify(p.nameEn)}-p-${p.id}.html`,
     }));
   }
 
@@ -222,7 +226,7 @@ class LiveCjDropshippingService implements CjDropshippingService {
       sellPriceMinorUsd: Math.round(parseFloat(data.sellPrice) * 100),
       categoryName: data.categoryName ?? null,
       warehouseInventory: null,
-      sourceUrl: `https://cjdropshipping.com/product/${data.pid}.html`,
+      sourceUrl: `https://cjdropshipping.com/product/${slugify(data.productNameEn)}-p-${data.pid}.html`,
       description: data.description ? stripHtml(data.description) : null,
       images: data.productImageSet?.length ? data.productImageSet : [data.bigImage],
       weightGrams: data.productWeight ? Math.round(parseFloat(data.productWeight)) : null,
