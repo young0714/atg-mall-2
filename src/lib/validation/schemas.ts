@@ -202,6 +202,7 @@ export const categorySchema = z.object({
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/),
   description: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
+  parentId: z.string().optional().or(z.literal("")),
 });
 export type CategoryInput = z.infer<typeof categorySchema>;
 

@@ -6,6 +6,7 @@ import { Container, Section } from "@/components/ui/Section";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Input } from "@/components/ui/Form";
 import { SortSelect } from "@/components/shop/SortSelect";
+import { buildCategoryTree, collectDescendantIds, getActivePath, type CategoryTreeNode } from "@/lib/categoryTree";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -36,6 +37,11 @@ export default async function ShopPage({
   const destination = await getDestination();
   const { q, category, wholesale, sort } = searchParams;
 
+  const categories = await db.category.findMany({ orderBy: { name: "asc" } });
+  const categoryTree = buildCategoryTree(categories);
+  const activeCategory = categories.find((c) => c.slug === category);
+  const activeCategoryPath = activeCategory ? getActivePath(categories, activeCategory.id) : null;
+
   const where: Prisma.ProductWhereInput = { isActive: true };
   if (q) {
     where.OR = [
@@ -43,7 +49,10 @@ export default async function ShopPage({
       { description: { contains: q, mode: "insensitive" } },
     ];
   }
-  if (category) where.category = { slug: category };
+  // Selecting a category shows its own products AND every descendant
+  // category's products (e.g. picking "Shoes" also shows "Sneakers",
+  // "Boots", etc.) — not just an exact match.
+  if (activeCategory) where.categoryId = { in: collectDescendantIds(categories, activeCategory.id) };
   if (wholesale === "1") where.isWholesale = true;
 
   const orderBy: Prisma.ProductOrderByWithRelationInput =
@@ -55,17 +64,13 @@ export default async function ShopPage({
           ? { avgRating: "desc" }
           : { createdAt: "desc" };
 
-  const [products, categories] = await Promise.all([
-    db.product.findMany({
-      where,
-      include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
-      orderBy,
-      take: 48,
-    }),
-    db.category.findMany({ orderBy: { name: "asc" } }),
-  ]);
+  const products = await db.product.findMany({
+    where,
+    include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+    orderBy,
+    take: 48,
+  });
 
-  const activeCategory = categories.find((c) => c.slug === category);
   const productCards = await Promise.all(products.map((p) => toProductCard(p, destination)));
 
   return (
@@ -92,24 +97,39 @@ export default async function ShopPage({
 
             <div>
               <p className="label mb-2">Categories</p>
-              <ul className="flex gap-2 overflow-x-auto pb-1 text-sm lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
-                <li className="shrink-0 lg:shrink">
+              <ul className="flex gap-2 overflow-x-auto pb-1 text-sm lg:hidden">
+                <li className="shrink-0">
                   <a
                     href="/shop"
-                    className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 lg:rounded-lg lg:px-3 ${!category ? "bg-navy-900 text-white" : "bg-sand-100 text-navy-600 hover:bg-sand-200 lg:bg-transparent lg:hover:bg-sand-100"}`}
+                    className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 ${!category ? "bg-navy-900 text-white" : "bg-sand-100 text-navy-600 hover:bg-sand-200"}`}
                   >
                     All categories
                   </a>
                 </li>
                 {categories.map((c) => (
-                  <li key={c.id} className="shrink-0 lg:shrink">
+                  <li key={c.id} className="shrink-0">
                     <a
                       href={`/shop?category=${c.slug}`}
-                      className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 lg:rounded-lg lg:px-3 ${category === c.slug ? "bg-navy-900 text-white" : "bg-sand-100 text-navy-600 hover:bg-sand-200 lg:bg-transparent lg:hover:bg-sand-100"}`}
+                      className={`block whitespace-nowrap rounded-full px-3.5 py-1.5 ${category === c.slug ? "bg-navy-900 text-white" : "bg-sand-100 text-navy-600 hover:bg-sand-200"}`}
                     >
                       {c.name}
                     </a>
                   </li>
+                ))}
+              </ul>
+
+              {/* Desktop: a real nested tree, expanded down to whichever category is active */}
+              <ul className="hidden text-sm lg:block lg:space-y-1">
+                <li>
+                  <a
+                    href="/shop"
+                    className={`block rounded-lg px-3 py-1.5 ${!category ? "bg-navy-900 text-white" : "text-navy-600 hover:bg-sand-100"}`}
+                  >
+                    All categories
+                  </a>
+                </li>
+                {categoryTree.map((node) => (
+                  <CategoryNavItem key={node.id} node={node} depth={0} activeSlug={category} activePath={activeCategoryPath} />
                 ))}
               </ul>
             </div>
@@ -151,5 +171,39 @@ export default async function ShopPage({
       </Container>
     </Section>
     </PullToRefresh>
+  );
+}
+
+function CategoryNavItem({
+  node,
+  depth,
+  activeSlug,
+  activePath,
+}: {
+  node: CategoryTreeNode;
+  depth: number;
+  activeSlug: string | undefined;
+  activePath: Set<string> | null;
+}) {
+  const isActive = node.slug === activeSlug;
+  const isOnActivePath = activePath?.has(node.id) ?? false;
+
+  return (
+    <li>
+      <a
+        href={`/shop?category=${node.slug}`}
+        style={{ paddingLeft: `${0.75 + depth * 0.9}rem` }}
+        className={`block rounded-lg py-1.5 pr-3 ${isActive ? "bg-navy-900 text-white" : "text-navy-600 hover:bg-sand-100"}`}
+      >
+        {node.name}
+      </a>
+      {node.children.length > 0 && isOnActivePath && (
+        <ul className="space-y-1">
+          {node.children.map((child) => (
+            <CategoryNavItem key={child.id} node={child} depth={depth + 1} activeSlug={activeSlug} activePath={activePath} />
+          ))}
+        </ul>
+      )}
+    </li>
   );
 }
