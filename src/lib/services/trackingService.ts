@@ -1,17 +1,22 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { getDhlTracking } from "./dhlTrackingService";
 
 /**
  * TrackingService — resolves an ATG tracking number (e.g. ATG-NG-2026000123)
  * to its shipment, packages, and event timeline.
  *
- * Today this reads ATG's own `Shipment`/`TrackingEvent` tables, which are
- * populated by warehouse/shipping staff via the admin console (see
- * warehouseService.ts). The interface is intentionally shaped so a future
- * integration with an external courier/freight-forwarder tracking API can
- * populate the same `TrackingEvent` rows (e.g. via a webhook or polling job)
- * without changing this service's callers.
+ * Primarily reads ATG's own `Shipment`/`TrackingEvent` tables, populated by
+ * warehouse/shipping staff via the admin console (see warehouseService.ts).
+ * Manual entries are always the system of record — nothing here writes
+ * courier data back to the DB. When a shipment is linked to a live-API
+ * carrier (Shipment.carrier, e.g. DHL) and its manual entries have gone
+ * stale (see STALE_AFTER_MS below), this falls back to a live courier
+ * lookup for just that one request's response, so a customer never sees a
+ * "no updates yet" page just because staff haven't logged anything recently.
  */
+
+const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 export interface TrackingResult {
   trackingNumber: string;
   status: string;
@@ -44,26 +49,47 @@ class DefaultTrackingService implements TrackingService {
       include: {
         trackingEvents: { orderBy: { occurredAt: "desc" } },
         packages: { include: { package: true } },
+        carrier: true,
       },
     });
     if (!shipment) return null;
 
     const latestEvent = shipment.trackingEvents[0];
+    const isStale = !latestEvent || Date.now() - latestEvent.occurredAt.getTime() > STALE_AFTER_MS;
+
+    let liveStatus = shipment.status as string;
+    let liveLocation: string | null = latestEvent?.location ?? shipment.origin;
+    let liveTimeline = shipment.trackingEvents.map((e) => ({
+      status: e.status,
+      location: e.location,
+      description: e.description,
+      occurredAt: e.occurredAt,
+    }));
+
+    if (
+      isStale &&
+      shipment.status !== "DELIVERED" &&
+      shipment.carrier?.code === "DHL" &&
+      shipment.carrier.isLiveApiEnabled &&
+      shipment.carrierTrackingNumber
+    ) {
+      const dhl = await getDhlTracking(shipment.carrierTrackingNumber);
+      if (dhl) {
+        liveStatus = dhl.status;
+        liveLocation = dhl.currentLocation ?? liveLocation;
+        liveTimeline = dhl.timeline;
+      }
+    }
 
     return {
       trackingNumber: shipment.trackingNumber,
-      status: shipment.status,
+      status: liveStatus,
       method: shipment.method,
       destinationCountry: shipment.destinationCountryIso,
       destinationCity: shipment.destinationCity,
       estimatedDeliveryAt: shipment.estimatedDeliveryAt,
-      currentLocation: latestEvent?.location ?? shipment.origin,
-      timeline: shipment.trackingEvents.map((e) => ({
-        status: e.status,
-        location: e.location,
-        description: e.description,
-        occurredAt: e.occurredAt,
-      })),
+      currentLocation: liveLocation,
+      timeline: liveTimeline,
       packages: shipment.packages.map((sp) => ({
         packageCode: sp.package.packageCode,
         status: sp.package.status,

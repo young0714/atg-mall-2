@@ -77,6 +77,18 @@ export async function createShipmentAction(formData: FormData) {
   redirect(`/admin/shipments/${shipment.id}`);
 }
 
+/** Optional — lets staff link a shipment to a courier once it's actually handed off, enabling trackingService's live-tracking fallback for it. */
+export async function setShipmentCarrierAction(formData: FormData) {
+  await requirePermission(PERMISSIONS.MANAGE_SHIPMENTS);
+  const shipmentId = String(formData.get("shipmentId"));
+  const carrierId = String(formData.get("carrierId") || "") || null;
+  const carrierTrackingNumber = String(formData.get("carrierTrackingNumber") || "").trim() || null;
+
+  await db.shipment.update({ where: { id: shipmentId }, data: { carrierId, carrierTrackingNumber } });
+
+  revalidatePath(`/admin/shipments/${shipmentId}`);
+}
+
 export async function addTrackingEventAction(formData: FormData) {
   await requirePermission(PERMISSIONS.MANAGE_SHIPMENTS);
   const shipmentId = String(formData.get("shipmentId"));

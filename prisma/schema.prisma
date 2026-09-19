@@ -996,6 +996,15 @@ model Shipment {
   status        ShipmentStatus @default(READY_TO_SHIP)
   estimatedDeliveryAt DateTime?
   shippedAt     DateTime?
+
+  // Optional — set by warehouse staff once handed to an external courier.
+  // Lets trackingService fall back to that courier's live tracking API when
+  // ATG's own manually-entered TrackingEvents have gone stale. Never
+  // required: a shipment with no carrier just relies on manual entries,
+  // same as before this existed.
+  carrierId              String?
+  carrier                Carrier? @relation(fields: [carrierId], references: [id])
+  carrierTrackingNumber  String?
   deliveredAt   DateTime?
   totalWeightGrams Int @default(0)
   notes         String?
@@ -1217,6 +1226,7 @@ model Carrier {
 
   rateCards      ShippingRateCard[]
   orderShipments OrderShipment[]
+  shipments      Shipment[]
 
   @@index([isActive])
 }
