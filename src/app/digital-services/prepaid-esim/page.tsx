@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireUser } from "@/lib/auth/current-user";
 import { Container, Section } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 
 export const metadata: Metadata = { title: "Prepaid & eSIM" };
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ export default async function PrepaidEsimPage() {
   await requireUser();
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container className="max-w-2xl">
         <Link href="/digital-services" className="text-sm text-atgblue-600">
@@ -34,5 +36,6 @@ export default async function PrepaidEsimPage() {
         </div>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

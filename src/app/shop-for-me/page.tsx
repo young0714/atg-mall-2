@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { STORE_COUNTRY_LABELS, STORE_COUNTRY_FLAGS } from "@/lib/store";
 import { submitShopForMeAction } from "./actions";
@@ -36,6 +37,7 @@ export default async function ShopForMePage({
     : null;
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container className="max-w-2xl">
         <SectionHeading
@@ -94,5 +96,6 @@ export default async function ShopForMePage({
         </form>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

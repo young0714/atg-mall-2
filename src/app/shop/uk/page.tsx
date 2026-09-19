@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { StoreCard } from "@/components/shop/StoreCard";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -37,6 +38,7 @@ export default async function ShopFromUkPage() {
   });
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container>
         <SectionHeading
@@ -65,5 +67,6 @@ export default async function ShopFromUkPage() {
         )}
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

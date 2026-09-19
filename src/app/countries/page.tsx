@@ -1,4 +1,5 @@
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { getActiveDestinationCountries } from "@/lib/services/destinationCountryService";
 import { isoToFlagEmoji } from "@/lib/constants";
 import Link from "next/link";
@@ -33,6 +34,7 @@ export default async function SupportedCountriesPage() {
   }
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container className="max-w-4xl">
         <SectionHeading
@@ -76,5 +78,6 @@ export default async function SupportedCountriesPage() {
         </div>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

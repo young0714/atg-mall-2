@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -67,6 +68,7 @@ export default async function InternationalStoresPage() {
   const countMap = Object.fromEntries(storeCounts.map((c) => [c.country, c._count._all]));
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container>
         <SectionHeading
@@ -90,5 +92,6 @@ export default async function InternationalStoresPage() {
         </div>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

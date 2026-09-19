@@ -1,6 +1,7 @@
 import { oneSixEightEightProductService } from "@/lib/services/oneSixEightEightProductService";
 import { RemoteListingGrid } from "@/components/shop/RemoteListingGrid";
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default async function OneSixEightEightPage({
   const results = await oneSixEightEightProductService.search(searchParams.q ?? "");
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container>
         <SectionHeading
@@ -37,5 +39,6 @@ export default async function OneSixEightEightPage({
         </div>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

@@ -6,6 +6,7 @@ import { walletService } from "@/lib/services/walletService";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { Container, Section } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { StatusBadge } from "@/components/ui/Badge";
 import { RedeemCodeReveal } from "@/components/digital-services/RedeemCodeReveal";
 
@@ -23,6 +24,7 @@ export default async function DigitalServicesPage() {
   });
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container className="max-w-2xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -92,5 +94,6 @@ export default async function DigitalServicesPage() {
         </div>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

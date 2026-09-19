@@ -1,6 +1,7 @@
 import { taobaoProductService } from "@/lib/services/taobaoProductService";
 import { RemoteListingGrid } from "@/components/shop/RemoteListingGrid";
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default async function TaobaoPage({
   const results = await taobaoProductService.search(searchParams.q ?? "");
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container>
         <SectionHeading
@@ -37,5 +39,6 @@ export default async function TaobaoPage({
         </div>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

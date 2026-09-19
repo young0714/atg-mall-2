@@ -1,4 +1,5 @@
 import { Container, Section, SectionHeading } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Field, Input, Select, Textarea } from "@/components/ui/Form";
 import { submitSourcingRequestAction } from "./actions";
 import { getDestination } from "@/lib/destination";
@@ -31,6 +32,7 @@ export default async function SourceAProductPage({
   const [destination, countries] = await Promise.all([getDestination(), getActiveDestinationCountries()]);
 
   return (
+    <PullToRefresh>
     <Section className="!py-12">
       <Container className="max-w-2xl">
         <SectionHeading
@@ -79,5 +81,6 @@ export default async function SourceAProductPage({
         </form>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }
