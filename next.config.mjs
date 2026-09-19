@@ -9,6 +9,8 @@ const nextConfig = {
       { protocol: "https", hostname: "**.cjdropshipping.com" },
       // AliExpress's product image CDN — used by imported ALIEXPRESS products.
       { protocol: "https", hostname: "**.alicdn.com" },
+      // Matterhorn Wholesale's product image host — used by imported MATTERHORN products.
+      { protocol: "https", hostname: "matterhorn-wholesale.com" },
       // Vercel Blob (admin-uploaded product images/videos) — store subdomain is generated per-project.
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
     ],
