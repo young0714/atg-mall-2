@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { getDhlTracking } from "./dhlTrackingService";
+import { getFedexTracking } from "./fedexTrackingService";
 
 /**
  * TrackingService — resolves an ATG tracking number (e.g. ATG-NG-2026000123)
@@ -10,13 +11,22 @@ import { getDhlTracking } from "./dhlTrackingService";
  * warehouse/shipping staff via the admin console (see warehouseService.ts).
  * Manual entries are always the system of record — nothing here writes
  * courier data back to the DB. When a shipment is linked to a live-API
- * carrier (Shipment.carrier, e.g. DHL) and its manual entries have gone
- * stale (see STALE_AFTER_MS below), this falls back to a live courier
+ * carrier (Shipment.carrier, e.g. DHL/FedEx) and its manual entries have
+ * gone stale (see STALE_AFTER_MS below), this falls back to a live courier
  * lookup for just that one request's response, so a customer never sees a
  * "no updates yet" page just because staff haven't logged anything recently.
  */
 
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
+
+const LIVE_TRACKING_BY_CARRIER_CODE: Record<string, (trackingNumber: string) => Promise<{
+  status: string;
+  currentLocation: string | null;
+  timeline: { status: string; location: string | null; description: string; occurredAt: Date }[];
+} | null>> = {
+  DHL: getDhlTracking,
+  FEDEX: getFedexTracking,
+};
 export interface TrackingResult {
   trackingNumber: string;
   status: string;
@@ -66,18 +76,13 @@ class DefaultTrackingService implements TrackingService {
       occurredAt: e.occurredAt,
     }));
 
-    if (
-      isStale &&
-      shipment.status !== "DELIVERED" &&
-      shipment.carrier?.code === "DHL" &&
-      shipment.carrier.isLiveApiEnabled &&
-      shipment.carrierTrackingNumber
-    ) {
-      const dhl = await getDhlTracking(shipment.carrierTrackingNumber);
-      if (dhl) {
-        liveStatus = dhl.status;
-        liveLocation = dhl.currentLocation ?? liveLocation;
-        liveTimeline = dhl.timeline;
+    const liveProvider = shipment.carrier?.code ? LIVE_TRACKING_BY_CARRIER_CODE[shipment.carrier.code] : undefined;
+    if (isStale && shipment.status !== "DELIVERED" && liveProvider && shipment.carrier?.isLiveApiEnabled && shipment.carrierTrackingNumber) {
+      const live = await liveProvider(shipment.carrierTrackingNumber);
+      if (live) {
+        liveStatus = live.status;
+        liveLocation = live.currentLocation ?? liveLocation;
+        liveTimeline = live.timeline;
       }
     }
 
