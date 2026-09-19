@@ -5,7 +5,14 @@ import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { cjDropshippingService } from "@/lib/services/cjDropshippingService";
 import { aliexpressService } from "@/lib/services/aliexpressService";
-import { cjToImportable, aliexpressToImportable, type ImportableProduct, type ImportSource } from "@/lib/services/importTypes";
+import { matterhornService } from "@/lib/services/matterhornService";
+import {
+  cjToImportable,
+  aliexpressToImportable,
+  matterhornToImportable,
+  type ImportableProduct,
+  type ImportSource,
+} from "@/lib/services/importTypes";
 import { revalidatePath } from "next/cache";
 
 export async function searchCjProductsAction(query: string): Promise<ImportableProduct[]> {
@@ -40,6 +47,14 @@ export async function lookupProductAction(
       const detail = await cjDropshippingService.getById(idOrQuery);
       if (!detail) return { ok: false, error: "That CJ product wasn't found — it may have been removed." };
       return { ok: true, product: cjToImportable(detail) };
+    }
+
+    if (source === "MATTERHORN") {
+      const productId = matterhornService.parseProductId(idOrQuery);
+      if (!productId) return { ok: false, error: "Couldn't find a product ID in that — paste the Matterhorn product link or its numeric ID." };
+      const detail = await matterhornService.getById(productId);
+      if (!detail) return { ok: false, error: "That Matterhorn product wasn't found — check the link or ID." };
+      return { ok: true, product: matterhornToImportable(detail) };
     }
 
     const productId = aliexpressService.parseProductId(idOrQuery);
@@ -198,21 +213,35 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
       // trusting a client-held copy) also means a draft staged days ago and
       // never reopened for editing still imports with the supplier's
       // current images/variants, not a stale snapshot.
-      const fresh: ImportableProduct =
-        draft.source === "CJ"
-          ? await (async () => {
-              const d = await cjDropshippingService.getById(draft.externalId);
-              if (!d) throw new Error("Product no longer available from CJ");
-              return cjToImportable(d);
-            })()
-          : await (async () => {
-              const d = await aliexpressService.getById(draft.externalId);
-              if (!d) throw new Error("Product no longer available from AliExpress");
-              return aliexpressToImportable(d);
-            })();
+      const fresh: ImportableProduct = await (async () => {
+        if (draft.source === "CJ") {
+          const d = await cjDropshippingService.getById(draft.externalId);
+          if (!d) throw new Error("Product no longer available from CJ");
+          return cjToImportable(d);
+        }
+        if (draft.source === "MATTERHORN") {
+          const d = await matterhornService.getById(draft.externalId);
+          if (!d) throw new Error("Product no longer available from Matterhorn");
+          return matterhornToImportable(d);
+        }
+        const d = await aliexpressService.getById(draft.externalId);
+        if (!d) throw new Error("Product no longer available from AliExpress");
+        return aliexpressToImportable(d);
+      })();
 
       const images = fresh.images.filter((url) => !draft.removedImageUrls.includes(url));
       const variants = fresh.variants.filter((v) => !draft.removedVariantExternalIds.includes(v.externalId));
+
+      const SOURCE_PLATFORM_BY_IMPORT_SOURCE = {
+        CJ: "CJDROPSHIPPING",
+        ALIEXPRESS: "ALIEXPRESS",
+        MATTERHORN: "MATTERHORN",
+      } as const;
+      const SOURCE_DISPLAY_NAME = {
+        CJ: "CJdropshipping",
+        ALIEXPRESS: "AliExpress",
+        MATTERHORN: "Matterhorn",
+      } as const;
 
       const store =
         draft.source === "CJ" ? await db.store.findUnique({ where: { slug: "cjdropshipping" } }) : null;
@@ -227,7 +256,7 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
           baseCurrency: "USD",
           weightGrams: draft.weightGrams,
           isFeatured: draft.isFeatured,
-          sourcePlatform: draft.source === "CJ" ? "CJDROPSHIPPING" : "ALIEXPRESS",
+          sourcePlatform: SOURCE_PLATFORM_BY_IMPORT_SOURCE[draft.source],
           sourceUrl: fresh.sourceUrl,
           sourceProductId: fresh.externalId,
           supplierCostMinor: fresh.suggestedPriceMinorUsd,
@@ -248,7 +277,7 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
         },
       });
 
-      let auditSummary = `Imported "${product.name}" from ${draft.source === "CJ" ? "CJdropshipping" : "AliExpress"} (batch import)`;
+      let auditSummary = `Imported "${product.name}" from ${SOURCE_DISPLAY_NAME[draft.source]} (batch import)`;
       if (draft.source === "CJ") {
         const addedToCjMyProducts = await cjDropshippingService.addToMyProduct(draft.externalId);
         auditSummary += addedToCjMyProducts ? " and added to CJ My Products" : " (could not register in CJ My Products)";
@@ -257,7 +286,7 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
       await db.auditLog.create({
         data: {
           actorId: staff.id,
-          action: draft.source === "CJ" ? "PRODUCT_IMPORTED_FROM_CJ" : "PRODUCT_IMPORTED_FROM_ALIEXPRESS",
+          action: `PRODUCT_IMPORTED_FROM_${draft.source}`,
           entityType: "Product",
           entityId: product.id,
           summary: auditSummary,

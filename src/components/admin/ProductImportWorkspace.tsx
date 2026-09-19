@@ -274,7 +274,11 @@ export function ProductImportWorkspace({
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Paste an AliExpress product link or ID, e.g. https://www.aliexpress.com/item/1005001234567890.html"
+                  placeholder={
+                    source === "MATTERHORN"
+                      ? "Paste a Matterhorn product link or ID, e.g. https://matterhorn-wholesale.com/dress_prod_id-154543.htm"
+                      : "Paste an AliExpress product link or ID, e.g. https://www.aliexpress.com/item/1005001234567890.html"
+                  }
                   className="flex-1"
                 />
                 <button type="submit" disabled={lookingUp} className="btn-primary shrink-0">
@@ -491,7 +495,7 @@ function EditPanel({
       <section className="card p-5">
         <h1 className="mb-1 text-xl font-display font-bold text-navy-900">Edit Before Staging</h1>
         <p className="mb-4 text-sm text-navy-500">
-          {product.source === "CJ" ? "CJ" : "AliExpress"} ID {product.externalId}
+          {product.source === "CJ" ? "CJ" : product.source === "MATTERHORN" ? "Matterhorn" : "AliExpress"} ID {product.externalId}
         </p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -10,8 +10,9 @@
 
 import type { CjProductDetail } from "./cjDropshippingService";
 import type { AliExpressProductDetail } from "./aliexpressService";
+import type { MatterhornProduct } from "./matterhornService";
 
-export type ImportSource = "CJ" | "ALIEXPRESS";
+export type ImportSource = "CJ" | "ALIEXPRESS" | "MATTERHORN";
 
 export interface ImportableVariant {
   externalId: string;
@@ -85,6 +86,33 @@ export function aliexpressToImportable(d: AliExpressProductDetail): ImportablePr
     sourceUrl: d.sourceUrl,
     // AliExpress's Dropshipping API doesn't expose a usable/resolvable video
     // URL in what's available to this app — see aliexpressService.ts.
+    videoUrl: null,
+  };
+}
+
+export function matterhornToImportable(d: MatterhornProduct): ImportableProduct {
+  return {
+    source: "MATTERHORN",
+    externalId: d.id,
+    name: d.name,
+    imageUrl: d.imageUrl,
+    images: d.images,
+    description: d.description,
+    suggestedPriceMinorUsd: d.sellPriceMinorUsd,
+    // Matterhorn's API doesn't expose a weight field at all.
+    weightGrams: null,
+    categoryNameHint: d.categoryName,
+    // Sizes carry no price of their own on Matterhorn — every variant
+    // starts at the same price as the base product (still freely editable,
+    // same as any other source).
+    variants: d.variants.map((v) => ({
+      externalId: v.variantUid,
+      name: v.size,
+      sku: null,
+      attributes: { size: v.size },
+      supplierPriceMinorUsd: d.sellPriceMinorUsd,
+    })),
+    sourceUrl: d.sourceUrl,
     videoUrl: null,
   };
 }

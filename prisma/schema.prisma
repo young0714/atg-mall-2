@@ -183,6 +183,7 @@ enum SourcePlatform {
   INTERNATIONAL_STORE
   CJDROPSHIPPING
   ALIEXPRESS
+  MATTERHORN
 }
 
 // Sourcing/origin country for a Store — distinct from

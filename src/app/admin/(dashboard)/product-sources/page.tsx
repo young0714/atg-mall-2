@@ -22,6 +22,7 @@ const SOURCE_ORDER: SourcePlatform[] = [
   "INTERNATIONAL_STORE",
   "CJDROPSHIPPING",
   "ALIEXPRESS",
+  "MATTERHORN",
   "AFFILIATE",
 ];
 
@@ -47,6 +48,7 @@ export default async function AdminProductSourcesPage() {
     INTERNATIONAL_STORE: [],
     CJDROPSHIPPING: [],
     ALIEXPRESS: [],
+    MATTERHORN: [],
     AFFILIATE: [],
   };
   for (const p of products) bySource[p.sourcePlatform].push(p);
