@@ -103,6 +103,7 @@ model User {
   supportMessages     SupportMessage[]
   notifications       Notification[]
   auditLogs           AuditLog[]
+  productImportDrafts ProductImportDraft[]
   warehouseReceipts   WarehouseReceipt[]     @relation("ReceivedBy")
   quotationsIssued    Quotation[]            @relation("QuotationIssuedBy")
   sourcingOptionsAdded SourcingOption[]      @relation("SourcingOptionAddedBy")
@@ -1484,4 +1485,32 @@ model AliExpressAuthToken {
   refreshTokenExpiresAt DateTime
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+}
+
+// A CJ/AliExpress product staged in the DSer-style batch importer
+// (ProductImportWorkspace) but not yet committed to the catalog. Saved the
+// moment an admin clicks "Save to Batch" so the batch survives navigating
+// away, closing the tab, or a reload — nothing here is a real Product until
+// importBatchAction() commits it and deletes the row.
+model ProductImportDraft {
+  id                        String   @id @default(cuid())
+  createdByUserId           String
+  createdBy                 User     @relation(fields: [createdByUserId], references: [id])
+  source                    String // "CJ" | "ALIEXPRESS"
+  externalId                String
+  name                      String
+  slug                      String
+  categoryId                String
+  description               String
+  thumbnailUrl              String
+  basePriceMinor            Int
+  weightGrams               Int
+  importVariants            Boolean
+  includeVideo              Boolean
+  removedImageUrls          String[]
+  removedVariantExternalIds String[]
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@index([createdByUserId, source])
 }

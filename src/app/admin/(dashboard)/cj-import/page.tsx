@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { cjDropshippingService } from "@/lib/services/cjDropshippingService";
+import { listImportDraftsAction } from "@/app/admin/(dashboard)/product-import/actions";
 import { ProductImportWorkspace } from "@/components/admin/ProductImportWorkspace";
 import type { Metadata } from "next";
 
@@ -23,7 +24,10 @@ export default async function AdminCjImportPage() {
     );
   }
 
-  const categories = await db.category.findMany({ orderBy: { name: "asc" } });
+  const [categories, initialBatch] = await Promise.all([
+    db.category.findMany({ orderBy: { name: "asc" } }),
+    listImportDraftsAction("CJ"),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -34,7 +38,11 @@ export default async function AdminCjImportPage() {
           together.
         </p>
       </div>
-      <ProductImportWorkspace source="CJ" categories={categories.map((c) => ({ id: c.id, name: c.name }))} />
+      <ProductImportWorkspace
+        source="CJ"
+        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        initialBatch={initialBatch}
+      />
     </div>
   );
 }

@@ -64,8 +64,104 @@ export interface ImportDraftInput {
   weightGrams: number;
   importVariants: boolean;
   includeVideo: boolean;
-  keptImageUrls: string[];
-  keptVariantExternalIds: string[];
+  removedImageUrls: string[];
+  removedVariantExternalIds: string[];
+}
+
+export interface PersistedDraft {
+  draftId: string;
+  source: ImportSource;
+  externalId: string;
+  name: string;
+  slug: string;
+  categoryId: string;
+  description: string;
+  thumbnailUrl: string;
+  basePriceMinorText: string;
+  weightGramsText: string;
+  importVariants: boolean;
+  includeVideo: boolean;
+  removedImageUrls: string[];
+  removedVariantExternalIds: string[];
+}
+
+/** Loads this admin's staged batch for a source, so it survives navigating away or reloading. */
+export async function listImportDraftsAction(source: ImportSource): Promise<PersistedDraft[]> {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const rows = await db.productImportDraft.findMany({
+    where: { createdByUserId: staff.id, source },
+    orderBy: { createdAt: "asc" },
+  });
+  return rows.map((r) => ({
+    draftId: r.id,
+    source: r.source as ImportSource,
+    externalId: r.externalId,
+    name: r.name,
+    slug: r.slug,
+    categoryId: r.categoryId,
+    description: r.description,
+    thumbnailUrl: r.thumbnailUrl,
+    basePriceMinorText: String(r.basePriceMinor),
+    weightGramsText: String(r.weightGrams),
+    importVariants: r.importVariants,
+    includeVideo: r.includeVideo,
+    removedImageUrls: r.removedImageUrls,
+    removedVariantExternalIds: r.removedVariantExternalIds,
+  }));
+}
+
+export interface SaveDraftInput {
+  draftId: string | null; // null = new row; otherwise updates the existing staged row
+  source: ImportSource;
+  externalId: string;
+  thumbnailUrl: string;
+  name: string;
+  slug: string;
+  categoryId: string;
+  description: string;
+  basePriceMinorText: string;
+  weightGramsText: string;
+  importVariants: boolean;
+  includeVideo: boolean;
+  removedImageUrls: string[];
+  removedVariantExternalIds: string[];
+}
+
+/** Called the moment an admin clicks "Save to Batch" — persists immediately, not just to local state. */
+export async function saveImportDraftAction(input: SaveDraftInput): Promise<{ draftId: string }> {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const data = {
+    createdByUserId: staff.id,
+    source: input.source,
+    externalId: input.externalId,
+    thumbnailUrl: input.thumbnailUrl,
+    name: input.name,
+    slug: input.slug,
+    categoryId: input.categoryId,
+    description: input.description,
+    basePriceMinor: Number(input.basePriceMinorText) || 0,
+    weightGrams: Number(input.weightGramsText) || 0,
+    importVariants: input.importVariants,
+    includeVideo: input.includeVideo,
+    removedImageUrls: input.removedImageUrls,
+    removedVariantExternalIds: input.removedVariantExternalIds,
+  };
+
+  if (input.draftId) {
+    const existing = await db.productImportDraft.findUnique({ where: { id: input.draftId } });
+    if (existing && existing.createdByUserId === staff.id) {
+      const updated = await db.productImportDraft.update({ where: { id: input.draftId }, data });
+      return { draftId: updated.id };
+    }
+  }
+
+  const created = await db.productImportDraft.create({ data });
+  return { draftId: created.id };
+}
+
+export async function removeImportDraftAction(draftId: string): Promise<void> {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  await db.productImportDraft.deleteMany({ where: { id: draftId, createdByUserId: staff.id } });
 }
 
 export interface ImportBatchResult {
@@ -84,8 +180,11 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
       }
 
       // Re-fetch from the source rather than trusting client-submitted
-      // images/variants — the admin's "kept" lists only select which of the
-      // REAL, server-verified images/variants to include.
+      // images/variants — the admin's "removed" lists only exclude which of
+      // the REAL, server-verified images/variants to drop. Re-fetching (not
+      // trusting a client-held copy) also means a draft staged days ago and
+      // never reopened for editing still imports with the supplier's
+      // current images/variants, not a stale snapshot.
       const fresh: ImportableProduct =
         draft.source === "CJ"
           ? await (async () => {
@@ -99,8 +198,8 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
               return aliexpressToImportable(d);
             })();
 
-      const images = fresh.images.filter((url) => draft.keptImageUrls.includes(url));
-      const variants = fresh.variants.filter((v) => draft.keptVariantExternalIds.includes(v.externalId));
+      const images = fresh.images.filter((url) => !draft.removedImageUrls.includes(url));
+      const variants = fresh.variants.filter((v) => !draft.removedVariantExternalIds.includes(v.externalId));
 
       const store =
         draft.source === "CJ" ? await db.store.findUnique({ where: { slug: "cjdropshipping" } }) : null;
@@ -141,6 +240,11 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
           summary: auditSummary,
         },
       });
+
+      // The draft's staged row is no longer needed once it's a real Product —
+      // delete regardless of who's calling (draftId is now the persisted
+      // row's own id, scoped to this admin already via saveImportDraftAction).
+      await db.productImportDraft.deleteMany({ where: { id: draft.draftId } });
 
       result.succeeded.push({ draftId: draft.draftId, productId: product.id, name: product.name });
     } catch (e) {

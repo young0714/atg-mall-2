@@ -6,7 +6,16 @@ import { formatMoney } from "@/lib/money";
 import { slugify } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { ImportableProduct, ImportSource } from "@/lib/services/importTypes";
-import { searchCjProductsAction, lookupProductAction, importBatchAction, type ImportDraftInput, type ImportBatchResult } from "@/app/admin/(dashboard)/product-import/actions";
+import {
+  searchCjProductsAction,
+  lookupProductAction,
+  importBatchAction,
+  saveImportDraftAction,
+  removeImportDraftAction,
+  type ImportDraftInput,
+  type ImportBatchResult,
+  type PersistedDraft,
+} from "@/app/admin/(dashboard)/product-import/actions";
 
 /**
  * DSer-style batch-staging import UI, shared by the CJ and AliExpress admin
@@ -14,11 +23,21 @@ import { searchCjProductsAction, lookupProductAction, importBatchAction, type Im
  * its variants/images, and "Save to batch" — nothing is written to the ATG
  * catalog yet. Repeat across as many products as you like, then "Import All
  * Saved" commits the whole batch in one go.
+ *
+ * Every "Save to Batch" persists immediately via saveImportDraftAction, so
+ * the batch survives leaving the page — `batch` here is a client-side
+ * mirror of that server state, not the source of truth. Only the item
+ * currently open in the edit panel holds the full ImportableProduct (fresh
+ * images/variants); the sidebar list only needs the lightweight fields
+ * already on Draft, so reopening the page never re-fetches every staged
+ * item from the supplier — only the one being edited.
  */
 
 interface Draft {
-  draftId: string;
-  product: ImportableProduct;
+  draftId: string | null; // null until the first successful save assigns a real id
+  source: ImportSource;
+  externalId: string;
+  thumbnailUrl: string;
   name: string;
   slug: string;
   categoryId: string;
@@ -31,10 +50,12 @@ interface Draft {
   removedVariantIds: Set<string>;
 }
 
-function toDraft(product: ImportableProduct, defaultCategoryId: string): Draft {
+function draftFromProduct(product: ImportableProduct, defaultCategoryId: string): Draft {
   return {
-    draftId: crypto.randomUUID(),
-    product,
+    draftId: null,
+    source: product.source,
+    externalId: product.externalId,
+    thumbnailUrl: product.imageUrl,
     name: product.name,
     slug: slugify(product.name),
     categoryId: defaultCategoryId,
@@ -48,12 +69,33 @@ function toDraft(product: ImportableProduct, defaultCategoryId: string): Draft {
   };
 }
 
+function draftFromPersisted(p: PersistedDraft): Draft {
+  return {
+    draftId: p.draftId,
+    source: p.source,
+    externalId: p.externalId,
+    thumbnailUrl: p.thumbnailUrl,
+    name: p.name,
+    slug: p.slug,
+    categoryId: p.categoryId,
+    description: p.description,
+    basePriceMinorText: p.basePriceMinorText,
+    weightGramsText: p.weightGramsText,
+    importVariants: p.importVariants,
+    includeVideo: p.includeVideo,
+    removedImages: new Set(p.removedImageUrls),
+    removedVariantIds: new Set(p.removedVariantExternalIds),
+  };
+}
+
 export function ProductImportWorkspace({
   source,
   categories,
+  initialBatch,
 }: {
   source: ImportSource;
   categories: { id: string; name: string }[];
+  initialBatch: PersistedDraft[];
 }) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<ImportableProduct[]>([]);
@@ -61,8 +103,10 @@ export function ProductImportWorkspace({
   const [lookingUp, setLookingUp] = useState(false);
   const [findError, setFindError] = useState<string | null>(null);
 
-  const [editing, setEditing] = useState<Draft | null>(null);
-  const [batch, setBatch] = useState<Draft[]>([]);
+  const [editing, setEditing] = useState<{ draft: Draft; product: ImportableProduct } | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [openingDraftId, setOpeningDraftId] = useState<string | null>(null);
+  const [batch, setBatch] = useState<Draft[]>(() => initialBatch.map(draftFromPersisted));
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportBatchResult | null>(null);
 
@@ -92,22 +136,62 @@ export function ProductImportWorkspace({
         setFindError(res.error);
         return;
       }
-      setEditing(toDraft(res.product, defaultCategoryId));
+      setEditing({ draft: draftFromProduct(res.product, defaultCategoryId), product: res.product });
     } finally {
       setLookingUp(false);
     }
   }
 
-  function saveDraftToBatch(draft: Draft) {
-    setBatch((prev) => {
-      const withoutThis = prev.filter((d) => d.draftId !== draft.draftId);
-      return [...withoutThis, draft];
-    });
-    setEditing(null);
+  /** Re-fetches full product detail before reopening an already-staged batch item — the sidebar only keeps the lightweight fields, never the full image/variant list. */
+  async function editBatchItem(draft: Draft) {
+    setOpeningDraftId(draft.draftId);
+    setFindError(null);
+    try {
+      const res = await lookupProductAction(draft.source, draft.externalId);
+      if (!res.ok) {
+        setFindError(res.error);
+        return;
+      }
+      setEditing({ draft, product: res.product });
+    } finally {
+      setOpeningDraftId(null);
+    }
   }
 
-  function removeFromBatch(draftId: string) {
+  async function saveDraftToBatch(draft: Draft, product: ImportableProduct) {
+    setSaving(true);
+    try {
+      const result = await saveImportDraftAction({
+        draftId: draft.draftId,
+        source: draft.source,
+        externalId: draft.externalId,
+        thumbnailUrl: product.imageUrl,
+        name: draft.name,
+        slug: draft.slug,
+        categoryId: draft.categoryId,
+        description: draft.description,
+        basePriceMinorText: draft.basePriceMinorText,
+        weightGramsText: draft.weightGramsText,
+        importVariants: draft.importVariants,
+        includeVideo: draft.includeVideo,
+        removedImageUrls: Array.from(draft.removedImages),
+        removedVariantExternalIds: Array.from(draft.removedVariantIds),
+      });
+      const saved: Draft = { ...draft, draftId: result.draftId, thumbnailUrl: product.imageUrl };
+      setBatch((prev) => {
+        const withoutThis = prev.filter((d) => d.draftId !== saved.draftId);
+        return [...withoutThis, saved];
+      });
+      setEditing(null);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeFromBatch(draftId: string | null) {
+    if (!draftId) return;
     setBatch((prev) => prev.filter((d) => d.draftId !== draftId));
+    await removeImportDraftAction(draftId);
   }
 
   async function handleImportAll() {
@@ -115,25 +199,27 @@ export function ProductImportWorkspace({
     setImporting(true);
     setImportResult(null);
     try {
-      const inputs: ImportDraftInput[] = batch.map((d) => ({
-        draftId: d.draftId,
-        source: d.product.source,
-        externalId: d.product.externalId,
-        name: d.name,
-        slug: d.slug,
-        categoryId: d.categoryId,
-        description: d.description,
-        basePriceMinor: Number(d.basePriceMinorText),
-        weightGrams: Number(d.weightGramsText),
-        importVariants: d.importVariants,
-        includeVideo: d.includeVideo,
-        keptImageUrls: d.product.images.filter((url) => !d.removedImages.has(url)),
-        keptVariantExternalIds: d.product.variants.map((v) => v.externalId).filter((id) => !d.removedVariantIds.has(id)),
-      }));
+      const inputs: ImportDraftInput[] = batch
+        .filter((d): d is Draft & { draftId: string } => d.draftId !== null)
+        .map((d) => ({
+          draftId: d.draftId,
+          source: d.source,
+          externalId: d.externalId,
+          name: d.name,
+          slug: d.slug,
+          categoryId: d.categoryId,
+          description: d.description,
+          basePriceMinor: Number(d.basePriceMinorText),
+          weightGrams: Number(d.weightGramsText),
+          importVariants: d.importVariants,
+          includeVideo: d.includeVideo,
+          removedImageUrls: Array.from(d.removedImages),
+          removedVariantExternalIds: Array.from(d.removedVariantIds),
+        }));
       const result = await importBatchAction(inputs);
       setImportResult(result);
       const succeededIds = new Set(result.succeeded.map((s) => s.draftId));
-      setBatch((prev) => prev.filter((d) => !succeededIds.has(d.draftId)));
+      setBatch((prev) => prev.filter((d) => !(d.draftId && succeededIds.has(d.draftId))));
     } finally {
       setImporting(false);
     }
@@ -144,10 +230,12 @@ export function ProductImportWorkspace({
       <div className="space-y-6">
         {editing ? (
           <EditPanel
-            draft={editing}
+            draft={editing.draft}
+            product={editing.product}
             categories={categories}
-            onChange={setEditing}
-            onSave={() => saveDraftToBatch(editing)}
+            saving={saving}
+            onChange={(d) => setEditing({ draft: d, product: editing.product })}
+            onSave={() => saveDraftToBatch(editing.draft, editing.product)}
             onCancel={() => setEditing(null)}
           />
         ) : (
@@ -241,13 +329,17 @@ export function ProductImportWorkspace({
             {batch.map((d) => (
               <li key={d.draftId} className="flex items-center gap-2 rounded-lg border border-navy-100 p-2">
                 {/* eslint-disable-next-line @next/next/no-img-element -- external supplier CDN */}
-                <img src={d.product.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
+                <img src={d.thumbnailUrl} alt="" className="h-10 w-10 shrink-0 rounded object-cover" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium text-navy-800">{d.name}</p>
                   <p className="text-xs text-navy-400">{formatMoney(Number(d.basePriceMinorText) || 0, "USD")}</p>
                 </div>
-                <button onClick={() => setEditing(d)} className="text-xs font-medium text-atgblue-600 hover:underline">
-                  Edit
+                <button
+                  onClick={() => editBatchItem(d)}
+                  disabled={openingDraftId === d.draftId}
+                  className="text-xs font-medium text-atgblue-600 hover:underline disabled:opacity-50"
+                >
+                  {openingDraftId === d.draftId ? "Loading…" : "Edit"}
                 </button>
                 <button onClick={() => removeFromBatch(d.draftId)} className="text-xs font-medium text-red-600 hover:underline">
                   Remove
@@ -270,18 +362,22 @@ export function ProductImportWorkspace({
 
 function EditPanel({
   draft,
+  product,
   categories,
+  saving,
   onChange,
   onSave,
   onCancel,
 }: {
   draft: Draft;
+  product: ImportableProduct;
   categories: { id: string; name: string }[];
+  saving: boolean;
   onChange: (draft: Draft) => void;
   onSave: () => void;
   onCancel: () => void;
 }) {
-  const keptImages = draft.product.images.filter((url) => !draft.removedImages.has(url));
+  const keptImages = product.images.filter((url) => !draft.removedImages.has(url));
   const canSave =
     draft.name.trim() &&
     draft.slug.trim() &&
@@ -309,12 +405,12 @@ function EditPanel({
       <div className="space-y-3">
         {/* eslint-disable-next-line @next/next/no-img-element -- external supplier CDN */}
         <img
-          src={keptImages[0] ?? draft.product.imageUrl}
+          src={keptImages[0] ?? product.imageUrl}
           alt={draft.name}
           className="aspect-square w-full rounded-xl2 object-cover"
         />
         <div className="grid grid-cols-4 gap-2">
-          {draft.product.images.map((url) => {
+          {product.images.map((url) => {
             const removed = draft.removedImages.has(url);
             return (
               <button
@@ -333,11 +429,11 @@ function EditPanel({
         </div>
         {keptImages.length === 0 && <p className="text-xs text-red-600">Keep at least one image.</p>}
 
-        {draft.product.variants.length > 0 && (
+        {product.variants.length > 0 && (
           <div className="card p-4 text-sm">
-            <p className="mb-2 font-semibold text-navy-800">Variants ({draft.product.variants.length})</p>
+            <p className="mb-2 font-semibold text-navy-800">Variants ({product.variants.length})</p>
             <ul className="space-y-1">
-              {draft.product.variants.map((v) => {
+              {product.variants.map((v) => {
                 const removed = draft.removedVariantIds.has(v.externalId);
                 return (
                   <li key={v.externalId} className="flex items-center justify-between gap-2">
@@ -356,7 +452,7 @@ function EditPanel({
       <section className="card p-5">
         <h1 className="mb-1 text-xl font-display font-bold text-navy-900">Edit Before Staging</h1>
         <p className="mb-4 text-sm text-navy-500">
-          {draft.product.source === "CJ" ? "CJ" : "AliExpress"} ID {draft.product.externalId}
+          {product.source === "CJ" ? "CJ" : "AliExpress"} ID {product.externalId}
         </p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -381,7 +477,7 @@ function EditPanel({
             label="Your price, minor units (USD)"
             htmlFor="basePriceMinor"
             required
-            hint={`Pre-filled at supplier cost (${formatMoney(draft.product.suggestedPriceMinorUsd, "USD")}) — set your own price.`}
+            hint={`Pre-filled at supplier cost (${formatMoney(product.suggestedPriceMinorUsd, "USD")}) — set your own price.`}
           >
             <Input
               id="basePriceMinor"
@@ -405,7 +501,7 @@ function EditPanel({
               <Textarea id="description" value={draft.description} onChange={(e) => onChange({ ...draft, description: e.target.value })} required />
             </Field>
           </div>
-          {draft.product.variants.length > 0 && (
+          {product.variants.length > 0 && (
             <label className="flex items-center gap-2 text-sm sm:col-span-2">
               <input
                 type="checkbox"
@@ -415,7 +511,7 @@ function EditPanel({
               Import variants
             </label>
           )}
-          {draft.product.videoUrl && (
+          {product.videoUrl && (
             <label className="flex items-center gap-2 text-sm sm:col-span-2">
               <input
                 type="checkbox"
@@ -426,8 +522,8 @@ function EditPanel({
             </label>
           )}
           <div className="flex gap-3 sm:col-span-2">
-            <button type="button" onClick={onSave} disabled={!canSave} className="btn-primary">
-              Save to Batch
+            <button type="button" onClick={onSave} disabled={!canSave || saving} className="btn-primary">
+              {saving ? "Saving…" : "Save to Batch"}
             </button>
             <button type="button" onClick={onCancel} className="btn-outline">
               Cancel

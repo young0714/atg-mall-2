@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { aliexpressService } from "@/lib/services/aliexpressService";
 import { aliexpressAuthIsConfigured, getAliExpressAuthorizationUrl, isAliExpressConnected } from "@/lib/services/aliexpressAuthService";
+import { listImportDraftsAction } from "@/app/admin/(dashboard)/product-import/actions";
 import { ProductImportWorkspace } from "@/components/admin/ProductImportWorkspace";
 import type { Metadata } from "next";
 
@@ -49,7 +50,10 @@ export default async function AdminAliExpressImportPage({
     );
   }
 
-  const categories = await db.category.findMany({ orderBy: { name: "asc" } });
+  const [categories, initialBatch] = await Promise.all([
+    db.category.findMany({ orderBy: { name: "asc" } }),
+    listImportDraftsAction("ALIEXPRESS"),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -60,7 +64,11 @@ export default async function AdminAliExpressImportPage({
           for this app yet, only exact product lookups. Edit and save each one, then import the whole batch together.
         </p>
       </div>
-      <ProductImportWorkspace source="ALIEXPRESS" categories={categories.map((c) => ({ id: c.id, name: c.name }))} />
+      <ProductImportWorkspace
+        source="ALIEXPRESS"
+        categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+        initialBatch={initialBatch}
+      />
     </div>
   );
 }
