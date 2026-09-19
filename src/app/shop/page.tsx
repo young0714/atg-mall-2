@@ -7,6 +7,7 @@ import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { Input } from "@/components/ui/Form";
 import { SortSelect } from "@/components/shop/SortSelect";
 import { buildCategoryTree, collectDescendantIds, getActivePath, type CategoryTreeNode } from "@/lib/categoryTree";
+import { MobileCategoryDrawer } from "@/components/shop/MobileCategoryDrawer";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -73,6 +74,22 @@ export default async function ShopPage({
 
   const productCards = await Promise.all(products.map((p) => toProductCard(p, destination)));
 
+  const categoryNav = (
+    <ul className="space-y-1 text-sm">
+      <li>
+        <a
+          href="/shop"
+          className={`block rounded-lg px-3 py-1.5 ${!category ? "bg-navy-900 text-white" : "text-navy-600 hover:bg-sand-100"}`}
+        >
+          All categories
+        </a>
+      </li>
+      {categoryTree.map((node) => (
+        <CategoryNavItem key={node.id} node={node} depth={0} activeSlug={category} activePath={activeCategoryPath} />
+      ))}
+    </ul>
+  );
+
   return (
     <PullToRefresh>
     <Section className="!py-10">
@@ -96,24 +113,14 @@ export default async function ShopPage({
             </form>
 
             <div>
-              <p className="label mb-2">Categories</p>
-              {/* Same nested tree on every screen size — a mobile-only flat pill
-                  row used to sit here, but it listed parent and child
-                  categories side by side with no indication either way,
-                  which just looked like nesting was broken on phones. */}
-              <ul className="space-y-1 text-sm">
-                <li>
-                  <a
-                    href="/shop"
-                    className={`block rounded-lg px-3 py-1.5 ${!category ? "bg-navy-900 text-white" : "text-navy-600 hover:bg-sand-100"}`}
-                  >
-                    All categories
-                  </a>
-                </li>
-                {categoryTree.map((node) => (
-                  <CategoryNavItem key={node.id} node={node} depth={0} activeSlug={category} activePath={activeCategoryPath} />
-                ))}
-              </ul>
+              <p className="label mb-2 hidden lg:block">Categories</p>
+              {/* Rendered once, shown two different ways: inline in the
+                  desktop sidebar, and inside a bottom-sheet drawer on
+                  mobile (a fully vertical tree pushed the whole product
+                  grid below the fold on phones once categories gained
+                  real nesting). */}
+              <div className="hidden lg:block">{categoryNav}</div>
+              <MobileCategoryDrawer activeLabel={activeCategory?.name ?? "All categories"}>{categoryNav}</MobileCategoryDrawer>
             </div>
 
             <div>
