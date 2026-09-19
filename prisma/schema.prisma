@@ -1529,6 +1529,7 @@ model ProductImportDraft {
   weightGrams               Int
   importVariants            Boolean
   includeVideo              Boolean
+  isFeatured                Boolean  @default(false)
   removedImageUrls          String[]
   removedVariantExternalIds String[]
   // Per-variant price overrides, keyed by the variant's externalId (supplier

@@ -46,6 +46,7 @@ interface Draft {
   weightGramsText: string;
   importVariants: boolean;
   includeVideo: boolean;
+  isFeatured: boolean;
   removedImages: Set<string>;
   removedVariantIds: Set<string>;
   // externalId -> price, minor units as text (same convention as
@@ -71,6 +72,7 @@ function draftFromProduct(product: ImportableProduct, defaultCategoryId: string)
     weightGramsText: String(product.weightGrams ?? 500),
     importVariants: product.variants.length > 0,
     includeVideo: !!product.videoUrl,
+    isFeatured: false,
     removedImages: new Set(),
     removedVariantIds: new Set(),
     variantPrices: Object.fromEntries(product.variants.map((v) => [v.externalId, String(v.supplierPriceMinorUsd || 0)])),
@@ -91,6 +93,7 @@ function draftFromPersisted(p: PersistedDraft): Draft {
     weightGramsText: p.weightGramsText,
     importVariants: p.importVariants,
     includeVideo: p.includeVideo,
+    isFeatured: p.isFeatured,
     removedImages: new Set(p.removedImageUrls),
     removedVariantIds: new Set(p.removedVariantExternalIds),
     variantPrices: p.variantPrices,
@@ -183,6 +186,7 @@ export function ProductImportWorkspace({
         weightGramsText: draft.weightGramsText,
         importVariants: draft.importVariants,
         includeVideo: draft.includeVideo,
+        isFeatured: draft.isFeatured,
         removedImageUrls: Array.from(draft.removedImages),
         removedVariantExternalIds: Array.from(draft.removedVariantIds),
         variantPrices: draft.variantPrices,
@@ -223,6 +227,7 @@ export function ProductImportWorkspace({
           weightGrams: Number(d.weightGramsText),
           importVariants: d.importVariants,
           includeVideo: d.includeVideo,
+          isFeatured: d.isFeatured,
           removedImageUrls: Array.from(d.removedImages),
           removedVariantExternalIds: Array.from(d.removedVariantIds),
           variantPrices: Object.fromEntries(Object.entries(d.variantPrices).map(([id, text]) => [id, Number(text)])),
@@ -555,6 +560,14 @@ function EditPanel({
               Include supplier video
             </label>
           )}
+          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={draft.isFeatured}
+              onChange={(e) => onChange({ ...draft, isFeatured: e.target.checked })}
+            />{" "}
+            Mark as Trending — shows in the homepage's Trending Products section and badge
+          </label>
           <div className="flex gap-3 sm:col-span-2">
             <button type="button" onClick={onSave} disabled={!canSave || saving} className="btn-primary">
               {saving ? "Saving…" : "Save to Batch"}

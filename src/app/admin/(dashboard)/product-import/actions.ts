@@ -64,6 +64,7 @@ export interface ImportDraftInput {
   weightGrams: number;
   importVariants: boolean;
   includeVideo: boolean;
+  isFeatured: boolean;
   removedImageUrls: string[];
   removedVariantExternalIds: string[];
   // externalId -> chosen price, in minor units — same convention as
@@ -85,6 +86,7 @@ export interface PersistedDraft {
   weightGramsText: string;
   importVariants: boolean;
   includeVideo: boolean;
+  isFeatured: boolean;
   removedImageUrls: string[];
   removedVariantExternalIds: string[];
   variantPrices: Record<string, string>;
@@ -110,6 +112,7 @@ export async function listImportDraftsAction(source: ImportSource): Promise<Pers
     weightGramsText: String(r.weightGrams),
     importVariants: r.importVariants,
     includeVideo: r.includeVideo,
+    isFeatured: r.isFeatured,
     removedImageUrls: r.removedImageUrls,
     removedVariantExternalIds: r.removedVariantExternalIds,
     variantPrices: (r.variantPrices as Record<string, string> | null) ?? {},
@@ -129,6 +132,7 @@ export interface SaveDraftInput {
   weightGramsText: string;
   importVariants: boolean;
   includeVideo: boolean;
+  isFeatured: boolean;
   removedImageUrls: string[];
   removedVariantExternalIds: string[];
   variantPrices: Record<string, string>;
@@ -150,6 +154,7 @@ export async function saveImportDraftAction(input: SaveDraftInput): Promise<{ dr
     weightGrams: Number(input.weightGramsText) || 0,
     importVariants: input.importVariants,
     includeVideo: input.includeVideo,
+    isFeatured: input.isFeatured,
     removedImageUrls: input.removedImageUrls,
     removedVariantExternalIds: input.removedVariantExternalIds,
     variantPrices: input.variantPrices,
@@ -221,6 +226,7 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
           basePriceMinor: draft.basePriceMinor,
           baseCurrency: "USD",
           weightGrams: draft.weightGrams,
+          isFeatured: draft.isFeatured,
           sourcePlatform: draft.source === "CJ" ? "CJDROPSHIPPING" : "ALIEXPRESS",
           sourceUrl: fresh.sourceUrl,
           sourceProductId: fresh.externalId,
