@@ -1,11 +1,9 @@
 import "server-only";
-import { currencyConversionService } from "./currencyConversionService";
 
 /**
  * MatterhornService — a REAL, LIVE integration against Matterhorn Wholesale's
- * B2B API (https://matterhorn-wholesale.com/B2BAPI, documented at
- * https://app.swaggerhub.com/apis-docs/MatterhornModa/MatterhornWholesaleB2BApi).
- * European women's fashion wholesaler — read-only here, same as
+ * B2B API (https://matterhorn-wholesale.com/B2BAPI). European women's
+ * fashion wholesaler — read-only here, same as
  * cjDropshippingService.ts/aliexpressService.ts: fetches one product's
  * detail, nothing here places an order or moves money.
  *
@@ -14,6 +12,14 @@ import { currencyConversionService } from "./currencyConversionService";
  * against the real API that it's the raw key, NOT a `Bearer <key>` prefix
  * (the latter returns 403).
  *
+ * The published Swagger spec (swaggerhub.com/apis-docs/MatterhornModa/...)
+ * is wrong on two counts, found by inspecting a real response directly
+ * rather than trusting the docs: there's no `price_net` field — instead a
+ * `prices` object keyed by currency code, which conveniently already
+ * includes a `USD` value (no conversion needed at all, better than
+ * converting from EUR ourselves would have been); and there IS a `weight`
+ * field (grams), despite the spec omitting it entirely.
+ *
  * Unlike CJ/AliExpress, Matterhorn has no keyword search endpoint — only
  * lookup by exact product id (or filtering by brand/category, not exposed
  * here). The import UI for this source is "paste a product link or ID",
@@ -21,10 +27,8 @@ import { currencyConversionService } from "./currencyConversionService";
  *
  * Also unlike CJ/AliExpress: variants here are sizes only (not colors —
  * each color is a separate product id, linked via `other_colors`), sizes
- * carry no price of their own (the whole product has one price), there's
- * no description field at all, and no weight field. Prices come back as
- * `price_net` (wholesale, pre-tax) in EUR — converted to USD here so this
- * service's own output is already USD, same convention as the other two.
+ * carry no price of their own (the whole product has one price), and
+ * there's no description field at all.
  */
 
 const BASE_URL = "https://matterhorn-wholesale.com/B2BAPI";
@@ -42,6 +46,7 @@ export interface MatterhornProduct {
   imageUrl: string;
   images: string[];
   sellPriceMinorUsd: number;
+  weightGrams: number | null;
   sourceUrl: string;
   categoryName: string | null;
   variants: MatterhornVariant[];
@@ -60,7 +65,9 @@ interface MatterhornApiItem {
   category_name?: string | null;
   category_path?: string | null;
   brand?: string | null;
-  price_net: number;
+  // Verified live: no price_net field — a per-currency map instead.
+  prices: Record<string, number>;
+  weight?: number | string | null; // grams; seen as a plain number live, but treated defensively as possibly-string like several other CJ/Matterhorn numeric fields
   url: string;
   images?: string[];
   variants?: Array<{ variant_uid: number; name: string; stock: number }>;
@@ -109,13 +116,13 @@ class LiveMatterhornService implements MatterhornService {
     const descriptionParts = [data.brand, data.category_name, data.color].filter(Boolean);
     const description = descriptionParts.length > 0 ? descriptionParts.join(" — ") : null;
 
-    const priceMinorEur = Math.round(data.price_net * 100);
-    const sellPriceMinorUsd = currencyConversionService.convert(priceMinorEur, "EUR", "USD");
+    const usdPrice = data.prices?.USD;
+    if (usdPrice == null) {
+      throw new Error(`Matterhorn product ${data.id} has no USD price available`);
+    }
+    const sellPriceMinorUsd = Math.round(usdPrice * 100);
 
-    // Their own example response shows a malformed "http:\..." url —
-    // normalized defensively in case that's real API behavior and not just
-    // a doc artifact.
-    const sourceUrl = data.url.replace(/^http:\\+/, "https://").replace(/\\/g, "/");
+    const weightGrams = data.weight != null ? Math.round(Number(data.weight)) : null;
 
     const images = data.images ?? [];
 
@@ -126,7 +133,8 @@ class LiveMatterhornService implements MatterhornService {
       imageUrl: images[0] ?? "",
       images,
       sellPriceMinorUsd,
-      sourceUrl,
+      weightGrams,
+      sourceUrl: data.url.replace(/^http:\/\//, "https://"),
       categoryName: data.category_name ?? null,
       variants: (data.variants ?? []).map((v) => ({
         variantUid: String(v.variant_uid),

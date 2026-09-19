@@ -99,8 +99,7 @@ export function matterhornToImportable(d: MatterhornProduct): ImportableProduct 
     images: d.images,
     description: d.description,
     suggestedPriceMinorUsd: d.sellPriceMinorUsd,
-    // Matterhorn's API doesn't expose a weight field at all.
-    weightGrams: null,
+    weightGrams: d.weightGrams,
     categoryNameHint: d.categoryName,
     // Sizes carry no price of their own on Matterhorn — every variant
     // starts at the same price as the base product (still freely editable,
