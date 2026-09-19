@@ -154,7 +154,13 @@ export async function deleteProductImageAction(formData: FormData) {
 export async function addProductVariantAction(formData: FormData) {
   const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
   const productId = String(formData.get("productId"));
-  const raw = Object.fromEntries(formData);
+  const product = await db.product.findUniqueOrThrow({ where: { id: productId }, select: { basePriceMinor: true } });
+
+  // The form takes an absolute price (matching what the admin sees
+  // everywhere else), not a raw delta — priceDeltaMinor is an internal
+  // storage detail, computed here rather than asked of the admin directly.
+  const priceMinor = Number(formData.get("price"));
+  const raw = { ...Object.fromEntries(formData), priceDeltaMinor: Number.isFinite(priceMinor) ? priceMinor - product.basePriceMinor : 0 };
   const parsed = productVariantSchema.safeParse(raw);
   if (!parsed.success) {
     redirect(`/admin/products/${productId}?error=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Invalid variant")}`);
@@ -173,6 +179,28 @@ export async function addProductVariantAction(formData: FormData) {
   });
   await db.auditLog.create({
     data: { actorId: staff.id, action: "PRODUCT_VARIANT_ADDED", entityType: "Product", entityId: productId, summary: `Added variant "${data.name}"` },
+  });
+
+  revalidatePath(`/admin/products/${productId}`);
+  redirect(`/admin/products/${productId}?updated=1`);
+}
+
+export async function updateVariantPriceAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const productId = String(formData.get("productId"));
+  const variantId = String(formData.get("variantId"));
+  const priceMinor = Number(formData.get("price"));
+  if (!Number.isFinite(priceMinor)) {
+    redirect(`/admin/products/${productId}?error=${encodeURIComponent("Enter a valid price")}`);
+  }
+
+  const product = await db.product.findUniqueOrThrow({ where: { id: productId }, select: { basePriceMinor: true } });
+  const variant = await db.productVariant.update({
+    where: { id: variantId, productId },
+    data: { priceDeltaMinor: priceMinor - product.basePriceMinor },
+  });
+  await db.auditLog.create({
+    data: { actorId: staff.id, action: "PRODUCT_VARIANT_PRICE_UPDATED", entityType: "Product", entityId: productId, summary: `Set "${variant.name}" price` },
   });
 
   revalidatePath(`/admin/products/${productId}`);

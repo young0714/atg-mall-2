@@ -48,6 +48,13 @@ interface Draft {
   includeVideo: boolean;
   removedImages: Set<string>;
   removedVariantIds: Set<string>;
+  // externalId -> price, minor units as text (same convention as
+  // basePriceMinorText). Defaulted from the supplier's own per-variant
+  // price — see ImportableVariant.supplierPriceMinorUsd — so a variant that
+  // genuinely costs more at the supplier starts out priced higher than the
+  // base, instead of every variant flattening to the same price. Purely a
+  // starting point: edit any of these freely, same as the base price.
+  variantPrices: Record<string, string>;
 }
 
 function draftFromProduct(product: ImportableProduct, defaultCategoryId: string): Draft {
@@ -66,6 +73,7 @@ function draftFromProduct(product: ImportableProduct, defaultCategoryId: string)
     includeVideo: !!product.videoUrl,
     removedImages: new Set(),
     removedVariantIds: new Set(),
+    variantPrices: Object.fromEntries(product.variants.map((v) => [v.externalId, String(v.supplierPriceMinorUsd || 0)])),
   };
 }
 
@@ -85,6 +93,7 @@ function draftFromPersisted(p: PersistedDraft): Draft {
     includeVideo: p.includeVideo,
     removedImages: new Set(p.removedImageUrls),
     removedVariantIds: new Set(p.removedVariantExternalIds),
+    variantPrices: p.variantPrices,
   };
 }
 
@@ -176,6 +185,7 @@ export function ProductImportWorkspace({
         includeVideo: draft.includeVideo,
         removedImageUrls: Array.from(draft.removedImages),
         removedVariantExternalIds: Array.from(draft.removedVariantIds),
+        variantPrices: draft.variantPrices,
       });
       const saved: Draft = { ...draft, draftId: result.draftId, thumbnailUrl: product.imageUrl };
       setBatch((prev) => {
@@ -215,6 +225,7 @@ export function ProductImportWorkspace({
           includeVideo: d.includeVideo,
           removedImageUrls: Array.from(d.removedImages),
           removedVariantExternalIds: Array.from(d.removedVariantIds),
+          variantPrices: Object.fromEntries(Object.entries(d.variantPrices).map(([id, text]) => [id, Number(text)])),
         }));
       const result = await importBatchAction(inputs);
       setImportResult(result);
@@ -384,7 +395,10 @@ function EditPanel({
     draft.categoryId &&
     Number.isFinite(Number(draft.basePriceMinorText)) &&
     Number.isFinite(Number(draft.weightGramsText)) &&
-    keptImages.length > 0;
+    keptImages.length > 0 &&
+    product.variants
+      .filter((v) => !draft.removedVariantIds.has(v.externalId))
+      .every((v) => Number.isFinite(Number(draft.variantPrices[v.externalId] ?? v.supplierPriceMinorUsd)));
 
   function toggleImage(url: string) {
     const next = new Set(draft.removedImages);
@@ -398,6 +412,10 @@ function EditPanel({
     if (next.has(id)) next.delete(id);
     else next.add(id);
     onChange({ ...draft, removedVariantIds: next });
+  }
+
+  function setVariantPrice(id: string, priceText: string) {
+    onChange({ ...draft, variantPrices: { ...draft.variantPrices, [id]: priceText } });
   }
 
   return (
@@ -432,15 +450,28 @@ function EditPanel({
         {product.variants.length > 0 && (
           <div className="card p-4 text-sm">
             <p className="mb-2 font-semibold text-navy-800">Variants ({product.variants.length})</p>
-            <ul className="space-y-1">
+            <p className="mb-2 text-xs text-navy-400">
+              Prices default to what the supplier charges for each — edit any that should differ from your base price.
+            </p>
+            <ul className="space-y-2">
               {product.variants.map((v) => {
                 const removed = draft.removedVariantIds.has(v.externalId);
                 return (
                   <li key={v.externalId} className="flex items-center justify-between gap-2">
                     <span className={cn("text-navy-600", removed && "text-navy-300 line-through")}>{v.name}</span>
-                    <button type="button" onClick={() => toggleVariant(v.externalId)} className="text-xs font-medium text-atgblue-600 hover:underline">
-                      {removed ? "Restore" : "Remove"}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        aria-label={`Price for ${v.name} (minor units)`}
+                        value={draft.variantPrices[v.externalId] ?? String(v.supplierPriceMinorUsd || 0)}
+                        onChange={(e) => setVariantPrice(v.externalId, e.target.value)}
+                        disabled={removed}
+                        className="w-24 disabled:opacity-40"
+                      />
+                      <button type="button" onClick={() => toggleVariant(v.externalId)} className="text-xs font-medium text-atgblue-600 hover:underline">
+                        {removed ? "Restore" : "Remove"}
+                      </button>
+                    </div>
                   </li>
                 );
               })}

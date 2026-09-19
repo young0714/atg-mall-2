@@ -229,7 +229,12 @@ export default async function AdminProductDetailPage({
       <section className="card space-y-4 p-5">
         <h2 className="font-semibold text-navy-900">Variants ({product.variants.length})</h2>
         {product.variants.length > 0 && (
-          <VariantsTable productId={product.id} variants={product.variants} />
+          <VariantsTable
+            productId={product.id}
+            variants={product.variants}
+            basePriceMinor={product.basePriceMinor}
+            baseCurrency={product.baseCurrency}
+          />
         )}
         <details>
           <summary className="cursor-pointer text-sm font-medium text-atgblue-600">+ Add variant</summary>
@@ -237,6 +242,9 @@ export default async function AdminProductDetailPage({
             <input type="hidden" name="productId" value={product.id} />
             <Field label="Name" htmlFor="v-name" required hint='e.g. "Black / XL"'>
               <Input id="v-name" name="name" required />
+            </Field>
+            <Field label="Price (minor units)" htmlFor="v-price" hint={`Defaults to the base price (${formatMoney(product.basePriceMinor, product.baseCurrency)})`}>
+              <Input id="v-price" name="price" type="number" defaultValue={product.basePriceMinor} />
             </Field>
             <Field label="SKU" htmlFor="v-sku"><Input id="v-sku" name="sku" /></Field>
             <Field label="Stock" htmlFor="v-stock"><Input id="v-stock" name="stock" type="number" defaultValue={999} /></Field>

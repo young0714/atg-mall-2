@@ -66,6 +66,10 @@ export interface ImportDraftInput {
   includeVideo: boolean;
   removedImageUrls: string[];
   removedVariantExternalIds: string[];
+  // externalId -> chosen price, in minor units — same convention as
+  // basePriceMinor. A variant with no entry here falls back to the base
+  // price itself (delta 0), same as before this existed.
+  variantPrices: Record<string, number>;
 }
 
 export interface PersistedDraft {
@@ -83,6 +87,7 @@ export interface PersistedDraft {
   includeVideo: boolean;
   removedImageUrls: string[];
   removedVariantExternalIds: string[];
+  variantPrices: Record<string, string>;
 }
 
 /** Loads this admin's staged batch for a source, so it survives navigating away or reloading. */
@@ -107,6 +112,7 @@ export async function listImportDraftsAction(source: ImportSource): Promise<Pers
     includeVideo: r.includeVideo,
     removedImageUrls: r.removedImageUrls,
     removedVariantExternalIds: r.removedVariantExternalIds,
+    variantPrices: (r.variantPrices as Record<string, string> | null) ?? {},
   }));
 }
 
@@ -125,6 +131,7 @@ export interface SaveDraftInput {
   includeVideo: boolean;
   removedImageUrls: string[];
   removedVariantExternalIds: string[];
+  variantPrices: Record<string, string>;
 }
 
 /** Called the moment an admin clicks "Save to Batch" — persists immediately, not just to local state. */
@@ -145,6 +152,7 @@ export async function saveImportDraftAction(input: SaveDraftInput): Promise<{ dr
     includeVideo: input.includeVideo,
     removedImageUrls: input.removedImageUrls,
     removedVariantExternalIds: input.removedVariantExternalIds,
+    variantPrices: input.variantPrices,
   };
 
   if (input.draftId) {
@@ -220,7 +228,14 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
           videoUrl: draft.includeVideo ? fresh.videoUrl : null,
           images: { create: images.slice(0, 8).map((url, i) => ({ url, sortOrder: i })) },
           variants: draft.importVariants
-            ? { create: variants.map((v) => ({ name: v.name, sku: v.sku ?? undefined, attributes: v.attributes })) }
+            ? {
+                create: variants.map((v) => ({
+                  name: v.name,
+                  sku: v.sku ?? undefined,
+                  attributes: v.attributes,
+                  priceDeltaMinor: (draft.variantPrices[v.externalId] ?? draft.basePriceMinor) - draft.basePriceMinor,
+                })),
+              }
             : undefined,
         },
       });

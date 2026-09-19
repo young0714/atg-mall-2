@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { deleteProductVariantsAction } from "./actions";
+import { deleteProductVariantsAction, updateVariantPriceAction } from "./actions";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { formatMoney } from "@/lib/money";
+import type { Currency } from "@prisma/client";
 
 interface VariantRow {
   id: string;
@@ -10,14 +12,19 @@ interface VariantRow {
   sku: string | null;
   stock: number;
   attributes: unknown;
+  priceDeltaMinor: number;
 }
 
 export function VariantsTable({
   productId,
   variants,
+  basePriceMinor,
+  baseCurrency,
 }: {
   productId: string;
   variants: VariantRow[];
+  basePriceMinor: number;
+  baseCurrency: Currency;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -51,7 +58,7 @@ export function VariantsTable({
     <form action={deleteProductVariantsAction} onSubmit={handleSubmit}>
       <input type="hidden" name="productId" value={productId} />
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[620px] text-sm">
+        <table className="w-full min-w-[720px] text-sm">
           <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
             <tr>
               <th className="p-2">
@@ -66,6 +73,7 @@ export function VariantsTable({
               </th>
               <th className="p-2">Name</th>
               <th className="p-2">SKU</th>
+              <th className="p-2">Price</th>
               <th className="p-2">Stock</th>
               <th className="p-2">Attributes</th>
             </tr>
@@ -88,6 +96,14 @@ export function VariantsTable({
                   </td>
                   <td className="p-2 font-medium text-navy-800">{v.name}</td>
                   <td className="p-2 text-navy-500">{v.sku ?? "—"}</td>
+                  <td className="p-2">
+                    <VariantPriceEditor
+                      productId={productId}
+                      variantId={v.id}
+                      priceMinor={basePriceMinor + v.priceDeltaMinor}
+                      currency={baseCurrency}
+                    />
+                  </td>
                   <td className="p-2 text-navy-500">{v.stock}</td>
                   <td className="p-2 text-navy-400">{JSON.stringify(v.attributes)}</td>
                 </tr>
@@ -102,6 +118,46 @@ export function VariantsTable({
       >
         Delete selected {selected.size > 0 ? `(${selected.size})` : ""}
       </SubmitButton>
+    </form>
+  );
+}
+
+function VariantPriceEditor({
+  productId,
+  variantId,
+  priceMinor,
+  currency,
+}: {
+  productId: string;
+  variantId: string;
+  priceMinor: number;
+  currency: Currency;
+}) {
+  const [editing, setEditing] = useState(false);
+
+  if (!editing) {
+    return (
+      <button type="button" onClick={() => setEditing(true)} className="text-navy-700 hover:underline" title="Click to edit">
+        {formatMoney(priceMinor, currency)}
+      </button>
+    );
+  }
+
+  return (
+    <form action={updateVariantPriceAction} className="flex items-center gap-1.5">
+      <input type="hidden" name="productId" value={productId} />
+      <input type="hidden" name="variantId" value={variantId} />
+      <input
+        type="number"
+        name="price"
+        defaultValue={priceMinor}
+        autoFocus
+        className="w-24 rounded-lg border border-navy-200 px-2 py-1 text-sm"
+      />
+      <SubmitButton className="btn-primary btn-sm !px-2 !py-1">Save</SubmitButton>
+      <button type="button" onClick={() => setEditing(false)} className="text-xs text-navy-400 hover:underline">
+        Cancel
+      </button>
     </form>
   );
 }

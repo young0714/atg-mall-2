@@ -18,6 +18,12 @@ export interface ImportableVariant {
   name: string;
   sku: string | null;
   attributes: Record<string, string>;
+  // The supplier's own price for this specific variant (e.g. a larger size
+  // or premium color often costs more than the base SKU). Used only to
+  // compute a sensible default price per variant at import time — applying
+  // the same markup ratio the admin chose for the base product — never
+  // stored or reused after that.
+  supplierPriceMinorUsd: number;
 }
 
 export interface ImportableProduct {
@@ -51,6 +57,7 @@ export function cjToImportable(d: CjProductDetail): ImportableProduct {
       name: v.name,
       sku: v.sku || null,
       attributes: v.attributes,
+      supplierPriceMinorUsd: v.priceMinorUsd,
     })),
     sourceUrl: d.sourceUrl,
     videoUrl: d.videoUrl,
@@ -73,6 +80,7 @@ export function aliexpressToImportable(d: AliExpressProductDetail): ImportablePr
       name: v.name,
       sku: v.skuId || null,
       attributes: v.attributes,
+      supplierPriceMinorUsd: v.priceMinorUsd,
     })),
     sourceUrl: d.sourceUrl,
     // AliExpress's Dropshipping API doesn't expose a usable/resolvable video

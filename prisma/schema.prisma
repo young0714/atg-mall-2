@@ -1519,6 +1519,13 @@ model ProductImportDraft {
   includeVideo              Boolean
   removedImageUrls          String[]
   removedVariantExternalIds String[]
+  // Per-variant price overrides, keyed by the variant's externalId (supplier
+  // SKU id) — { [externalId]: "priceMinorText" }. Defaults are computed
+  // client-side from the supplier's own per-variant price at the same
+  // markup ratio as the admin's chosen base price; only present here once
+  // an admin has actually opened/edited a draft, same minor-units-as-text
+  // convention as basePriceMinor's own editable field.
+  variantPrices             Json?
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
 
