@@ -4,6 +4,7 @@ import { getDestination } from "@/lib/destination";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import { formatMoney } from "@/lib/money";
 import { Container, Section } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import Link from "next/link";
 import Image from "next/image";
 import { updateCartItemAction, removeCartItemAction } from "./actions";
@@ -41,6 +42,7 @@ export default async function CartPage() {
   const subtotalMinor = itemsInUsd.reduce((sum, { item, unitPriceUsdMinor }) => sum + unitPriceUsdMinor * item.quantity, 0);
 
   return (
+    <PullToRefresh>
     <Section className="!py-10">
       <Container className="max-w-4xl">
         <h1 className="text-2xl font-display font-bold text-navy-900">Your Cart</h1>
@@ -111,5 +113,6 @@ export default async function CartPage() {
         )}
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }

@@ -12,6 +12,7 @@ import { Field, Input, Textarea } from "@/components/ui/Form";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
 import { ProductImageGallery } from "@/components/shop/ProductImageGallery";
 import { Container, Section } from "@/components/ui/Section";
+import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { formatDate } from "@/lib/utils";
 import { createReviewAction } from "./actions";
 import Link from "next/link";
@@ -65,6 +66,7 @@ export default async function ProductPage({
     : [false, null];
 
   return (
+    <PullToRefresh>
     <Section className="!py-8">
       <Container>
         <nav className="mb-6 text-xs text-navy-400">
@@ -199,5 +201,6 @@ export default async function ProductPage({
         </div>
       </Container>
     </Section>
+    </PullToRefresh>
   );
 }
