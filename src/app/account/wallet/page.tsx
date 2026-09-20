@@ -111,7 +111,7 @@ export default async function WalletPage({
             <SubmitButton className="btn-primary w-full">Deposit</SubmitButton>
             {!paymentService.isLive() && (
               <p className="text-center text-[11px] text-navy-400">
-                No real payment gateway is connected yet — deposits are simulated for demo purposes.
+                No real payment gateway is connected yet. Deposits are simulated for demo purposes.
               </p>
             )}
           </form>

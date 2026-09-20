@@ -40,7 +40,7 @@ export default async function SupportedCountriesPage() {
         <SectionHeading
           eyebrow="Worldwide Shipping"
           title="Supported destination countries"
-          description="ATG Mall is a worldwide marketplace — choose any of these destinations at checkout to see delivery options and pricing calculated for your product's origin, weight and shipping method. Nigeria and Gambia remain our deepest, most established markets. We add new destinations regularly."
+          description="ATG Mall is a worldwide marketplace. Choose any of these destinations at checkout to see delivery options and pricing calculated for your product's origin, weight and shipping method. Nigeria and Gambia remain our deepest, most established markets. We add new destinations regularly."
         />
 
         <div className="mt-10 space-y-8">
@@ -70,7 +70,7 @@ export default async function SupportedCountriesPage() {
 
         <div className="mt-10 rounded-xl2 border border-gold-200 bg-gold-50 p-4 text-sm text-gold-700">
           <strong>Note:</strong> shipping availability and cost depend on the product&apos;s origin, destination,
-          package size and selected shipping method — not every product ships to every destination on this list.{" "}
+          package size and selected shipping method. Not every product ships to every destination on this list.{" "}
           <Link href="/shop-for-me" className="underline">
             Ask us
           </Link>{" "}

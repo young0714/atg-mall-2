@@ -99,7 +99,7 @@ export async function confirmBvnVerification(params: {
   const data = body?.data;
 
   if (!res.ok || body?.status !== "success" || !data || data.status !== "COMPLETED") {
-    return { ok: false, error: "Verification wasn't completed — you may have closed the page early. Please try again." };
+    return { ok: false, error: "Verification wasn't completed. You may have closed the page early, please try again." };
   }
 
   const verifiedName = [data.first_name, data.middleName, data.last_name]

@@ -11,7 +11,7 @@ export default function ProhibitedItemsPage() {
     <LegalPage
       title="Prohibited Items Policy"
       lastUpdated="September 2026"
-      intro="To keep ATG Mall compliant with import regulations in Nigeria, Gambia and the other destinations we ship to worldwide, and to keep our customers, staff and carriers safe, we do not source, purchase, receive, consolidate or ship the categories of items below. This list is not exhaustive — customs authorities in your destination country may restrict additional items, and we reserve the right to refuse any item at our discretion."
+      intro="To keep ATG Mall compliant with import regulations in Nigeria, Gambia and the other destinations we ship to worldwide, and to keep our customers, staff and carriers safe, we do not source, purchase, receive, consolidate or ship the categories of items below. This list is not exhaustive: customs authorities in your destination country may restrict additional items, and we reserve the right to refuse any item at our discretion."
     >
       <h2>1. Always prohibited</h2>
       <ul>
@@ -25,7 +25,7 @@ export default function ProhibitedItemsPage() {
         <li>Items infringing third-party intellectual property (counterfeit branded goods).</li>
       </ul>
 
-      <h2>2. Restricted — require prior approval or documentation</h2>
+      <h2>2. Restricted: require prior approval or documentation</h2>
       <p>
         The following categories may be shippable in some circumstances, but require prior written approval from our
         team and, in many cases, documentation such as permits, certificates, or safety data sheets. Contact support

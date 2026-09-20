@@ -138,7 +138,7 @@ export function Footer() {
         <div className="container-atg flex flex-col gap-2 py-6 text-xs text-navy-400 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} ATG Mall. All rights reserved.</p>
           <p className="font-medium text-navy-300">
-            ATG Mall is a product of <span className="text-white">Apex Terra Global Limited</span>, Nigeria — a
+            ATG Mall is a product of <span className="text-white">Apex Terra Global Limited</span>, Nigeria, a
             separate consumer shopping platform from the corporate{" "}
             <a href="https://apexterraglobal.com" className="underline hover:text-white">
               apexterraglobal.com

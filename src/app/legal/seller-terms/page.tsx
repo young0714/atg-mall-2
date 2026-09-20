@@ -11,7 +11,7 @@ export default function SellerTermsPage() {
     <LegalPage
       title="Seller Terms"
       lastUpdated="September 2026"
-      intro="These Seller Terms apply to any individual or business ('Seller') that lists products for sale on the ATG Mall marketplace, in addition to our general Terms & Conditions. The ATG Mall marketplace is being rolled out in phases — some capabilities described here may not yet be available to all sellers."
+      intro="These Seller Terms apply to any individual or business ('Seller') that lists products for sale on the ATG Mall marketplace, in addition to our general Terms & Conditions. The ATG Mall marketplace is being rolled out in phases, so some capabilities described here may not yet be available to all sellers."
     >
       <h2>1. Becoming a seller</h2>
       <p>

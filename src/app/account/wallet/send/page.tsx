@@ -14,7 +14,7 @@ export default function SendMoneyPage() {
           ← Back to Wallet
         </Link>
         <h1 className="mt-2 text-2xl font-display font-bold text-navy-900">Send Money</h1>
-        <p className="mt-1 text-sm text-navy-500">Send from your ATG Wallet to another customer's wallet — instantly, no fees.</p>
+        <p className="mt-1 text-sm text-navy-500">Send from your ATG Wallet to another customer's wallet, instantly and with no fees.</p>
         <div className="mt-6">
           <WalletTransferFlow />
         </div>

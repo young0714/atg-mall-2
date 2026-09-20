@@ -15,7 +15,7 @@ export default function ShippingPolicyPage() {
     >
       <h2>1. Where we ship</h2>
       <p>
-        ATG Mall ships worldwide to any active destination country you select at checkout — see our{" "}
+        ATG Mall ships worldwide to any active destination country you select at checkout. See our{" "}
         <a href="/countries">Supported Countries</a> page for the current list. Shipping availability, cost and
         transit time for a given order depend on the product's origin, your destination country, package
         weight/dimensions and the shipping method selected; not every product or method is available to every
@@ -26,16 +26,16 @@ export default function ShippingPolicyPage() {
         Harcourt, Kano, Ibadan, Benin City, Enugu and Kaduna) and <strong>🇬🇲 Gambia</strong> (including Banjul,
         Kanifing and Brikama), with the widest range of local delivery zones and fastest transit options. Other
         supported destinations are served as well, and more are added regularly. The cities and local delivery
-        zones we serve are configured by our operations team and may be updated over time — your account will show
+        zones we serve are configured by our operations team and may be updated over time. Your account will show
         the zones currently available for your destination.
       </p>
 
       <h2>2. Shipping methods</h2>
       <p>We offer a choice of shipping methods, shown with an estimated cost and transit window at checkout or quotation stage:</p>
       <ul>
-        <li><strong>Air Freight</strong> — fastest option, best for lighter or urgent parcels.</li>
-        <li><strong>Sea Freight (LCL/FCL)</strong> — most economical for heavy or bulky cargo, longer transit time.</li>
-        <li><strong>Express Courier</strong> — door-to-door service for small, urgent parcels.</li>
+        <li><strong>Air Freight</strong>: fastest option, best for lighter or urgent parcels.</li>
+        <li><strong>Sea Freight (LCL/FCL)</strong>: most economical for heavy or bulky cargo, longer transit time.</li>
+        <li><strong>Express Courier</strong>: door-to-door service for small, urgent parcels.</li>
       </ul>
       <p>
         Shipping costs are calculated from the weight and, where relevant, volumetric (dimensional) weight of your
@@ -47,7 +47,7 @@ export default function ShippingPolicyPage() {
       <p>
         When a supplier ships an item to our warehouse, we log its receipt, inspect it, and record its weight and
         dimensions. If you have multiple packages awaiting shipment, you can request that we consolidate them into a
-        single shipment — this usually reduces your total shipping cost compared to shipping items separately, since
+        single shipment, which usually reduces your total shipping cost compared to shipping items separately, since
         international freight is priced by weight/volume.
       </p>
 

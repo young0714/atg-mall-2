@@ -199,7 +199,7 @@ export function BillPaymentFlow() {
 
           {!chargeCurrency ? (
             <p className="rounded-lg bg-gold-50 p-3 text-sm text-gold-700">
-              Bill payments for {country.name} aren&apos;t available yet — check back soon, or pick a different country.
+              Bill payments for {country.name} aren&apos;t available yet. Check back soon, or pick a different country.
             </p>
           ) : (
             <div>

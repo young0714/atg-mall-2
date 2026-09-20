@@ -24,8 +24,8 @@ export default function TermsPage() {
       <p>ATG Mall provides the following services, either directly or through third-party suppliers and logistics partners:</p>
       <ul>
         <li>Access to product listings sourced from Chinese marketplaces (including 1688 and Taobao) and from sellers on ATG Mall.</li>
-        <li>"Shop for Me" — purchasing a specific product on your behalf from a link or description you provide.</li>
-        <li>"Source a Product" — sourcing quotes for products you describe, which you may accept or decline.</li>
+        <li>"Shop for Me": purchasing a specific product on your behalf from a link or description you provide.</li>
+        <li>"Source a Product": sourcing quotes for products you describe, which you may accept or decline.</li>
         <li>Receiving, inspecting and consolidating packages at our warehouse.</li>
         <li>Arranging international shipping to supported destination countries worldwide, and local delivery within the cities we serve.</li>
         <li>An ATG Wallet for holding funds you deposit to pay for orders, quotations and shipments.</li>
@@ -67,7 +67,7 @@ export default function TermsPage() {
       <p>
         Estimated transit times shown on the platform are estimates, not guarantees, and can be affected by customs
         clearance, weather, carrier delays and other factors outside our control. You are responsible for ensuring
-        items you order are not prohibited or restricted from import into your destination country — see our{" "}
+        items you order are not prohibited or restricted from import into your destination country. See our{" "}
         <a href="/legal/prohibited-items">Prohibited Items</a> policy. Where applicable customs duties, levies or
         clearance charges apply, these are your responsibility unless we have stated otherwise for a specific order.
       </p>

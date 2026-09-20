@@ -27,7 +27,7 @@ export default function AboutPage() {
           <SectionHeading
             eyebrow="About ATG Mall"
             title="Shop global. Delivered local."
-            description="ATG Mall makes it simple to shop from Chinese marketplaces and get your items home — anywhere we ship to worldwide — without needing a China-based agent, a freight forwarder, and a customs broker of your own."
+            description="ATG Mall makes it simple to shop from Chinese marketplaces and get your items home, anywhere we ship to worldwide, without needing a China-based agent, a freight forwarder, and a customs broker of your own."
           />
 
           <div className="legal-content mt-8">
@@ -38,17 +38,17 @@ export default function AboutPage() {
               parts that are hard to do yourself:
             </p>
             <ul>
-              <li><strong>Shop &amp; Source</strong> — browse products through ATG Mall, or send us a link or description of something you found elsewhere and we&apos;ll source it and quote you a landed cost.</li>
-              <li><strong>Buy</strong> — we purchase from the supplier on your behalf once you approve pricing.</li>
-              <li><strong>Consolidate</strong> — multiple purchases are received at our warehouse and can be combined into a single shipment to reduce your shipping cost.</li>
-              <li><strong>Ship</strong> — we arrange international freight (air, sea or courier) to any destination we support, worldwide.</li>
-              <li><strong>Deliver</strong> — your consolidated shipment clears and is delivered to a city we serve, or made available for pickup.</li>
+              <li><strong>Shop &amp; Source</strong>: browse products through ATG Mall, or send us a link or description of something you found elsewhere and we&apos;ll source it and quote you a landed cost.</li>
+              <li><strong>Buy</strong>: we purchase from the supplier on your behalf once you approve pricing.</li>
+              <li><strong>Consolidate</strong>: multiple purchases are received at our warehouse and can be combined into a single shipment to reduce your shipping cost.</li>
+              <li><strong>Ship</strong>: we arrange international freight (air, sea or courier) to any destination we support, worldwide.</li>
+              <li><strong>Deliver</strong>: your consolidated shipment clears and is delivered to a city we serve, or made available for pickup.</li>
             </ul>
 
             <h2>Who we are</h2>
             <p>
               ATG Mall is a product of <strong>Apex Terra Global Limited</strong>, a company registered in Nigeria.
-              ATG Mall is a separate, dedicated consumer shopping and logistics platform — distinct from Apex Terra
+              ATG Mall is a separate, dedicated consumer shopping and logistics platform, distinct from Apex Terra
               Global&apos;s corporate website at{" "}
               <a href="https://apexterraglobal.com" target="_blank" rel="noreferrer">apexterraglobal.com</a>.
             </p>
@@ -60,7 +60,7 @@ export default function AboutPage() {
 
             <h2>How we&apos;re different</h2>
             <p>
-              We show you an estimated landed cost — product price, service fee, and estimated shipping — before you
+              We show you an estimated landed cost (product price, service fee, and estimated shipping) before you
               commit, rather than surprising you with charges after your order has already left China. Every order,
               package and shipment can be tracked from purchase through to delivery on your ATG Mall account.
             </p>

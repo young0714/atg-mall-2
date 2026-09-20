@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
       <h2>3. Who we share information with</h2>
       <p>We share information only where necessary to provide the service, including with:</p>
       <ul>
-        <li>Suppliers, to fulfil purchases made on your behalf (typically limited to what a purchase requires — product, quantity, and shipping destination).</li>
+        <li>Suppliers, to fulfil purchases made on your behalf (typically limited to what a purchase requires: product, quantity, and shipping destination).</li>
         <li>Shipping, freight and customs partners, to move and clear your packages.</li>
         <li>Payment processors, to process payments and deposits.</li>
         <li>Staff within Apex Terra Global Limited who need access to serve your account (for example, warehouse, sourcing, or support staff), governed by role-based access controls.</li>

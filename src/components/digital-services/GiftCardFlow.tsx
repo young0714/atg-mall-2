@@ -445,7 +445,7 @@ export function GiftCardFlow({ variant = "gift-card" }: GiftCardFlowProps = {}) 
           </p>
           {orderId && (
             <p className="mt-1 text-xs text-navy-400">
-              Order {orderId} — view the redeem code in{" "}
+              Order {orderId}: view the redeem code in{" "}
               <Link href="/digital-services" className="text-atgblue-600 underline">
                 your order history
               </Link>

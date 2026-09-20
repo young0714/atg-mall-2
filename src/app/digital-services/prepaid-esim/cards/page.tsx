@@ -17,7 +17,7 @@ export default async function PrepaidCardsPage() {
           ← Back
         </Link>
         <h1 className="mb-1 mt-2 text-2xl font-display font-bold text-navy-900">Prepaid Cards</h1>
-        <p className="mb-6 text-sm text-navy-500">Open-loop cards, usable online or in-store — not tied to one retailer.</p>
+        <p className="mb-6 text-sm text-navy-500">Open-loop cards, usable online or in-store, not tied to one retailer.</p>
         <GiftCardFlow variant="prepaid" />
       </Container>
     </Section>

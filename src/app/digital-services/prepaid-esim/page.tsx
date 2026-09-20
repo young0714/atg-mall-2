@@ -30,7 +30,7 @@ export default async function PrepaidEsimPage() {
           <Link href="/digital-services/prepaid-esim/esim" className="card p-5">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-atggreen-50 text-lg">📶</div>
             <h3 className="font-semibold text-navy-900">eSIM</h3>
-            <p className="mt-1 text-xs text-navy-500">Get connected instantly in 190+ countries — no physical SIM needed.</p>
+            <p className="mt-1 text-xs text-navy-500">Get connected instantly in 190+ countries, no physical SIM needed.</p>
             <p className="mt-3 text-xs font-semibold text-atggreen-600">Browse eSIMs →</p>
           </Link>
         </div>

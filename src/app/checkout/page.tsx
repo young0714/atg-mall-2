@@ -178,7 +178,7 @@ export default async function CheckoutPage({
                     <label key={a.id} className="flex cursor-pointer items-start gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
                       <input type="radio" name="addressId" value={a.id} defaultChecked={a.isDefault} className="mt-1" required />
                       <span className="text-sm">
-                        <span className="font-medium text-navy-800">{a.fullName}</span> — {a.addressLine1}, {a.city}, {a.state}, {addressCountryNames.get(a.countryIso) ?? a.countryIso}
+                        <span className="font-medium text-navy-800">{a.fullName}</span>, {a.addressLine1}, {a.city}, {a.state}, {addressCountryNames.get(a.countryIso) ?? a.countryIso}
                         <br />
                         <span className="text-navy-400">{a.phone}</span>
                       </span>
@@ -201,15 +201,15 @@ export default async function CheckoutPage({
                 <div className="space-y-2 text-sm">
                   <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
                     <input type="radio" name="paymentMethod" value="WALLET" defaultChecked required />
-                    ATG Wallet {wallet && <span className="text-navy-400">— balance {formatMoney(wallet.balanceMinor, wallet.currency)}</span>}
+                    ATG Wallet {wallet && <span className="text-navy-400">(balance {formatMoney(wallet.balanceMinor, wallet.currency)})</span>}
                   </label>
                   <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
                     <input type="radio" name="paymentMethod" value="CARD" />
-                    Debit/Credit Card {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment — no real gateway connected yet)"}
+                    Debit/Credit Card {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment, no real gateway connected yet)"}
                   </label>
                   <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
                     <input type="radio" name="paymentMethod" value="BANK_TRANSFER" />
-                    Bank Transfer {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment — no real gateway connected yet)"}
+                    Bank Transfer {paymentService.isLive() ? "(via Flutterwave)" : "(mock payment, no real gateway connected yet)"}
                   </label>
                 </div>
               </section>

@@ -48,7 +48,7 @@ export default async function CheckoutCallbackPage({
               <p className="mt-1 text-sm text-navy-500">
                 {cancelled
                   ? "You cancelled the payment before it completed."
-                  : "We couldn't confirm this payment. If you were charged, it may take a few minutes to reflect — check your order, or try again."}
+                  : "We couldn't confirm this payment. If you were charged, it may take a few minutes to reflect. Check your order, or try again."}
               </p>
               <Link href="/account/orders" className="btn-outline mt-5 inline-block">
                 View my orders

@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ATG Mall — Shop The World. Delivered To You.",
+    name: "ATG Mall: Shop The World, Delivered To You.",
     short_name: "ATG Mall",
     description:
-      "Shop products from China, the USA and the UK, delivered to supported destinations worldwide. Sourcing, purchasing, warehousing, consolidation and shipping — handled by ATG Mall.",
+      "Shop products from China, the USA and the UK, delivered to supported destinations worldwide. Sourcing, purchasing, warehousing, consolidation and shipping are all handled by ATG Mall.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

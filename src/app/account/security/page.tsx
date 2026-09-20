@@ -15,7 +15,7 @@ export default async function SecurityPage() {
     <div>
       <h1 className="text-2xl font-display font-bold text-navy-900">Security</h1>
       <p className="mt-1 text-sm text-navy-500">
-        Add a PIN lock so ATG Mall re-locks itself every time you close and reopen it — separate from your regular
+        Add a PIN lock so ATG Mall re-locks itself every time you close and reopen it, separate from your regular
         sign-in.
       </p>
 

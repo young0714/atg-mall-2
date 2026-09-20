@@ -42,7 +42,7 @@ export default async function AccountOverviewPage({
     <div className="space-y-8">
       {searchParams.justRegistered && (
         <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
-          Welcome to ATG Mall! Your account is ready — start shopping, sourcing or shipping whenever you&apos;re ready.
+          Welcome to ATG Mall! Your account is ready, start shopping, sourcing or shipping whenever you&apos;re ready.
         </div>
       )}
       {searchParams.welcome && (
@@ -52,7 +52,7 @@ export default async function AccountOverviewPage({
       )}
       {searchParams.passwordSet && (
         <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
-          Password set — you can now sign in with your email and password.
+          Password set. You can now sign in with your email and password.
         </div>
       )}
       <div>

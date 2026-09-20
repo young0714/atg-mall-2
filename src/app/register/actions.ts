@@ -33,11 +33,11 @@ export async function registerAction(formData: FormData) {
       userContact: user.email,
       event: NOTIFICATION_EVENTS.WELCOME,
       title: "Welcome to ATG Mall!",
-      body: `Hi ${firstName}, your ATG Mall account is ready. Start shopping, sourcing or shipping — we've got the rest covered.`,
+      body: `Hi ${firstName}, your ATG Mall account is ready. Start shopping, sourcing or shipping, we've got the rest covered.`,
       html: await renderEmailLayout({
         eyebrow: "WELCOME",
         heading: `Welcome to ATG Mall, ${firstName}!`,
-        bodyHtml: "Your account is ready. Start shopping, sourcing or shipping — we've got the rest covered.",
+        bodyHtml: "Your account is ready. Start shopping, sourcing or shipping, we've got the rest covered.",
         cta: { label: "Start Shopping →", url: `${APP_URL}/shop` },
         includeTrending: true,
       }),

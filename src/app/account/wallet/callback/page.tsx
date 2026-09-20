@@ -33,7 +33,7 @@ export default async function WalletCallbackPage({
           <p className="text-sm text-navy-500">
             {cancelled
               ? "You cancelled the payment before it completed."
-              : "We couldn't confirm this deposit. If you were charged, it may take a few minutes to reflect — check your wallet balance, or try again."}
+              : "We couldn't confirm this deposit. If you were charged, it may take a few minutes to reflect. Check your wallet balance, or try again."}
           </p>
         </>
       )}

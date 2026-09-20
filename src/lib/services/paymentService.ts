@@ -91,7 +91,7 @@ class FlutterwavePaymentProvider implements PaymentProvider {
         providerRef: txRef,
         providerName: this.name,
         status: "FAILED",
-        failureReason: `${params.currency} isn't supported for card/bank transfer yet — please pay from your ATG Wallet instead.`,
+        failureReason: `${params.currency} isn't supported for card/bank transfer yet. Please pay from your ATG Wallet instead.`,
       };
     }
 

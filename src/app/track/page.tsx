@@ -34,7 +34,7 @@ export default function TrackPage() {
           <SectionHeading
             eyebrow="Track Shipment"
             title="Where's my package?"
-            description="Enter your ATG tracking number to see its full journey — from our China warehouse to your door."
+            description="Enter your ATG tracking number to see its full journey, from our China warehouse to your door."
             align="center"
           />
           <form action={trackAction} className="mt-8 flex flex-col gap-3 sm:flex-row">

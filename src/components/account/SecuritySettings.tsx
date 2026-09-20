@@ -105,7 +105,7 @@ export function SecuritySettings({
           <div>
             <h2 className="font-semibold text-navy-900">PIN Lock</h2>
             <p className="mt-0.5 text-sm text-navy-500">
-              {pinEnabled ? "Enabled — required every time you reopen ATG Mall." : "Off — anyone who opens ATG Mall on your device sees your account."}
+              {pinEnabled ? "Enabled, required every time you reopen ATG Mall." : "Off, anyone who opens ATG Mall on your device sees your account."}
             </p>
           </div>
           <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${pinEnabled ? "bg-atggreen-50 text-atggreen-700" : "bg-navy-100 text-navy-500"}`}>
@@ -180,7 +180,7 @@ export function SecuritySettings({
         <div className="card p-5">
           <h2 className="font-semibold text-navy-900">Face ID / Touch ID</h2>
           <p className="mt-0.5 text-sm text-navy-500">
-            Unlock with your device's biometrics instead of typing your PIN. Works per device — add each one you use.
+            Unlock with your device's biometrics instead of typing your PIN. Works per device: add each one you use.
           </p>
 
           {devices.length > 0 && (

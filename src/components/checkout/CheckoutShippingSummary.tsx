@@ -123,7 +123,7 @@ export function CheckoutShippingSummary({
           Final total is recalculated from your actual shipping selection when the order is placed.
         </p>
         <SubmitButton className="btn-primary mt-4 w-full" disabled={!canCheckout} pendingText="Placing order…">
-          {canCheckout ? "Place Order" : "Shipping unavailable — see above"}
+          {canCheckout ? "Place Order" : "Shipping unavailable, see above"}
         </SubmitButton>
       </section>
     </>

@@ -38,7 +38,7 @@ export default async function SourceAProductPage({
         <SectionHeading
           eyebrow="Source a Product"
           title="Tell us what you need. We'll find it."
-          description="Describe the product — even without a link — and our sourcing team will search verified suppliers and come back with options, pricing, MOQ and estimated shipping."
+          description="Describe the product, even without a link, and our sourcing team will search verified suppliers and come back with options, pricing, MOQ and estimated shipping."
         />
 
         {searchParams.error && (
@@ -49,10 +49,10 @@ export default async function SourceAProductPage({
           <Field label="Product name / description" htmlFor="productName" required>
             <Input id="productName" name="productName" required placeholder="e.g. Industrial sewing machine, heavy duty" />
           </Field>
-          <Field label="Reference product link" htmlFor="productUrl" hint="Optional — a similar product you found online">
+          <Field label="Reference product link" htmlFor="productUrl" hint="Optional: a similar product you found online">
             <Input id="productUrl" name="productUrl" type="url" />
           </Field>
-          <Field label="Upload a reference image" htmlFor="productImageFile" hint="Optional — JPEG/PNG/WEBP, up to 8MB">
+          <Field label="Upload a reference image" htmlFor="productImageFile" hint="Optional: JPEG/PNG/WEBP, up to 8MB">
             <input id="productImageFile" name="productImageFile" type="file" accept="image/*" className="input" />
           </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

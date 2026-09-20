@@ -25,7 +25,7 @@ export function Logo({
   const img = (
     <Image
       src="/logo.png"
-      alt="ATG Mall — Shop Global. Delivered Local."
+      alt="ATG Mall: Shop Global. Delivered Local."
       width={200}
       height={200}
       priority

@@ -23,7 +23,7 @@ export default async function OneSixEightEightPage({
         <SectionHeading
           eyebrow="1688"
           title="Wholesale listings from 1688"
-          description="Mock listings for demonstration — pending an authorized 1688 API integration. Request any item via Shop for Me."
+          description="Mock listings for demonstration, pending an authorized 1688 API integration. Request any item via Shop for Me."
         />
         <form method="GET" className="mt-6 max-w-md">
           <input

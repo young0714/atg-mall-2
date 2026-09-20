@@ -38,7 +38,7 @@ const COUNTRIES = [
     flag: "🇨🇳",
     name: "China",
     href: "/shop-from-china",
-    desc: "1688, Taobao, Alibaba and trusted suppliers — bulk and factory-direct pricing.",
+    desc: "1688, Taobao, Alibaba and trusted suppliers, with bulk and factory-direct pricing.",
     tone: "bg-atgblue-500",
   },
   {
@@ -74,7 +74,7 @@ export default async function InternationalStoresPage() {
         <SectionHeading
           eyebrow="Shop the World"
           title="International Stores"
-          description="ATG Mall sources from stores across China, the USA and the UK — send us a link from any of them and we'll buy, consolidate and ship it worldwide."
+          description="ATG Mall sources from stores across China, the USA and the UK. Send us a link from any of them and we'll buy, consolidate and ship it worldwide."
         />
 
         <div className="mt-10 grid grid-cols-1 gap-5 lg:grid-cols-3">

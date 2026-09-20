@@ -30,7 +30,7 @@ export default async function DigitalServicesPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-display font-bold text-navy-900">Digital Services</h1>
-            <p className="mt-1 text-sm text-navy-500">Paid instantly from your ATG Wallet — no card or bank redirect needed.</p>
+            <p className="mt-1 text-sm text-navy-500">Paid instantly from your ATG Wallet, no card or bank redirect needed.</p>
           </div>
           <div className="rounded-full border border-navy-100 bg-white px-4 py-2 shadow-card">
             <p className="text-[10px] uppercase tracking-wide text-navy-400">Wallet balance</p>

@@ -23,7 +23,7 @@ export default async function TaobaoPage({
         <SectionHeading
           eyebrow="Taobao"
           title="Retail listings from Taobao"
-          description="Mock listings for demonstration — pending an authorized Taobao API integration. Request any item via Shop for Me."
+          description="Mock listings for demonstration, pending an authorized Taobao API integration. Request any item via Shop for Me."
         />
         <form method="GET" className="mt-6 max-w-md">
           <input

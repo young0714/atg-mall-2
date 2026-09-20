@@ -54,7 +54,7 @@ export default function LoginPage({
         <div className="card mt-6 p-7">
           <h2 className="text-lg font-display font-bold text-navy-900">Or continue as a guest</h2>
           <p className="mt-1 text-sm text-navy-500">
-            No password needed — we&apos;ll email you a link to access your account and orders later.
+            No password needed, we&apos;ll email you a link to access your account and orders later.
           </p>
 
           {searchParams.guestError && (

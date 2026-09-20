@@ -44,11 +44,11 @@ export default async function ShopFromUkPage() {
         <SectionHeading
           eyebrow="🇬🇧 Shop from UK"
           title="Shop from leading UK stores"
-          description="Have ATG source and deliver your purchases internationally — send us a link from any of these stores, or any other UK retailer."
+          description="Have ATG source and deliver your purchases internationally. Send us a link from any of these stores, or any other UK retailer."
         />
 
         <div className="mt-4 rounded-xl2 border border-gold-200 bg-gold-50 p-4 text-sm text-gold-700">
-          <strong>Note:</strong> ATG Mall does not have a live product-search integration with these stores — this is
+          <strong>Note:</strong> ATG Mall does not have a live product-search integration with these stores. This is
           a directory of stores we can shop from on your behalf. Use{" "}
           <Link href="/shop-for-me" className="underline">Shop for Me</Link> to send us the link to any specific
           product you want.

@@ -101,7 +101,7 @@ export default async function ProductPage({
               <div className="mt-4 rounded-xl2 border border-navy-100 bg-sand-50 p-3 text-sm">
                 <p className="font-medium text-navy-800">{product.supplier.name}</p>
                 <p className="text-xs text-navy-500">
-                  {product.supplier.location} · {product.supplier.verified ? "Verified supplier" : "Unverified — proceed with standard inspection"}
+                  {product.supplier.location} · {product.supplier.verified ? "Verified supplier" : "Unverified, proceed with standard inspection"}
                 </p>
               </div>
             )}
@@ -156,7 +156,7 @@ export default async function ProductPage({
           <div className="mt-8 border-t border-navy-100 pt-6">
             {searchParams.reviewSubmitted && (
               <div className="mb-4 rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
-                Thanks — your review has been posted.
+                Thanks, your review has been posted.
               </div>
             )}
             {searchParams.reviewError && (
@@ -173,7 +173,7 @@ export default async function ProductPage({
             )}
 
             {user && existingReview && (
-              <p className="text-sm text-navy-500">You&apos;ve already reviewed this product — thanks!</p>
+              <p className="text-sm text-navy-500">You&apos;ve already reviewed this product, thanks!</p>
             )}
 
             {user && !existingReview && !verifiedPurchase && (

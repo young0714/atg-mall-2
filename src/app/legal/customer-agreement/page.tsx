@@ -16,7 +16,7 @@ export default function CustomerAgreementPage() {
       <h2>1. Our role</h2>
       <p>
         When you submit a Shop for Me or Source a Product request, or place a catalog order that we purchase from a
-        supplier on your behalf, ATG Mall acts as your <strong>purchasing agent</strong> for that transaction — we buy
+        supplier on your behalf, ATG Mall acts as your <strong>purchasing agent</strong> for that transaction, we buy
         the item from the supplier in order to fulfil your instructions, and separately act as a{" "}
         <strong>freight forwarder</strong> in receiving, consolidating and shipping the resulting package(s) to you.
       </p>

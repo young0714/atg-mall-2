@@ -21,7 +21,7 @@ export default function DeleteAccountPage() {
       </p>
       <p>
         If you can no longer sign in, email <a href="mailto:support@apexterraglobal.com">support@apexterraglobal.com</a>{" "}
-        from the address on your account and ask us to delete it — we'll verify your identity before proceeding.
+        from the address on your account and ask us to delete it. We'll verify your identity before proceeding.
       </p>
 
       <h2>2. What gets deleted</h2>
@@ -32,7 +32,7 @@ export default function DeleteAccountPage() {
 
       <h2>3. What we keep, and why</h2>
       <p>
-        Order, payment, shipment and wallet transaction records are retained even after deletion — not linked to your
+        Order, payment, shipment and wallet transaction records are retained even after deletion, but not linked to your
         name or contact details anymore, but kept in our accounting and logistics records as required by tax,
         consumer-protection and anti-fraud law. This is the same reason a bank or shop can't erase a receipt just
         because you close your account with them.

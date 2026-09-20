@@ -54,7 +54,7 @@ export function InstallAppBanner() {
             Tap <strong>Share</strong> <span aria-hidden>⬆️</span> in Safari, then <strong>&quot;Add to Home Screen.&quot;</strong>
           </p>
         ) : (
-          <p className="text-atgblue-800">Install ATG Mall for quicker access — no App Store needed.</p>
+          <p className="text-atgblue-800">Install ATG Mall for quicker access, no App Store needed.</p>
         )}
         <div className="flex shrink-0 items-center gap-2">
           {!showIOSSteps && (

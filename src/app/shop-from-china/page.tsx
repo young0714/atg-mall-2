@@ -40,7 +40,7 @@ export default async function ShopFromChinaPage() {
         />
 
         <div className="mt-4 rounded-xl2 border border-gold-200 bg-gold-50 p-4 text-sm text-gold-700">
-          <strong>Note:</strong> ATG Mall does not yet have a live, authorized API connection to these platforms —
+          <strong>Note:</strong> ATG Mall does not yet have a live, authorized API connection to these platforms.
           1688 and Taobao below show realistic mock data to demonstrate the browsing experience. Use{" "}
           <Link href="/shop-for-me" className="underline">Shop for Me</Link> to request any real product you find on
           any of these platforms today.

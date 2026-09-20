@@ -43,12 +43,12 @@ export default async function ShopForMePage({
         <SectionHeading
           eyebrow="Shop for Me"
           title="Found something online? We'll buy it for you."
-          description="Paste a product link from any store — our team will review it, quote you the full landed cost, and purchase it once you approve."
+          description="Paste a product link from any store, and our team will review it, quote you the full landed cost, and purchase it once you approve."
         />
 
         {store && (
           <div className="mt-4 rounded-xl2 border border-atgblue-200 bg-atgblue-50 p-4 text-sm text-atgblue-700">
-            Requesting from <strong>{store.name}</strong> ({STORE_COUNTRY_FLAGS[store.country]} {STORE_COUNTRY_LABELS[store.country]}) — paste the link to the specific product you want below.
+            Requesting from <strong>{store.name}</strong> ({STORE_COUNTRY_FLAGS[store.country]} {STORE_COUNTRY_LABELS[store.country]}). Paste the link to the specific product you want below.
           </div>
         )}
 
@@ -64,7 +64,7 @@ export default async function ShopForMePage({
           <Field label="Product name" htmlFor="productName" required>
             <Input id="productName" name="productName" required defaultValue={searchParams.productName} />
           </Field>
-          <Field label="Product image URL" htmlFor="productImageUrl" hint="Optional — paste an image link if you have one">
+          <Field label="Product image URL" htmlFor="productImageUrl" hint="Optional: paste an image link if you have one">
             <Input id="productImageUrl" name="productImageUrl" type="url" defaultValue={searchParams.productImageUrl} />
           </Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -85,7 +85,7 @@ export default async function ShopForMePage({
               ))}
             </Select>
           </Field>
-          <Field label="Special instructions" htmlFor="instructions" hint="Anything our team should know — variant, deadline, etc.">
+          <Field label="Special instructions" htmlFor="instructions" hint="Anything our team should know: variant, deadline, etc.">
             <Textarea id="instructions" name="instructions" />
           </Field>
 

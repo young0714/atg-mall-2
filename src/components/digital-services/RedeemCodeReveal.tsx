@@ -7,7 +7,7 @@ export function RedeemCodeReveal({ deliveryPayload }: { deliveryPayload: unknown
 
   const payload = deliveryPayload as { cardNumber?: string; pinCode?: string } | null;
   if (!payload || (!payload.cardNumber && !payload.pinCode)) {
-    return <p className="mt-1 text-xs text-navy-400">Redeem code is still being generated — check back shortly.</p>;
+    return <p className="mt-1 text-xs text-navy-400">Redeem code is still being generated. Check back shortly.</p>;
   }
 
   if (!revealed) {

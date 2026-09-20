@@ -36,7 +36,7 @@ export function BvnVerifyForm({ action }: { action: (formData: FormData) => void
       </Field>
       <SubmitButton className="btn-outline w-full">Verify BVN</SubmitButton>
       <p className="text-center text-[11px] text-navy-400">
-        You&apos;ll be taken to a secure NIBSS page to confirm your identity with an OTP. We never store your BVN —
+        You&apos;ll be taken to a secure NIBSS page to confirm your identity with an OTP. We never store your BVN,
         only the verification result.
       </p>
     </form>

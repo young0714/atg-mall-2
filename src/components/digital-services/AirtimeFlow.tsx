@@ -251,7 +251,7 @@ export function AirtimeFlow() {
 
           {!chargeCurrency ? (
             <p className="rounded-lg bg-gold-50 p-3 text-sm text-gold-700">
-              {serviceType === "BUNDLE" ? "Bundles" : "Airtime top-ups"} for {country.name} aren&apos;t available yet —
+              {serviceType === "BUNDLE" ? "Bundles" : "Airtime top-ups"} for {country.name} aren&apos;t available yet.
               check back soon, or pick a different country.
             </p>
           ) : (
@@ -313,7 +313,7 @@ export function AirtimeFlow() {
                 </option>
                 {fixedAmounts.map((v) => (
                   <option key={v} value={v}>
-                    {bundleDescription(v) ? `${bundleDescription(v)} — ${displayAmount(v)}` : displayAmount(v)}
+                    {bundleDescription(v) ? `${bundleDescription(v)}: ${displayAmount(v)}` : displayAmount(v)}
                   </option>
                 ))}
               </select>
