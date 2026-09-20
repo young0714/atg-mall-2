@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/Form";
 import { SortSelect } from "@/components/shop/SortSelect";
 import { buildCategoryTree, collectDescendantIds, getActivePath, type CategoryTreeNode } from "@/lib/categoryTree";
 import { MobileCategoryDrawer } from "@/components/shop/MobileCategoryDrawer";
+import { Pagination } from "@/components/ui/Pagination";
 import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -180,78 +181,12 @@ export default async function ShopPage({
               </div>
             )}
 
-            {totalPages > 1 && (
-              <nav aria-label="Product pages" className="mt-8 flex flex-wrap items-center justify-center gap-1.5">
-                <PageLink page={currentPage - 1} href={pageHref(currentPage - 1)} disabled={currentPage === 1}>
-                  Prev
-                </PageLink>
-                {paginationRange(currentPage, totalPages).map((item, i) =>
-                  item === "..." ? (
-                    <span key={`ellipsis-${i}`} className="flex h-8 min-w-8 items-center justify-center text-sm text-navy-300">
-                      …
-                    </span>
-                  ) : (
-                    <PageLink key={item} page={item} href={pageHref(item)} active={item === currentPage}>
-                      {item}
-                    </PageLink>
-                  ),
-                )}
-                <PageLink page={currentPage + 1} href={pageHref(currentPage + 1)} disabled={currentPage === totalPages}>
-                  Next
-                </PageLink>
-              </nav>
-            )}
+            <Pagination currentPage={currentPage} totalPages={totalPages} hrefForPage={pageHref} />
           </div>
         </div>
       </Container>
     </Section>
     </PullToRefresh>
-  );
-}
-
-// Windowed page list around the current page, plus the first/last page
-// always shown — "..." marks a skipped gap. e.g. page 6 of 12 -> [1, "...",
-// 5, 6, 7, "...", 12].
-function paginationRange(current: number, total: number): (number | "...")[] {
-  const windowStart = Math.max(2, current - 1);
-  const windowEnd = Math.min(total - 1, current + 1);
-
-  const pages: (number | "...")[] = [1];
-  if (windowStart > 2) pages.push("...");
-  for (let p = windowStart; p <= windowEnd; p++) pages.push(p);
-  if (windowEnd < total - 1) pages.push("...");
-  if (total > 1) pages.push(total);
-  return pages;
-}
-
-function PageLink({
-  page,
-  href,
-  active,
-  disabled,
-  children,
-}: {
-  page: number;
-  href: string;
-  active?: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  const base = "flex h-8 min-w-8 items-center justify-center rounded-lg px-2.5 text-sm font-semibold";
-  if (disabled) {
-    return <span className={`${base} text-navy-100`}>{children}</span>;
-  }
-  if (active) {
-    return (
-      <span aria-current="page" className={`${base} bg-navy-900 text-white`}>
-        {children}
-      </span>
-    );
-  }
-  return (
-    <a href={href} className={`${base} text-navy-600 hover:bg-sand-100`}>
-      {children}
-    </a>
   );
 }
 

@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { StatusBadge } from "@/components/ui/Badge";
+import { Pagination } from "@/components/ui/Pagination";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { ORDER_STATUS_FLOW } from "@/lib/constants";
@@ -11,23 +12,48 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Admin — Orders" };
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 100;
+
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: { status?: string; page?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_ORDERS);
 
-  const orders = await db.order.findMany({
-    where: searchParams.status ? { status: searchParams.status as never } : undefined,
-    orderBy: { createdAt: "desc" },
-    include: { user: true, items: true },
-    take: 100,
-  });
+  const currentPage = Math.max(1, Math.trunc(Number(searchParams.page)) || 1);
+  const where = searchParams.status ? { status: searchParams.status as never } : undefined;
+
+  const [totalCount, orders] = await Promise.all([
+    db.order.count({ where }),
+    db.order.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: { user: true, items: true },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function pageHref(page: number): string {
+    const params = new URLSearchParams();
+    if (searchParams.status) params.set("status", searchParams.status);
+    if (page > 1) params.set("page", String(page));
+    const qs = params.toString();
+    return qs ? `/admin/orders?${qs}` : "/admin/orders";
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-display font-bold text-navy-900">Orders</h1>
+      <div>
+        <h1 className="text-2xl font-display font-bold text-navy-900">Orders</h1>
+        <p className="mt-1 text-sm text-navy-500">
+          {totalCount === 0
+            ? "0 orders"
+            : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, totalCount)} of ${totalCount} order${totalCount === 1 ? "" : "s"}`}
+        </p>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <Link href="/admin/orders" className={`badge ${!searchParams.status ? "bg-navy-900 text-white" : "bg-navy-50 text-navy-500"}`}>All</Link>
@@ -72,6 +98,8 @@ export default async function AdminOrdersPage({
           </table>
         </div>
       )}
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} hrefForPage={pageHref} />
     </div>
   );
 }
