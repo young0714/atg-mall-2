@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { Field, Input, Select } from "@/components/ui/Form";
+import { Pagination } from "@/components/ui/Pagination";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { adjustWalletAction, reverseWalletTransferAction } from "./actions";
@@ -11,21 +12,32 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 export const metadata: Metadata = { title: "Admin — Wallets" };
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 50;
+
 export default async function AdminWalletsPage({
   searchParams,
 }: {
-  searchParams: { adjusted?: string; reversed?: string; error?: string };
+  searchParams: { adjusted?: string; reversed?: string; error?: string; page?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_WALLETS);
 
-  const [wallets, transfers] = await Promise.all([
+  const currentPage = Math.max(1, Math.trunc(Number(searchParams.page)) || 1);
+
+  const [wallets, transferCount, transfers] = await Promise.all([
     db.wallet.findMany({ orderBy: { balanceMinor: "desc" }, include: { user: true } }),
+    db.walletTransfer.count(),
     db.walletTransfer.findMany({
       orderBy: { createdAt: "desc" },
-      take: 50,
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
       include: { sender: true, recipient: true, reversedBy: true },
     }),
   ]);
+  const totalTransferPages = Math.max(1, Math.ceil(transferCount / PAGE_SIZE));
+
+  function pageHref(page: number): string {
+    return page > 1 ? `/admin/wallets?page=${page}` : "/admin/wallets";
+  }
 
   return (
     <div className="space-y-6">
@@ -69,7 +81,14 @@ export default async function AdminWalletsPage({
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-semibold text-navy-900">Wallet Transfers</h2>
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="text-lg font-semibold text-navy-900">Wallet Transfers</h2>
+          <p className="text-sm text-navy-500">
+            {transferCount === 0
+              ? "0 transfers"
+              : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, transferCount)} of ${transferCount}`}
+          </p>
+        </div>
         <div className="overflow-x-auto rounded-xl2 border border-navy-100 bg-white">
           <table className="w-full min-w-[800px] text-sm">
             <thead className="border-b border-navy-100 text-left text-xs uppercase tracking-wide text-navy-400">
@@ -121,6 +140,7 @@ export default async function AdminWalletsPage({
           </table>
           {transfers.length === 0 && <p className="p-6 text-center text-sm text-navy-400">No wallet transfers yet.</p>}
         </div>
+        <Pagination currentPage={currentPage} totalPages={totalTransferPages} hrefForPage={pageHref} />
       </div>
     </div>
   );
