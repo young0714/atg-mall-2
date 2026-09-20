@@ -138,6 +138,18 @@ const WAYCHIT_API = "https://api.waychit.com";
 // above. Confirmed via Waychit's own docs (waychit.com/developers) 2026-09-20;
 // they have no sandbox/test-key mode, only live keys, so this was built and
 // first verified against a real, small-value live transaction.
+//
+// Two genuinely different Waychit flows, chosen by method — their API has no
+// single endpoint that lets a caller pick a channel:
+//  - CARD -> POST /v1/payment-sessions/card: a real card-only hosted page.
+//  - BANK_TRANSFER (labelled "Bank Transfer / Mobile Money" in the UI) ->
+//    POST /v1/payment-requests: one hosted page bundling every other channel
+//    together (Wave, QMoney, Afrimoney, Yonna, APS, Ecobank, bank transfer);
+//    Waychit has no way to isolate just one of those, the customer picks on
+//    their page.
+// Each flow has its own response shape, status field names, and webhook
+// event (payment.session.completed vs payment.request.completed) — see
+// confirmWaychitCardSessionTransaction / confirmWaychitTransaction below.
 class WaychitPaymentProvider implements PaymentProvider {
   name = "WAYCHIT";
   constructor(private apiKey: string) {}
@@ -154,6 +166,45 @@ class WaychitPaymentProvider implements PaymentProvider {
       };
     }
 
+    // Docs confirm "price"/"amount" are whole Dalasi, not minor units
+    // (butut) like every other provider here: "Cost of the product in
+    // dalasis" (payment-sessions/card Request Parameters).
+    const amountMajor = Math.round(params.amountMinor / 100);
+    const successRedirectUrl = `${params.redirectUrl}?wcref=${clientReference}`;
+    const failureRedirectUrl = `${params.redirectUrl}?wcref=${clientReference}&failed=1`;
+
+    if (params.method === "CARD") {
+      const res = await fetch(`${WAYCHIT_API}/v1/payment-sessions/card`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clientReference,
+          lineItems: [{ productName: `Order ${params.orderNumber}`, quantity: 1, price: amountMajor }],
+          customerEmail: params.customerEmail,
+          // Note the different field name from payment-requests below
+          // (returnRedirectUrl, not successRedirectUrl) — per their docs.
+          returnRedirectUrl: successRedirectUrl,
+          failureRedirectUrl,
+          metadata: { orderNumber: params.orderNumber },
+        }),
+      });
+
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.success || !body?.paymentSession?.waychitLaunchUrl) {
+        return {
+          providerRef: clientReference,
+          providerName: this.name,
+          status: "FAILED",
+          failureReason: body?.message || "Could not start the payment. Please try again.",
+        };
+      }
+
+      return { providerRef: clientReference, providerName: this.name, status: "PENDING", redirectUrl: body.paymentSession.waychitLaunchUrl };
+    }
+
     const res = await fetch(`${WAYCHIT_API}/v1/payment-requests`, {
       method: "POST",
       headers: {
@@ -161,15 +212,11 @@ class WaychitPaymentProvider implements PaymentProvider {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        // Waychit's docs example prices a meal at "amount": 200 GMD — whole
-        // Dalasi, not minor units (butut) like every other provider here.
-        // Verify this holds on the first real transaction; there's no
-        // sandbox to check it against ahead of time.
-        amount: Math.round(params.amountMinor / 100),
+        amount: amountMajor,
         description: `Order ${params.orderNumber}`,
         clientReference,
-        successRedirectUrl: `${params.redirectUrl}?wcref=${clientReference}`,
-        failureRedirectUrl: `${params.redirectUrl}?wcref=${clientReference}&failed=1`,
+        successRedirectUrl,
+        failureRedirectUrl,
         metadata: { orderNumber: params.orderNumber },
       }),
     });
@@ -364,50 +411,27 @@ export async function confirmFlutterwaveTransaction(transactionId: string): Prom
 }
 
 /**
- * The single source of truth for "a Waychit payment actually succeeded."
- * Takes Waychit's own payment-request id (only the webhook reliably has
- * this — see api/v1/webhooks/waychit/route.ts). Never trusts the webhook
- * payload's claimed status alone: re-verifies against Waychit's own API
- * first, then cross-checks amount/currency against our stored Payment row,
- * same defensive shape as confirmFlutterwaveTransaction above.
- *
- * The checkout callback page does NOT call this — Waychit has no documented
- * sandbox to confirm whether their redirect reliably carries this id, so
- * the callback page instead reads our own Payment row directly by the
- * clientReference it does control (see checkout/callback/page.tsx). This
- * function's job is the authoritative, webhook-driven path only.
+ * Shared by both Waychit confirm functions below once each has verified its
+ * own flow-specific "actually succeeded" signal — looks up our Payment row
+ * by the clientReference we control, cross-checks amount/currency against
+ * what we actually charged for (same defensive shape as
+ * confirmFlutterwaveTransaction), then marks it paid.
  */
-export async function confirmWaychitTransaction(waychitId: string): Promise<{ ok: boolean; orderId?: string }> {
-  const apiKey = process.env.WAYCHIT_API_KEY;
-  if (!apiKey) return { ok: false };
-
-  const res = await fetch(`${WAYCHIT_API}/v1/payment-requests/${waychitId}`, {
-    headers: { Authorization: `Bearer ${apiKey}`, Accept: "application/json" },
-  });
-  const body = await res.json().catch(() => null);
-  const data = body?.paymentRequest;
-  if (!res.ok || !body?.success || !data) return { ok: false };
-
-  // Waychit's docs show "status" on a plain retrieve but
-  // "paymentRequestStatus"/"paymentStatus" on the completed webhook payload
-  // — check both rather than assume one, since there's no sandbox to
-  // confirm which the live retrieve endpoint returns post-completion.
-  const isClosed = data.paymentRequestStatus === "closed" || data.status === "closed";
-  const isSucceeded = data.paymentStatus ? data.paymentStatus === "succeeded" : isClosed;
-  if (!isClosed || !isSucceeded) return { ok: false };
-
-  const clientReference: string | undefined = data.clientReference;
-  if (!clientReference) return { ok: false };
-
+async function finalizeWaychitPayment(
+  clientReference: string,
+  amountMajor: number,
+  currency: string,
+): Promise<{ ok: boolean; orderId?: string }> {
   const payment = await db.payment.findFirst({ where: { providerRef: clientReference }, include: { order: true } });
   if (!payment) return { ok: false };
 
-  // Cross-check against what we actually charged for, same as Flutterwave —
-  // amount here assumes Waychit's API uses whole GMD (not minor units), per
+  // amountMajor assumes Waychit's API uses whole GMD (not minor units), per
   // the WaychitPaymentProvider.charge() comment; unverified against a real
-  // sandbox, only a real transaction.
-  const amountMatches = Math.round(Number(data.amount) * 100) === payment.amountMinor;
-  const currencyMatches = data.currency === payment.currency;
+  // sandbox, only a real transaction. Currency compared case-insensitively —
+  // Waychit's own docs are inconsistent ("GMD" in some examples, "gmd" in
+  // others).
+  const amountMatches = Math.round(amountMajor * 100) === payment.amountMinor;
+  const currencyMatches = currency.toUpperCase() === payment.currency;
   if (!amountMatches || !currencyMatches) return { ok: false };
 
   if (payment.status === "SUCCESSFUL") return { ok: true, orderId: payment.orderId ?? undefined };
@@ -459,6 +483,67 @@ export async function confirmWaychitTransaction(waychitId: string): Promise<{ ok
   }
 
   return { ok: true };
+}
+
+/**
+ * The single source of truth for "a Waychit Bank Transfer / Mobile Money
+ * payment actually succeeded" (the bundled /v1/payment-requests flow — Wave,
+ * QMoney, Afrimoney, Yonna, APS, Ecobank, bank transfer). Takes Waychit's own
+ * payment-request id (only the webhook reliably has this — see
+ * api/v1/webhooks/waychit/route.ts). Never trusts the webhook payload's
+ * claimed status alone: re-verifies against Waychit's own API first.
+ *
+ * The checkout callback page does NOT call this — Waychit has no documented
+ * sandbox to confirm whether their redirect reliably carries this id, so
+ * the callback page instead reads our own Payment row directly by the
+ * clientReference it does control (see checkout/callback/page.tsx). This
+ * function's job is the authoritative, webhook-driven path only.
+ */
+export async function confirmWaychitTransaction(waychitId: string): Promise<{ ok: boolean; orderId?: string }> {
+  const apiKey = process.env.WAYCHIT_API_KEY;
+  if (!apiKey) return { ok: false };
+
+  const res = await fetch(`${WAYCHIT_API}/v1/payment-requests/${waychitId}`, {
+    headers: { Authorization: `Bearer ${apiKey}`, Accept: "application/json" },
+  });
+  const body = await res.json().catch(() => null);
+  const data = body?.paymentRequest;
+  if (!res.ok || !body?.success || !data) return { ok: false };
+
+  // Waychit's docs show "status" on a plain retrieve but
+  // "paymentRequestStatus"/"paymentStatus" on the completed webhook payload
+  // — check both rather than assume one, since there's no sandbox to
+  // confirm which the live retrieve endpoint returns post-completion.
+  const isClosed = data.paymentRequestStatus === "closed" || data.status === "closed";
+  const isSucceeded = data.paymentStatus ? data.paymentStatus === "succeeded" : isClosed;
+  if (!isClosed || !isSucceeded || !data.clientReference) return { ok: false };
+
+  return finalizeWaychitPayment(data.clientReference, Number(data.amount), data.currency);
+}
+
+/**
+ * Same as confirmWaychitTransaction above, but for the card-only
+ * /v1/payment-sessions/card flow — a different endpoint, response shape
+ * ("paymentSession" not "paymentRequest", "totalAmount" not "amount",
+ * "paymentSessionStatus" not "paymentRequestStatus"), and webhook event
+ * (payment.session.completed).
+ */
+export async function confirmWaychitCardSessionTransaction(sessionId: string): Promise<{ ok: boolean; orderId?: string }> {
+  const apiKey = process.env.WAYCHIT_API_KEY;
+  if (!apiKey) return { ok: false };
+
+  const res = await fetch(`${WAYCHIT_API}/v1/payment-sessions/card/${sessionId}`, {
+    headers: { Authorization: `Bearer ${apiKey}`, Accept: "application/json" },
+  });
+  const body = await res.json().catch(() => null);
+  const data = body?.paymentSession;
+  if (!res.ok || !body?.success || !data) return { ok: false };
+
+  const isClosed = data.paymentSessionStatus === "closed" || data.status === "closed";
+  const isSucceeded = data.paymentStatus ? data.paymentStatus === "succeeded" : isClosed;
+  if (!isClosed || !isSucceeded || !data.clientReference) return { ok: false };
+
+  return finalizeWaychitPayment(data.clientReference, Number(data.totalAmount), data.currency);
 }
 
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {

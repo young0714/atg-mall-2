@@ -105,7 +105,9 @@ export default async function WalletPage({
             <Field label="Method" htmlFor="method" required>
               <Select id="method" name="method" required>
                 <option value="CARD">Card {paymentService.isLive(wallet.currency) ? gatewayLabel(wallet.currency) : "(mock)"}</option>
-                <option value="BANK_TRANSFER">Bank Transfer {paymentService.isLive(wallet.currency) ? gatewayLabel(wallet.currency) : "(mock)"}</option>
+                <option value="BANK_TRANSFER">
+                  {wallet.currency === "GMD" ? "Bank Transfer / Mobile Money (Wave, QMoney, Afrimoney...)" : "Bank Transfer"} {paymentService.isLive(wallet.currency) ? gatewayLabel(wallet.currency) : "(mock)"}
+                </option>
               </Select>
             </Field>
             <SubmitButton className="btn-primary w-full">Deposit</SubmitButton>

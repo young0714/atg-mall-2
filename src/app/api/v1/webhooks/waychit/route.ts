@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { confirmWaychitTransaction } from "@/lib/services/paymentService";
+import { confirmWaychitTransaction, confirmWaychitCardSessionTransaction } from "@/lib/services/paymentService";
 
 /**
  * Waychit webhook — the authoritative source of truth for GMD payment
@@ -27,7 +27,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing payment request id" }, { status: 400 });
   }
 
-  await confirmWaychitTransaction(String(waychitId));
+  // Two event types, two different Waychit flows (see WaychitPaymentProvider
+  // in paymentService.ts) — payment.session.completed is the card-only
+  // /v1/payment-sessions/card flow, everything else is the bundled
+  // /v1/payment-requests flow (Wave, QMoney, Afrimoney, bank transfer, etc.).
+  if (body?.type === "payment.session.completed") {
+    await confirmWaychitCardSessionTransaction(String(waychitId));
+  } else {
+    await confirmWaychitTransaction(String(waychitId));
+  }
 
   // Always ack 200 once the signature checks out — Waychit retries for up
   // to 24h on anything else, and a "failed" event is still a validly
