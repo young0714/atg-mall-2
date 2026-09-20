@@ -32,7 +32,7 @@ export function ShopTheWorld() {
         <SectionHeading
           eyebrow="Shop the World"
           title="Shop the World with ATG"
-          description="ATG isn't limited to products already listed here — send us a link from any store in China, the USA or the UK, and we'll source, consolidate and ship it to you."
+          description="ATG isn't limited to products already listed here. Send us a link from any store in China, the USA or the UK, and we'll source, consolidate and ship it to you."
         />
         <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
           {countries.map((c) => (

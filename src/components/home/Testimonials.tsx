@@ -7,11 +7,11 @@ import { StarRating } from "@/components/shop/StarRating";
 const reviews = [
   {
     name: "Retail shop owner, Lagos",
-    text: "I used Shop for Me to buy wholesale phone accessories I found on a supplier site. ATG handled the purchase and shipping — the landed cost estimate matched what I actually paid.",
+    text: "I used Shop for Me to buy wholesale phone accessories I found on a supplier site. ATG handled the purchase and shipping, and the landed cost estimate matched what I actually paid.",
   },
   {
     name: "Small business owner, Banjul",
-    text: "Sourcing a product I couldn't find locally was straightforward — the team came back with three supplier options and I picked one that fit my budget.",
+    text: "Sourcing a product I couldn't find locally was straightforward. The team came back with three supplier options and I picked one that fit my budget.",
   },
   {
     name: "Independent seller, London",

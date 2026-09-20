@@ -5,7 +5,7 @@ import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Taobao — Shop retail from China",
+  title: "Taobao: Shop retail from China",
   description: "Browse Taobao-style retail listings and request a purchase through ATG Mall's Shop for Me service.",
 };
 

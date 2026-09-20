@@ -19,11 +19,11 @@ const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "ATG Mall — Shop The World. Delivered To You.",
+    default: "ATG Mall: Shop The World, Delivered To You.",
     template: "%s | ATG Mall",
   },
   description:
-    "ATG Mall is a worldwide shopping marketplace — shop products from China, the USA and the UK, with sourcing, warehousing, consolidation and international shipping handled end to end. Delivery available to supported destinations worldwide, including Nigeria and Gambia.",
+    "ATG Mall is a worldwide shopping marketplace where you can shop products from China, the USA and the UK, with sourcing, warehousing, consolidation and international shipping handled end to end. Delivery is available to supported destinations worldwide, including Nigeria and Gambia.",
   keywords: [
     "worldwide shopping marketplace",
     "international shopping marketplace",
@@ -41,9 +41,9 @@ export const metadata: Metadata = {
     "buy from UK Nigeria",
   ],
   openGraph: {
-    title: "ATG Mall — Shop The World. Delivered To You.",
+    title: "ATG Mall: Shop The World, Delivered To You.",
     description:
-      "Shop products from China, the USA and the UK, delivered to supported destinations worldwide. Sourcing, purchasing, warehousing, consolidation and shipping — handled by ATG Mall.",
+      "Shop products from China, the USA and the UK, delivered to supported destinations worldwide. Sourcing, purchasing, warehousing, consolidation and shipping are all handled by ATG Mall.",
     url: appUrl,
     siteName: "ATG Mall",
     type: "website",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ATG Mall — Shop The World. Delivered To You.",
+    title: "ATG Mall: Shop The World, Delivered To You.",
     description: "Shop from China, USA and UK. We handle the rest. Cross-border shopping, worldwide.",
     images: ["/logo.png"],
   },

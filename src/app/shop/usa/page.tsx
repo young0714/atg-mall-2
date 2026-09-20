@@ -6,18 +6,18 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Shop from USA — Amazon, Walmart, Best Buy & More",
+  title: "Shop from USA: Amazon, Walmart, Best Buy & More",
   description:
-    "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG — send us a product link from any American store and we'll source, consolidate and ship it worldwide.",
+    "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG. Send us a product link from any American store and we'll source, consolidate and ship it worldwide.",
   openGraph: {
-    title: "Shop from USA — Amazon, Walmart, Best Buy & More",
-    description: "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG — send us a product link from any American store and we'll source, consolidate and ship it worldwide.",
+    title: "Shop from USA: Amazon, Walmart, Best Buy & More",
+    description: "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG. Send us a product link from any American store and we'll source, consolidate and ship it worldwide.",
     images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Shop from USA — Amazon, Walmart, Best Buy & More",
-    description: "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG — send us a product link from any American store and we'll source, consolidate and ship it worldwide.",
+    title: "Shop from USA: Amazon, Walmart, Best Buy & More",
+    description: "Amazon USA shopping through ATG, Walmart USA shopping through ATG, Best Buy USA shopping through ATG. Send us a product link from any American store and we'll source, consolidate and ship it worldwide.",
     images: ["/logo.png"],
   },
   keywords: [

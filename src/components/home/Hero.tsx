@@ -27,7 +27,7 @@ export function Hero({
           </h1>
           <p className="mt-5 max-w-lg text-navy-100">
             Shop products from the USA, China and UK, with worldwide delivery options. We handle
-            sourcing, purchasing, receiving, consolidation and international shipping — so you
+            sourcing, purchasing, receiving, consolidation and international shipping, so you
             don&apos;t have to.
           </p>
 

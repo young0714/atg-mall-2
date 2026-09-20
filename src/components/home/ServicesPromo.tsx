@@ -4,7 +4,7 @@ import { Section, Container } from "@/components/ui/Section";
 const services = [
   {
     title: "Shop Products",
-    desc: "Browse ATG's own catalog, marketplace vendors, and products sourced from 1688, Taobao and trusted suppliers — all in one place, with shipping and fees calculated at checkout.",
+    desc: "Browse ATG's own catalog, marketplace vendors, and products sourced from 1688, Taobao and trusted suppliers, all in one place, with shipping and fees calculated at checkout.",
     href: "/shop",
     cta: "Browse the catalog",
     tone: "bg-atgblue-500",
@@ -18,7 +18,7 @@ const services = [
   },
   {
     title: "Source A Product",
-    desc: "Tell us what you need — our sourcing team finds verified supplier options and quotes for you to compare.",
+    desc: "Tell us what you need, and our sourcing team finds verified supplier options and quotes for you to compare.",
     href: "/source-a-product",
     cta: "Start sourcing",
     tone: "bg-navy-800",

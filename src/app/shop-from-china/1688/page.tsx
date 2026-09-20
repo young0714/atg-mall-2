@@ -5,7 +5,7 @@ import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "1688 — Shop wholesale from China",
+  title: "1688: Shop wholesale from China",
   description: "Browse 1688-style wholesale listings and request a purchase through ATG Mall's Shop for Me service.",
 };
 

@@ -6,18 +6,18 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Shop from UK — Amazon UK, Argos, Currys & More",
+  title: "Shop from UK: Amazon UK, Argos, Currys & More",
   description:
-    "UK shopping through ATG — Amazon UK, Argos, Currys, Tesco, ASOS and more. Send us a product link from any UK store and we'll source, consolidate and ship it worldwide.",
+    "UK shopping through ATG: Amazon UK, Argos, Currys, Tesco, ASOS and more. Send us a product link from any UK store and we'll source, consolidate and ship it worldwide.",
   openGraph: {
-    title: "Shop from UK — Amazon UK, Argos, Currys & More",
-    description: "UK shopping through ATG — Amazon UK, Argos, Currys, Tesco, ASOS and more. Send us a product link from any UK store and we'll source, consolidate and ship it worldwide.",
+    title: "Shop from UK: Amazon UK, Argos, Currys & More",
+    description: "UK shopping through ATG: Amazon UK, Argos, Currys, Tesco, ASOS and more. Send us a product link from any UK store and we'll source, consolidate and ship it worldwide.",
     images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Shop from UK — Amazon UK, Argos, Currys & More",
-    description: "UK shopping through ATG — Amazon UK, Argos, Currys, Tesco, ASOS and more. Send us a product link from any UK store and we'll source, consolidate and ship it worldwide.",
+    title: "Shop from UK: Amazon UK, Argos, Currys & More",
+    description: "UK shopping through ATG: Amazon UK, Argos, Currys, Tesco, ASOS and more. Send us a product link from any UK store and we'll source, consolidate and ship it worldwide.",
     images: ["/logo.png"],
   },
   keywords: [

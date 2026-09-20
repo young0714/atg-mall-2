@@ -1,7 +1,7 @@
 import { Section, SectionHeading, Container } from "@/components/ui/Section";
 
 const points = [
-  { title: "Transparent landed costs", desc: "See product cost, shipping and fees broken down before you buy — no surprises at delivery.", icon: "🧮" },
+  { title: "Transparent landed costs", desc: "See product cost, shipping and fees broken down before you buy, with no surprises at delivery.", icon: "🧮" },
   { title: "Worldwide Shopping", desc: "Shop products from multiple international markets with shipping options calculated for your destination.", icon: "🌍" },
   { title: "Sourcing expertise", desc: "Can't find it online? Our sourcing team finds verified suppliers and quotes on your behalf.", icon: "🤝" },
   { title: "Consolidated shipping", desc: "Combine multiple purchases into one shipment to save on international freight.", icon: "📦" },

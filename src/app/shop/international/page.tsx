@@ -5,18 +5,18 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "International Stores — Shop from China, USA & UK",
+  title: "International Stores: Shop from China, USA & UK",
   description:
-    "International shopping worldwide — browse ATG Mall's directory of stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping.",
+    "Browse ATG Mall's directory of international stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping worldwide.",
   openGraph: {
-    title: "International Stores — Shop from China, USA & UK",
-    description: "International shopping worldwide — browse ATG Mall's directory of stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping.",
+    title: "International Stores: Shop from China, USA & UK",
+    description: "Browse ATG Mall's directory of international stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping worldwide.",
     images: ["/logo.png"],
   },
   twitter: {
     card: "summary_large_image",
-    title: "International Stores — Shop from China, USA & UK",
-    description: "International shopping worldwide — browse ATG Mall's directory of stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping.",
+    title: "International Stores: Shop from China, USA & UK",
+    description: "Browse ATG Mall's directory of international stores across China, USA and UK, and let ATG handle sourcing, consolidation and shipping worldwide.",
     images: ["/logo.png"],
   },
   keywords: [
