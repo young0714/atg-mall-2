@@ -31,7 +31,11 @@ export default async function HomePage() {
       take: 8,
       orderBy: { createdAt: "desc" },
     }),
-    db.category.findMany({ orderBy: { sortOrder: "asc" }, take: 12 }),
+    // Secondary sort matters: categories mostly share the default sortOrder
+    // (0), and Postgres doesn't guarantee a stable order among ties without
+    // one — without it, editing any unrelated field on any category could
+    // silently reshuffle which 12 show up here.
+    db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }], take: 12 }),
     db.product.findMany({
       where: { isActive: true, isWholesale: true },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },

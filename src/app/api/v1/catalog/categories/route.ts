@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const categories = await db.category.findMany({ orderBy: { sortOrder: "asc" } });
+  const categories = await db.category.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] });
   return NextResponse.json({
     data: categories.map((c) => ({ id: c.id, name: c.name, slug: c.slug, imageUrl: c.imageUrl })),
   });
