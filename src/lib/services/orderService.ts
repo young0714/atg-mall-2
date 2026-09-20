@@ -11,6 +11,7 @@ import { generateAtgNumber } from "./trackingService";
 import { paymentService } from "./paymentService";
 import { walletService } from "./walletService";
 import { notificationService, NOTIFICATION_EVENTS } from "./notificationService";
+import { renderEmailLayout, APP_URL } from "@/lib/email/emailLayout";
 import { currencyConversionService } from "./currencyConversionService";
 import { commissionService } from "./commissionService";
 import { sumMinor } from "@/lib/money";
@@ -280,6 +281,13 @@ class DefaultOrderService implements OrderService {
       event: NOTIFICATION_EVENTS.ORDER_CREATED,
       title: "Order placed",
       body: `Your ATG Mall order ${orderNumber} has been created.`,
+      html: await renderEmailLayout({
+        eyebrow: "ORDER PLACED",
+        heading: "Your order is confirmed",
+        bodyHtml: `Your ATG Mall order <strong>${orderNumber}</strong> has been created.`,
+        cta: { label: "View Order", url: `${APP_URL}/account/orders` },
+        includeTrending: true,
+      }),
       channels: ["IN_APP", "EMAIL"],
     });
 
@@ -425,6 +433,13 @@ class DefaultOrderService implements OrderService {
       event: NOTIFICATION_EVENTS.ORDER_CREATED,
       title: "Order placed",
       body: `Your ATG Mall order ${orderNumber} has been created from quotation ${quotation.quotationNumber}.`,
+      html: await renderEmailLayout({
+        eyebrow: "ORDER PLACED",
+        heading: "Your order is confirmed",
+        bodyHtml: `Your ATG Mall order <strong>${orderNumber}</strong> has been created from quotation ${quotation.quotationNumber}.`,
+        cta: { label: "View Order", url: `${APP_URL}/account/orders` },
+        includeTrending: true,
+      }),
       channels: ["IN_APP", "EMAIL"],
     });
 

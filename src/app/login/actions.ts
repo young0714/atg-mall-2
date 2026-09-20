@@ -6,6 +6,7 @@ import { createSession } from "@/lib/auth/session";
 import { isStaffRole } from "@/lib/rbac";
 import { getDestination, setDestinationCookie, syncDestinationToProfile } from "@/lib/destination";
 import { notificationService, NOTIFICATION_EVENTS } from "@/lib/services/notificationService";
+import { renderEmailLayout } from "@/lib/email/emailLayout";
 import { mergeGuestCartIntoUser } from "@/lib/services/cartService";
 import { redirect } from "next/navigation";
 
@@ -50,6 +51,13 @@ export async function continueAsGuestAction(formData: FormData) {
           event: NOTIFICATION_EVENTS.ACCOUNT_ACCESS_LINK,
           title: "Continue as a guest on ATG Mall",
           body: `You're shopping as a guest on ATG Mall. Save this link to access your account and orders later, and set a password whenever you're ready: ${linkUrl}`,
+          html: await renderEmailLayout({
+            eyebrow: "GUEST ACCESS",
+            heading: "Continue as a guest on ATG Mall",
+            bodyHtml: "Save this link to access your account and orders later, and set a password whenever you're ready.",
+            cta: { label: "Continue", url: linkUrl },
+            includeTrending: false,
+          }),
           channels: ["EMAIL"],
         });
       }
@@ -68,6 +76,13 @@ export async function continueAsGuestAction(formData: FormData) {
         event: NOTIFICATION_EVENTS.ACCOUNT_ACCESS_LINK,
         title: "Continue on ATG Mall",
         body: `Click this link to continue on ATG Mall: ${linkUrl}`,
+        html: await renderEmailLayout({
+          eyebrow: "ACCOUNT ACCESS",
+          heading: "Continue on ATG Mall",
+          bodyHtml: "Click below to continue on ATG Mall.",
+          cta: { label: "Continue", url: linkUrl },
+          includeTrending: false,
+        }),
         channels: ["EMAIL"],
       });
     }

@@ -4,6 +4,7 @@ import { forgotPasswordSchema } from "@/lib/validation/schemas";
 import { createMagicLinkToken } from "@/lib/auth/auth-service";
 import { db } from "@/lib/db";
 import { notificationService, NOTIFICATION_EVENTS } from "@/lib/services/notificationService";
+import { renderEmailLayout } from "@/lib/email/emailLayout";
 import { redirect } from "next/navigation";
 
 export async function requestPasswordResetAction(formData: FormData) {
@@ -29,6 +30,14 @@ export async function requestPasswordResetAction(formData: FormData) {
         event: NOTIFICATION_EVENTS.PASSWORD_RESET_REQUESTED,
         title: "Reset your ATG Mall password",
         body: `We received a request to reset your ATG Mall password. Click this link to sign in and set a new one: ${linkUrl}\n\nIf you didn't request this, you can safely ignore this email.`,
+        html: await renderEmailLayout({
+          eyebrow: "PASSWORD RESET",
+          heading: "Reset your ATG Mall password",
+          bodyHtml:
+            "We received a request to reset your ATG Mall password. Click below to sign in and set a new one.<br><br>If you didn't request this, you can safely ignore this email.",
+          cta: { label: "Reset Password", url: linkUrl },
+          includeTrending: false,
+        }),
         channels: ["EMAIL"],
       });
     }

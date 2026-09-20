@@ -35,12 +35,12 @@ export type NotificationEvent = (typeof NOTIFICATION_EVENTS)[keyof typeof NOTIFI
 
 interface Transport {
   channel: NotificationChannel;
-  send(params: { to: string; title: string; body: string }): Promise<void>;
+  send(params: { to: string; title: string; body: string; html?: string }): Promise<void>;
 }
 
 class ConsoleMockTransport implements Transport {
   constructor(public channel: NotificationChannel) {}
-  async send({ to, title }: { to: string; title: string; body: string }): Promise<void> {
+  async send({ to, title }: { to: string; title: string; body: string; html?: string }): Promise<void> {
     // Mock transport: no real SMS/WhatsApp/Push provider is connected.
     // In development this simply logs what would have been sent.
     if (process.env.NODE_ENV !== "production") {
@@ -59,7 +59,7 @@ class ResendEmailTransport implements Transport {
   channel: NotificationChannel = "EMAIL";
   constructor(private apiKey: string) {}
 
-  async send({ to, title, body }: { to: string; title: string; body: string }): Promise<void> {
+  async send({ to, title, body, html }: { to: string; title: string; body: string; html?: string }): Promise<void> {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -71,6 +71,7 @@ class ResendEmailTransport implements Transport {
         to,
         subject: title,
         text: body,
+        ...(html ? { html } : {}),
       }),
     });
 
@@ -103,6 +104,10 @@ export interface NotificationService {
     event: NotificationEvent;
     title: string;
     body: string;
+    // Optional branded HTML version — email-only (ConsoleMockTransport and
+    // any other non-email transport ignore it); `body` stays the plain-text
+    // source of truth for the in-app Notification row and every channel.
+    html?: string;
     channels?: NotificationChannel[];
   }): Promise<void>;
 }
@@ -122,6 +127,7 @@ class DefaultNotificationService implements NotificationService {
     event,
     title,
     body,
+    html,
     channels = ["IN_APP"],
   }: {
     userId: string;
@@ -129,6 +135,7 @@ class DefaultNotificationService implements NotificationService {
     event: NotificationEvent;
     title: string;
     body: string;
+    html?: string;
     channels?: NotificationChannel[];
   }): Promise<void> {
     await db.notification.create({
@@ -137,7 +144,7 @@ class DefaultNotificationService implements NotificationService {
 
     for (const channel of channels) {
       if (channel === "IN_APP") continue;
-      await this.transports[channel].send({ to: userContact, title, body });
+      await this.transports[channel].send({ to: userContact, title, body, html });
     }
   }
 }

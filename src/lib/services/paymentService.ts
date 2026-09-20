@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import type { Currency, PaymentMethod } from "@prisma/client";
 import { db } from "@/lib/db";
 import { notificationService, NOTIFICATION_EVENTS } from "./notificationService";
+import { renderEmailLayout, APP_URL } from "@/lib/email/emailLayout";
 import { walletService } from "./walletService";
 import { commissionService } from "./commissionService";
 import { matchNames } from "./nameMatchService";
@@ -246,6 +247,13 @@ export async function confirmFlutterwaveTransaction(transactionId: string): Prom
         event: NOTIFICATION_EVENTS.PAYMENT_RECEIVED,
         title: "Payment received",
         body: `We've received your payment for order ${payment.order.orderNumber}.`,
+        html: await renderEmailLayout({
+          eyebrow: "PAYMENT RECEIVED",
+          heading: "We've got your payment",
+          bodyHtml: `We've received your payment for order <strong>${payment.order.orderNumber}</strong>.`,
+          cta: { label: "View Order", url: `${APP_URL}/account/orders` },
+          includeTrending: true,
+        }),
         channels: ["IN_APP", "EMAIL"],
       });
     }
