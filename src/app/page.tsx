@@ -24,7 +24,7 @@ export default async function HomePage() {
     getCurrentUser(),
   ]);
 
-  const [featuredProducts, categories, wholesaleProducts, heroImageRows] = await Promise.all([
+  const [featuredProducts, categories, wholesaleProducts, heroImageRows, heroSettings] = await Promise.all([
     db.product.findMany({
       where: { isActive: true, isFeatured: true },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
@@ -44,8 +44,10 @@ export default async function HomePage() {
       where: { isActive: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
+    db.heroSettings.findFirst(),
   ]);
   const heroImages = heroImageRows.map((row) => row.imageUrl);
+  const heroSlideDurationMs = (heroSettings?.slideDurationSeconds ?? 5) * 1000;
 
   const [featuredCards, wholesaleCards] = await Promise.all([
     Promise.all(featuredProducts.map((p) => toProductCard(p, destination))),
@@ -96,7 +98,7 @@ export default async function HomePage() {
         <WelcomeBack firstName={user.fullName.split(" ")[0]} wallet={wallet} recentOrder={recentOrder} />
       ) : (
         <>
-          <Hero destination={destination.isoCode} countries={countries} heroImages={heroImages} />
+          <Hero destination={destination.isoCode} countries={countries} heroImages={heroImages} heroSlideDurationMs={heroSlideDurationMs} />
           <ServicesPromo />
           <ShopTheWorld />
         </>

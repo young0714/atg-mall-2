@@ -69,3 +69,31 @@ export async function deleteHeroImageAction(formData: FormData) {
   revalidatePath("/admin/hero-images");
   revalidatePath("/");
 }
+
+export async function updateHeroSettingsAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const seconds = Number(formData.get("slideDurationSeconds"));
+  if (!Number.isInteger(seconds) || seconds < 2 || seconds > 30) {
+    redirect("/admin/hero-images?error=" + encodeURIComponent("Slide duration must be a whole number of seconds, between 2 and 30"));
+  }
+
+  const existing = await db.heroSettings.findFirst();
+  if (existing) {
+    await db.heroSettings.update({ where: { id: existing.id }, data: { slideDurationSeconds: seconds } });
+  } else {
+    await db.heroSettings.create({ data: { slideDurationSeconds: seconds } });
+  }
+  await db.auditLog.create({
+    data: {
+      actorId: staff.id,
+      action: "HERO_SETTINGS_UPDATED",
+      entityType: "HeroSettings",
+      entityId: existing?.id ?? "new",
+      summary: `Set hero slide duration to ${seconds}s`,
+    },
+  });
+
+  revalidatePath("/admin/hero-images");
+  revalidatePath("/");
+  redirect("/admin/hero-images?saved=1");
+}

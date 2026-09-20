@@ -6,17 +6,19 @@ export function Hero({
   destination,
   countries,
   heroImages = [],
+  heroSlideDurationMs,
 }: {
   destination: string;
   countries: { isoCode: string; name: string }[];
   heroImages?: string[];
+  heroSlideDurationMs?: number;
 }) {
   const hasPhotos = heroImages.length > 0;
 
   return (
     <section className="relative overflow-hidden bg-navy-gradient text-white">
       {hasPhotos ? (
-        <HeroBackgroundSlideshow images={heroImages} />
+        <HeroBackgroundSlideshow images={heroImages} intervalMs={heroSlideDurationMs} />
       ) : (
         <div className="absolute inset-0 opacity-20" aria-hidden>
           <svg width="100%" height="100%" viewBox="0 0 800 500" preserveAspectRatio="none">

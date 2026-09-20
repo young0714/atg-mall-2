@@ -3,7 +3,7 @@ import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { Badge } from "@/components/ui/Badge";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { createHeroImageAction, toggleHeroImageActiveAction, deleteHeroImageAction } from "./actions";
+import { createHeroImageAction, toggleHeroImageActiveAction, deleteHeroImageAction, updateHeroSettingsAction } from "./actions";
 import Image from "next/image";
 import type { Metadata } from "next";
 
@@ -13,11 +13,15 @@ export const dynamic = "force-dynamic";
 export default async function AdminHeroImagesPage({
   searchParams,
 }: {
-  searchParams: { created?: string; error?: string };
+  searchParams: { created?: string; saved?: string; error?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
 
-  const heroImages = await db.heroImage.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] });
+  const [heroImages, heroSettings] = await Promise.all([
+    db.heroImage.findMany({ orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] }),
+    db.heroSettings.findFirst(),
+  ]);
+  const slideDurationSeconds = heroSettings?.slideDurationSeconds ?? 5;
 
   return (
     <div className="space-y-6">
@@ -31,6 +35,7 @@ export default async function AdminHeroImagesPage({
       </div>
 
       {searchParams.created && <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">Photo added.</div>}
+      {searchParams.saved && <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">Slide speed updated.</div>}
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
       <form action={createHeroImageAction} className="card flex flex-wrap items-end gap-3 p-5">
@@ -39,6 +44,25 @@ export default async function AdminHeroImagesPage({
           <input id="imageFile" name="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" required className="input" />
         </div>
         <SubmitButton className="btn-primary">Upload</SubmitButton>
+      </form>
+
+      <form action={updateHeroSettingsAction} className="card flex flex-wrap items-end gap-3 p-5">
+        <div>
+          <label htmlFor="slideDurationSeconds" className="mb-1 block text-sm font-medium text-navy-700">Seconds per photo</label>
+          <input
+            id="slideDurationSeconds"
+            name="slideDurationSeconds"
+            type="number"
+            min={2}
+            max={30}
+            step={1}
+            defaultValue={slideDurationSeconds}
+            required
+            className="input w-24"
+          />
+        </div>
+        <SubmitButton className="btn-outline">Save speed</SubmitButton>
+        <p className="text-xs text-navy-400">How long each photo stays on screen before crossfading to the next (2–30 seconds).</p>
       </form>
 
       {heroImages.length === 0 ? (

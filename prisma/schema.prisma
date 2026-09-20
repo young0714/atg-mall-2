@@ -1199,6 +1199,14 @@ model HeroImage {
   @@index([isActive])
 }
 
+// Singleton row (same pattern as ShippingGlobalSettings) — controls how
+// long each HeroImage stays on screen before crossfading to the next.
+model HeroSettings {
+  id                   String   @id @default(cuid())
+  slideDurationSeconds Int      @default(5)
+  updatedAt            DateTime @updatedAt
+}
+
 // ---------------------------------------------------------------------------
 // Shipping Calculation Engine (Phase 1 — foundational reference data)
 //
