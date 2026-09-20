@@ -102,18 +102,26 @@ export async function provisionGuestUser(input: {
   return { status: "created", user };
 }
 
+// Anti-spam cooldown only — NOT the link's own lifetime (that's
+// MAGIC_LINK_TTL_MS below). Without this, someone mashing "resend" (or
+// repeatedly submitting someone else's email) could flood an inbox with
+// links in quick succession.
+const RESEND_COOLDOWN_MS = 60 * 1000;
+
 /**
  * Mints a one-time login link token for a guest, invalidating any prior
  * unused tokens first so only the most recently emailed link is ever live.
- * Returns null (mints nothing, sends nothing) if a still-valid token
- * already exists, so repeatedly submitting someone else's email can't be
- * used to spam their inbox.
+ * Returns null (mints nothing, sends nothing) if a token was already minted
+ * in the last minute, so rapid repeat submissions can't spam an inbox —
+ * but a genuine resend request after that cooldown always gets a fresh
+ * link and email, rather than silently going nowhere for the token's full
+ * 24-hour lifetime.
  */
 export async function createMagicLinkToken(userId: string): Promise<string | null> {
-  const stillValid = await db.magicLinkToken.findFirst({
-    where: { userId, usedAt: null, expiresAt: { gt: new Date() } },
+  const recentToken = await db.magicLinkToken.findFirst({
+    where: { userId, usedAt: null, createdAt: { gt: new Date(Date.now() - RESEND_COOLDOWN_MS) } },
   });
-  if (stillValid) return null;
+  if (recentToken) return null;
 
   await db.magicLinkToken.updateMany({
     where: { userId, usedAt: null },
