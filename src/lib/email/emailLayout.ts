@@ -61,7 +61,7 @@ export async function renderEmailLayout(params: {
       </div>
       ${trendingHtml}
       <div style="background:#091426; padding:24px 40px;">
-        <div style="font-size:12px; font-weight:600; color:#d6e0ec;">Apex Terra Global Limited &middot; Nigeria</div>
+        <div style="font-size:12px; font-weight:600; color:#d6e0ec;">Apex Terra Global Limited</div>
         <div style="font-size:11px; color:#4f74a0; margin-top:4px;">WhatsApp/Call: +234 704 394 5345 &middot; support@apexterraglobal.com</div>
       </div>
     </div>
