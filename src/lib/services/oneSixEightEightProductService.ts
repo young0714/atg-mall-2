@@ -25,7 +25,7 @@ const MOCK_CATALOG: RemoteProductDetail[] = [
   {
     externalId: "1688-77213456",
     platform: "MOCK_1688",
-    title: "Wireless Bluetooth Earbuds Pro — Bulk Lot",
+    title: "Wireless Bluetooth Earbuds Pro: Bulk Lot",
     imageUrl: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800",
     priceMinor: 3500,
     currency: "CNY",
@@ -35,7 +35,7 @@ const MOCK_CATALOG: RemoteProductDetail[] = [
     rating: 4.7,
     sourceUrl: "https://www.1688.com/mock/77213456",
     description:
-      "TWS Bluetooth 5.3 earbuds with charging case, sold by the carton. Mock listing for demonstration — pricing and MOQ are illustrative pending a live 1688 integration.",
+      "TWS Bluetooth 5.3 earbuds with charging case, sold by the carton. Mock listing for demonstration, pricing and MOQ are illustrative pending a live 1688 integration.",
     images: [
       "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800",
       "https://images.unsplash.com/photo-1590658165737-15a047b7c823?w=800",
@@ -65,7 +65,7 @@ const MOCK_CATALOG: RemoteProductDetail[] = [
   {
     externalId: "1688-90233871",
     platform: "MOCK_1688",
-    title: "Men's Cargo Pants — Wholesale Carton (12 pcs)",
+    title: "Men's Cargo Pants: Wholesale Carton (12 pcs)",
     imageUrl: "https://images.unsplash.com/photo-1517438476312-10d79c077509?w=800",
     priceMinor: 5200,
     currency: "CNY",
