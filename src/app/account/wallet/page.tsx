@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { walletService } from "@/lib/services/walletService";
-import { paymentService } from "@/lib/services/paymentService";
+import { paymentService, gatewayLabel } from "@/lib/services/paymentService";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { Field, Input, Select } from "@/components/ui/Form";
@@ -104,12 +104,12 @@ export default async function WalletPage({
             </Field>
             <Field label="Method" htmlFor="method" required>
               <Select id="method" name="method" required>
-                <option value="CARD">Card {paymentService.isLive() ? "(via Flutterwave)" : "(mock)"}</option>
-                <option value="BANK_TRANSFER">Bank Transfer {paymentService.isLive() ? "(via Flutterwave)" : "(mock)"}</option>
+                <option value="CARD">Card {paymentService.isLive(wallet.currency) ? gatewayLabel(wallet.currency) : "(mock)"}</option>
+                <option value="BANK_TRANSFER">Bank Transfer {paymentService.isLive(wallet.currency) ? gatewayLabel(wallet.currency) : "(mock)"}</option>
               </Select>
             </Field>
             <SubmitButton className="btn-primary w-full">Deposit</SubmitButton>
-            {!paymentService.isLive() && (
+            {!paymentService.isLive(wallet.currency) && (
               <p className="text-center text-[11px] text-navy-400">
                 No real payment gateway is connected yet. Deposits are simulated for demo purposes.
               </p>

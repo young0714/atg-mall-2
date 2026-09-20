@@ -25,7 +25,7 @@ export default async function AdminPaymentsPage() {
         <h1 className="text-2xl font-display font-bold text-navy-900">Payments</h1>
         <p className="text-sm text-navy-500">
           {paymentService.isLive()
-            ? "Card/Bank Transfer payments are processed live via Flutterwave. Wallet payments are ATG's own ledger."
+            ? "Card/Bank Transfer payments are processed live via Flutterwave (NGN/USD) and Waychit (GMD). Wallet payments are ATG's own ledger."
             : "No live payment gateway is connected — Card/Bank Transfer payments here are processed via the mock PaymentService."}
         </p>
       </div>
