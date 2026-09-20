@@ -136,8 +136,7 @@ const WAYCHIT_API = "https://api.waychit.com";
 // Gambia-only gateway (Visa/Mastercard, Afrimoney, QMoney, Wave, Yonna, APS,
 // Ecobank) — the one Flutterwave doesn't cover, per FLUTTERWAVE_SUPPORTED_CURRENCIES
 // above. Confirmed via Waychit's own docs (waychit.com/developers) 2026-09-20;
-// they have no sandbox/test-key mode, only live keys, so this was built and
-// first verified against a real, small-value live transaction.
+// they have no sandbox/test-key mode, only live keys.
 //
 // Two genuinely different Waychit flows, chosen by method — their API has no
 // single endpoint that lets a caller pick a channel:
@@ -146,7 +145,9 @@ const WAYCHIT_API = "https://api.waychit.com";
 //    POST /v1/payment-requests: one hosted page bundling every other channel
 //    together (Wave, QMoney, Afrimoney, Yonna, APS, Ecobank, bank transfer);
 //    Waychit has no way to isolate just one of those, the customer picks on
-//    their page.
+//    their page. Confirmed working end-to-end with a real Wave payment
+//    2026-09-20 (webhook fired, order marked paid) — the CARD/payment-sessions
+//    flow is still unverified against a real transaction.
 // Each flow has its own response shape, status field names, and webhook
 // event (payment.session.completed vs payment.request.completed) — see
 // confirmWaychitCardSessionTransaction / confirmWaychitTransaction below.
@@ -425,11 +426,10 @@ async function finalizeWaychitPayment(
   const payment = await db.payment.findFirst({ where: { providerRef: clientReference }, include: { order: true } });
   if (!payment) return { ok: false };
 
-  // amountMajor assumes Waychit's API uses whole GMD (not minor units), per
-  // the WaychitPaymentProvider.charge() comment; unverified against a real
-  // sandbox, only a real transaction. Currency compared case-insensitively —
-  // Waychit's own docs are inconsistent ("GMD" in some examples, "gmd" in
-  // others).
+  // amountMajor assumes Waychit's API uses whole GMD (not minor units) — per
+  // their docs ("Cost of the product in dalasis") and confirmed by a real
+  // Wave payment 2026-09-20. Currency compared case-insensitively — Waychit's
+  // own docs are inconsistent ("GMD" in some examples, "gmd" in others).
   const amountMatches = Math.round(amountMajor * 100) === payment.amountMinor;
   const currencyMatches = currency.toUpperCase() === payment.currency;
   if (!amountMatches || !currencyMatches) return { ok: false };
@@ -493,6 +493,9 @@ async function finalizeWaychitPayment(
  * api/v1/webhooks/waychit/route.ts). Never trusts the webhook payload's
  * claimed status alone: re-verifies against Waychit's own API first.
  *
+ * Confirmed working end-to-end with a real Wave payment 2026-09-20 — webhook
+ * fired, this re-verified successfully, order marked paid.
+ *
  * The checkout callback page does NOT call this — Waychit has no documented
  * sandbox to confirm whether their redirect reliably carries this id, so
  * the callback page instead reads our own Payment row directly by the
@@ -512,8 +515,8 @@ export async function confirmWaychitTransaction(waychitId: string): Promise<{ ok
 
   // Waychit's docs show "status" on a plain retrieve but
   // "paymentRequestStatus"/"paymentStatus" on the completed webhook payload
-  // — check both rather than assume one, since there's no sandbox to
-  // confirm which the live retrieve endpoint returns post-completion.
+  // — this defensive dual-field check (rather than assuming one) is what
+  // actually matched on the real 2026-09-20 transaction, so kept as-is.
   const isClosed = data.paymentRequestStatus === "closed" || data.status === "closed";
   const isSucceeded = data.paymentStatus ? data.paymentStatus === "succeeded" : isClosed;
   if (!isClosed || !isSucceeded || !data.clientReference) return { ok: false };
