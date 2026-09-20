@@ -359,6 +359,11 @@ model Product {
 
   isWholesale    Boolean  @default(false)
   isFeatured     Boolean  @default(false)
+  // Separate from isFeatured: a product only shows in the homepage hero
+  // slideshow once an admin has actually looked at its photo and confirmed
+  // it's clean (no text/badges baked into the image itself, which several
+  // supplier-sourced photos have) — never set automatically by an import.
+  isHeroEligible Boolean  @default(false)
   isActive       Boolean  @default(true)
   avgRating      Float    @default(0)
   reviewCount    Int      @default(0)

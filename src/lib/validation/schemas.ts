@@ -123,6 +123,7 @@ export const productSchema = z.object({
   weightGrams: z.coerce.number().int().min(1).default(500),
   isWholesale: z.coerce.boolean().default(false),
   isFeatured: z.coerce.boolean().default(false),
+  isHeroEligible: z.coerce.boolean().default(false),
   imageUrl: z.string().url().optional().or(z.literal("")),
   sourcePlatform: z
     .enum([

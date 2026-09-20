@@ -1,21 +1,30 @@
 import Link from "next/link";
 import { DestinationSwitcher } from "@/components/layout/DestinationSwitcher";
+import { HeroBackgroundSlideshow } from "./HeroBackgroundSlideshow";
 
 export function Hero({
   destination,
   countries,
+  heroImages = [],
 }: {
   destination: string;
   countries: { isoCode: string; name: string }[];
+  heroImages?: string[];
 }) {
+  const hasPhotos = heroImages.length > 0;
+
   return (
     <section className="relative overflow-hidden bg-navy-gradient text-white">
-      <div className="absolute inset-0 opacity-20" aria-hidden>
-        <svg width="100%" height="100%" viewBox="0 0 800 500" preserveAspectRatio="none">
-          <path d="M0 400 C 200 300, 300 450, 500 350 S 800 250, 800 250" stroke="white" strokeWidth="1.5" fill="none" />
-          <path d="M0 300 C 200 200, 300 350, 500 250 S 800 150, 800 150" stroke="white" strokeWidth="1" fill="none" />
-        </svg>
-      </div>
+      {hasPhotos ? (
+        <HeroBackgroundSlideshow images={heroImages} />
+      ) : (
+        <div className="absolute inset-0 opacity-20" aria-hidden>
+          <svg width="100%" height="100%" viewBox="0 0 800 500" preserveAspectRatio="none">
+            <path d="M0 400 C 200 300, 300 450, 500 350 S 800 250, 800 250" stroke="white" strokeWidth="1.5" fill="none" />
+            <path d="M0 300 C 200 200, 300 350, 500 250 S 800 150, 800 150" stroke="white" strokeWidth="1" fill="none" />
+          </svg>
+        </div>
+      )}
       <div className="container-atg relative flex flex-col gap-10 py-16 sm:py-24 lg:flex-row lg:items-center">
         <div className="max-w-xl">
           <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gold-300">

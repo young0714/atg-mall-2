@@ -24,7 +24,7 @@ export default async function HomePage() {
     getCurrentUser(),
   ]);
 
-  const [featuredProducts, categories, wholesaleProducts] = await Promise.all([
+  const [featuredProducts, categories, wholesaleProducts, heroProducts] = await Promise.all([
     db.product.findMany({
       where: { isActive: true, isFeatured: true },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
@@ -37,7 +37,18 @@ export default async function HomePage() {
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
       take: 4,
     }),
+    // Only admin-approved photos (see isHeroEligible) ever reach the hero —
+    // several supplier-sourced product photos have marketing text baked
+    // into the image itself, which would clash with the hero's own
+    // headline, so this is never auto-populated from isFeatured or the
+    // catalog at large.
+    db.product.findMany({
+      where: { isActive: true, isHeroEligible: true },
+      include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+      take: 6,
+    }),
   ]);
+  const heroImages = heroProducts.map((p) => p.images[0]?.url).filter((url): url is string => !!url);
 
   const [featuredCards, wholesaleCards] = await Promise.all([
     Promise.all(featuredProducts.map((p) => toProductCard(p, destination))),
@@ -88,7 +99,7 @@ export default async function HomePage() {
         <WelcomeBack firstName={user.fullName.split(" ")[0]} wallet={wallet} recentOrder={recentOrder} />
       ) : (
         <>
-          <Hero destination={destination.isoCode} countries={countries} />
+          <Hero destination={destination.isoCode} countries={countries} heroImages={heroImages} />
           <ServicesPromo />
           <ShopTheWorld />
         </>

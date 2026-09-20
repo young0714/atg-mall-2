@@ -1,0 +1,1 @@
+ALTER TABLE "Product" ADD COLUMN "isHeroEligible" BOOLEAN NOT NULL DEFAULT false;
