@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { Badge, StatusBadge } from "@/components/ui/Badge";
+import { Pagination } from "@/components/ui/Pagination";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { paymentService } from "@/lib/services/paymentService";
@@ -11,13 +12,30 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Admin — Payments" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminPaymentsPage() {
+const PAGE_SIZE = 100;
+
+export default async function AdminPaymentsPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
   await requirePermission(PERMISSIONS.MANAGE_PAYMENTS);
-  const payments = await db.payment.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { order: { include: { user: true } }, user: true },
-    take: 100,
-  });
+
+  const currentPage = Math.max(1, Math.trunc(Number(searchParams.page)) || 1);
+  const [totalCount, payments] = await Promise.all([
+    db.payment.count(),
+    db.payment.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { order: { include: { user: true } }, user: true },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function pageHref(page: number): string {
+    return page > 1 ? `/admin/payments?page=${page}` : "/admin/payments";
+  }
 
   return (
     <div className="space-y-6">
@@ -27,6 +45,11 @@ export default async function AdminPaymentsPage() {
           {paymentService.isLive()
             ? "Card/Bank Transfer payments are processed live via Flutterwave (NGN/USD) and Waychit (GMD). Wallet payments are ATG's own ledger."
             : "No live payment gateway is connected — Card/Bank Transfer payments here are processed via the mock PaymentService."}
+        </p>
+        <p className="mt-1 text-sm text-navy-500">
+          {totalCount === 0
+            ? "0 payments"
+            : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, totalCount)} of ${totalCount} payment${totalCount === 1 ? "" : "s"}`}
         </p>
       </div>
 
@@ -76,6 +99,8 @@ export default async function AdminPaymentsPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} hrefForPage={pageHref} />
     </div>
   );
 }
