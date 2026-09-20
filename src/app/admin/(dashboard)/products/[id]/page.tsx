@@ -124,12 +124,6 @@ export default async function AdminProductDetailPage({
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="isFeatured" value="true" defaultChecked={product.isFeatured} /> Featured / Trending
           </label>
-          <div className="sm:col-span-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="isHeroEligible" value="true" defaultChecked={product.isHeroEligible} /> Show in homepage hero
-            </label>
-            <p className="mt-1 text-xs text-navy-400">Only enable this if the product photo has no text or badges baked into the image itself — it'll display full-bleed behind the hero headline.</p>
-          </div>
           <Field label="Description" htmlFor="description" required>
             <Textarea id="description" name="description" defaultValue={product.description} required />
           </Field>

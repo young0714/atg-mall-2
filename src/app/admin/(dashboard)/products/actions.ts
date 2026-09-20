@@ -46,7 +46,6 @@ export async function createProductAction(formData: FormData) {
       weightGrams: data.weightGrams,
       isWholesale: data.isWholesale,
       isFeatured: data.isFeatured,
-      isHeroEligible: data.isHeroEligible,
       sourcePlatform: data.sourcePlatform,
       affiliateUrl: data.affiliateUrl || null,
       affiliateProvider: data.affiliateProvider || null,

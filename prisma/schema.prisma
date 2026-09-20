@@ -359,10 +359,11 @@ model Product {
 
   isWholesale    Boolean  @default(false)
   isFeatured     Boolean  @default(false)
-  // Separate from isFeatured: a product only shows in the homepage hero
-  // slideshow once an admin has actually looked at its photo and confirmed
-  // it's clean (no text/badges baked into the image itself, which several
-  // supplier-sourced photos have) — never set automatically by an import.
+  // Unused/dormant — superseded by the standalone HeroImage model below,
+  // which isn't tied to any specific product (the hero also needs generic
+  // service/brand photography, not just product shots). Left in place
+  // rather than dropped, per this project's additive-only migration
+  // convention; no UI writes to it anymore.
   isHeroEligible Boolean  @default(false)
   isActive       Boolean  @default(true)
   avgRating      Float    @default(0)
@@ -1182,6 +1183,20 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
+}
+
+// Admin-managed photos for the homepage hero slideshow — deliberately not
+// tied to any Product, since the hero also needs generic service/brand
+// photography (warehouse, shipping, delivery) alongside product shots.
+// Uploaded via Vercel Blob, same as product images.
+model HeroImage {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([isActive])
 }
 
 // ---------------------------------------------------------------------------

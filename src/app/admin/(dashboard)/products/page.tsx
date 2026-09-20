@@ -93,10 +93,6 @@ export default async function AdminProductsPage({
           <Field label="Weight (grams)" htmlFor="weightGrams" required><Input id="weightGrams" name="weightGrams" type="number" defaultValue={500} required /></Field>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isWholesale" value="true" /> Wholesale item</label>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isFeatured" value="true" /> Featured / Trending</label>
-          <div className="sm:col-span-2">
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="isHeroEligible" value="true" /> Show in homepage hero</label>
-            <p className="mt-1 text-xs text-navy-400">Only enable this if the product photo has no text or badges baked into the image itself — it'll display full-bleed behind the hero headline.</p>
-          </div>
           <Field label="Description" htmlFor="description" required>
             <Textarea id="description" name="description" required />
           </Field>

@@ -24,7 +24,7 @@ export default async function HomePage() {
     getCurrentUser(),
   ]);
 
-  const [featuredProducts, categories, wholesaleProducts, heroProducts] = await Promise.all([
+  const [featuredProducts, categories, wholesaleProducts, heroImageRows] = await Promise.all([
     db.product.findMany({
       where: { isActive: true, isFeatured: true },
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
@@ -37,18 +37,15 @@ export default async function HomePage() {
       include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
       take: 4,
     }),
-    // Only admin-approved photos (see isHeroEligible) ever reach the hero —
-    // several supplier-sourced product photos have marketing text baked
-    // into the image itself, which would clash with the hero's own
-    // headline, so this is never auto-populated from isFeatured or the
-    // catalog at large.
-    db.product.findMany({
-      where: { isActive: true, isHeroEligible: true },
-      include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
-      take: 6,
+    // Admin-managed via /admin/hero-images (see HeroImage) — not tied to
+    // any product, since the hero also needs generic service/brand photos.
+    // Falls back to the plain gradient hero when nothing's active there.
+    db.heroImage.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
     }),
   ]);
-  const heroImages = heroProducts.map((p) => p.images[0]?.url).filter((url): url is string => !!url);
+  const heroImages = heroImageRows.map((row) => row.imageUrl);
 
   const [featuredCards, wholesaleCards] = await Promise.all([
     Promise.all(featuredProducts.map((p) => toProductCard(p, destination))),
