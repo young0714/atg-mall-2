@@ -1,6 +1,9 @@
 import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
+import { getDestination } from "@/lib/destination";
+import { toProductCard } from "@/lib/product-view";
 import { StatusBadge } from "@/components/ui/Badge";
+import { ProductCard } from "@/components/shop/ProductCard";
 import { formatMoney } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
@@ -20,6 +23,22 @@ export default async function OrdersPage({
     orderBy: { createdAt: "desc" },
     include: { items: true },
   });
+
+  // Only surface a "you might also like" nudge right after a clean
+  // success — not on the payment-retry banner, where the customer's
+  // attention should stay on fixing that order.
+  const showTrending = Boolean(searchParams.justPlaced) && !searchParams.paymentError;
+  let trendingCards: Awaited<ReturnType<typeof toProductCard>>[] = [];
+  if (showTrending) {
+    const destination = await getDestination();
+    const trendingProducts = await db.product.findMany({
+      where: { isActive: true, isFeatured: true },
+      include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+      take: 4,
+      orderBy: { createdAt: "desc" },
+    });
+    trendingCards = await Promise.all(trendingProducts.map((p) => toProductCard(p, destination)));
+  }
 
   return (
     <div>
@@ -58,6 +77,17 @@ export default async function OrdersPage({
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {trendingCards.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-lg font-display font-bold text-navy-900">You might also like</h2>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {trendingCards.map((product) => (
+              <ProductCard key={product.slug} product={product} />
+            ))}
+          </div>
         </div>
       )}
     </div>
