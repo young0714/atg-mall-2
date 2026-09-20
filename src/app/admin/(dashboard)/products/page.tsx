@@ -16,12 +16,18 @@ export const dynamic = "force-dynamic";
 export default async function AdminProductsPage({
   searchParams,
 }: {
-  searchParams: { created?: string; error?: string };
+  searchParams: { created?: string; error?: string; q?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
 
+  const q = searchParams.q?.trim();
+
   const [products, categories, shippingOrigins] = await Promise.all([
-    db.product.findMany({ orderBy: { createdAt: "desc" }, include: { category: true, images: { take: 1 } } }),
+    db.product.findMany({
+      where: q ? { name: { contains: q, mode: "insensitive" } } : undefined,
+      orderBy: { createdAt: "desc" },
+      include: { category: true, images: { take: 1 } },
+    }),
     db.category.findMany({ orderBy: { name: "asc" } }),
     db.shippingOrigin.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
   ]);
@@ -30,11 +36,17 @@ export default async function AdminProductsPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-display font-bold text-navy-900">Products</h1>
-        <p className="text-sm text-navy-500">{products.length} products in catalog</p>
+        <p className="text-sm text-navy-500">{products.length} product{products.length === 1 ? "" : "s"}{q ? ` matching "${q}"` : " in catalog"}</p>
       </div>
 
       {searchParams.created && <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">Product created.</div>}
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
+
+      <form className="flex gap-2" action="/admin/products" method="GET">
+        <Input name="q" defaultValue={q} placeholder="Search products by name…" className="max-w-sm" />
+        <button type="submit" className="btn-outline">Search</button>
+        {q && <Link href="/admin/products" className="btn-outline">Clear</Link>}
+      </form>
 
       <details className="card p-5">
         <summary className="cursor-pointer font-semibold text-navy-900">+ Add New Product</summary>
