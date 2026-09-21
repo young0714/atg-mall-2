@@ -253,12 +253,17 @@ class WaychitPaymentProvider implements PaymentProvider {
 // `modem-pay` SDK rather than raw fetch, specifically so webhook signature
 // verification is theirs to maintain, not hand-rolled HMAC like Waychit's.
 //
-// Confirmed via the SDK's own shipped type definitions (not just docs
-// prose, which was ambiguous on this) 2026-09-21:
-//  - `PaymentIntentResponse.data.amount` is documented as "in the smallest
-//    unit of the currency" — i.e. already minor units (butut), matching
-//    this app's own amountMinor convention directly. No /100 or *100
-//    conversion, unlike Waychit (whole Dalasi) or Flutterwave (major units).
+// Confirmed via a real sandbox transaction 2026-09-21 (not just the SDK's
+// shipped type definitions, which turned out to be wrong on the one point
+// that actually matters):
+//  - `amount` is MAJOR units (e.g. 1807.91 for GMD 1,807.91), NOT "the
+//    smallest unit of the currency" as PaymentIntentResponse.data.amount's
+//    own doc comment claims — a real test order sent as minor units
+//    (180791) came back rejected as "exceeds inbound limit" because Modem
+//    Pay read it as GMD 180,791.00, a 100x amount. Convert amountMinor/100
+//    on the way in, and back *100 when reconciling in
+//    confirmModemPayTransaction — same shape as Flutterwave, unlike what
+//    the type comment implied.
 //  - `payment_methods` accepts exactly "card" | "bank" | "wallet"
 //    (PaymentMethodType) — mapped from our own two-option UI below.
 //  - `paymentIntents.retrieve(id)` takes the Payment Intent's own `id`
@@ -298,7 +303,7 @@ class ModemPayPaymentProvider implements PaymentProvider {
 
     try {
       const response = await this.client.paymentIntents.create({
-        amount: params.amountMinor,
+        amount: params.amountMinor / 100,
         currency: params.currency,
         return_url: params.redirectUrl,
         cancel_url: params.redirectUrl,
@@ -670,10 +675,10 @@ export async function confirmModemPayTransaction(paymentIntentId: string): Promi
   const payment = await db.payment.findFirst({ where: { providerRef: paymentIntentId }, include: { order: true } });
   if (!payment) return { ok: false };
 
-  // amount is already minor units on both sides (see the provider's doc
-  // comment) — no unit conversion needed for this comparison, unlike
-  // Waychit/Flutterwave.
-  const amountMatches = intent.amount === payment.amountMinor;
+  // intent.amount is major units (confirmed via a real sandbox transaction
+  // — see the provider's doc comment) — convert back to minor units for
+  // this comparison, same as confirmFlutterwaveTransaction does.
+  const amountMatches = Math.round(intent.amount * 100) === payment.amountMinor;
   const currencyMatches = intent.currency === payment.currency;
   if (!amountMatches || !currencyMatches) return { ok: false };
 
