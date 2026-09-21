@@ -328,11 +328,14 @@ class ModemPayPaymentProvider implements PaymentProvider {
       const intentId = data?.id ?? data?.payment_intent_id;
 
       if (!response.status || !paymentLink || !intentId) {
+        // TEMPORARY: two field-name guesses in a row have missed — dump the
+        // raw shape into the visible error banner instead of guessing a
+        // third time blind. Remove once the real shape is confirmed.
         return {
           providerRef: `MODEMPAY-FAILED-${Date.now().toString(36).toUpperCase()}`,
           providerName: this.name,
           status: "FAILED",
-          failureReason: response.message || "Could not start the payment. Please try again.",
+          failureReason: `DEBUG raw response: ${JSON.stringify(response).slice(0, 900)}`,
         };
       }
 
