@@ -2,20 +2,40 @@ import { requireUser } from "@/lib/auth/current-user";
 import { db } from "@/lib/db";
 import { formatDateTime } from "@/lib/utils";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "./actions";
+import { Pagination } from "@/components/ui/Pagination";
 import type { Metadata } from "next";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export const metadata: Metadata = { title: "Notifications" };
 export const dynamic = "force-dynamic";
 
-export default async function NotificationsPage() {
+const PAGE_SIZE = 50;
+
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
   const user = await requireUser();
-  const notifications = await db.notification.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const currentPage = Math.max(1, Math.trunc(Number(searchParams.page)) || 1);
+  const [totalCount, notifications, unreadCount] = await Promise.all([
+    db.notification.count({ where: { userId: user.id } }),
+    db.notification.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    // Own query, independent of the page above — "Mark all as read" must
+    // reflect whether ANY notification is unread, not just this page's.
+    db.notification.count({ where: { userId: user.id, isRead: false } }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function pageHref(page: number): string {
+    return page > 1 ? `/account/notifications?page=${page}` : "/account/notifications";
+  }
 
   return (
     <div className="space-y-6">
@@ -23,6 +43,11 @@ export default async function NotificationsPage() {
         <div>
           <h1 className="text-2xl font-display font-bold text-navy-900">Notifications</h1>
           <p className="mt-1 text-sm text-navy-500">Updates on your orders, packages, shipments and support requests.</p>
+          <p className="mt-1 text-sm text-navy-500">
+            {totalCount === 0
+              ? "0 notifications"
+              : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, totalCount)} of ${totalCount}`}
+          </p>
         </div>
         {unreadCount > 0 && (
           <form action={markAllNotificationsReadAction}>
@@ -59,6 +84,8 @@ export default async function NotificationsPage() {
           </div>
         )}
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} hrefForPage={pageHref} />
     </div>
   );
 }
