@@ -209,7 +209,7 @@ export default async function CheckoutPage({
                   </label>
                   <label className="flex items-center gap-3 rounded-lg border border-navy-100 p-3 has-[:checked]:border-atgblue-400 has-[:checked]:bg-atgblue-50">
                     <input type="radio" name="paymentMethod" value="BANK_TRANSFER" />
-                    {orderCurrency === "GMD" ? "Bank Transfer / Mobile Money (Wave, QMoney, Afrimoney...)" : "Bank Transfer"} {gatewayLabel(orderCurrency)}
+                    {orderCurrency === "GMD" ? "Mobile Money (Wave, QMoney, Afrimoney...)" : "Bank Transfer"} {gatewayLabel(orderCurrency)}
                   </label>
                 </div>
               </section>
