@@ -5,6 +5,7 @@ import { paymentService, gatewayLabel } from "@/lib/services/paymentService";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { Field, Input, Select } from "@/components/ui/Form";
+import { Pagination } from "@/components/ui/Pagination";
 import { depositToWalletAction, startBvnVerificationAction } from "./actions";
 import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -16,19 +17,32 @@ import Link from "next/link";
 export const metadata: Metadata = { title: "Wallet" };
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 30;
+
 export default async function WalletPage({
   searchParams,
 }: {
-  searchParams: { deposited?: string; error?: string };
+  searchParams: { deposited?: string; error?: string; page?: string };
 }) {
   const user = await requireUser();
   const profile = await db.customerProfile.findUnique({ where: { userId: user.id } });
   const wallet = await walletService.getOrCreateWallet(user.id, profile?.preferredCurrency ?? "NGN");
-  const transactions = await db.walletTransaction.findMany({
-    where: { walletId: wallet.id },
-    orderBy: { createdAt: "desc" },
-    take: 30,
-  });
+
+  const currentPage = Math.max(1, Math.trunc(Number(searchParams.page)) || 1);
+  const [totalCount, transactions] = await Promise.all([
+    db.walletTransaction.count({ where: { walletId: wallet.id } }),
+    db.walletTransaction.findMany({
+      where: { walletId: wallet.id },
+      orderBy: { createdAt: "desc" },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function pageHref(page: number): string {
+    return (page > 1 ? `/account/wallet?page=${page}` : "/account/wallet") + "#history";
+  }
 
   return (
     <div className="space-y-8">
@@ -46,8 +60,13 @@ export default async function WalletPage({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
         <div id="history" className="card order-last scroll-mt-6 lg:order-none">
-          <div className="border-b border-navy-100 p-5">
+          <div className="flex items-baseline justify-between border-b border-navy-100 p-5">
             <h2 className="font-semibold text-navy-900">Transaction History</h2>
+            <p className="text-xs text-navy-400">
+              {totalCount === 0
+                ? "0 transactions"
+                : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, totalCount)} of ${totalCount}`}
+            </p>
           </div>
           {transactions.length === 0 ? (
             <p className="p-5 text-sm text-navy-400">No transactions yet.</p>
@@ -69,6 +88,9 @@ export default async function WalletPage({
               ))}
             </div>
           )}
+          <div className="px-5 pb-5">
+            <Pagination currentPage={currentPage} totalPages={totalPages} hrefForPage={pageHref} />
+          </div>
         </div>
 
         <div className="space-y-6">
