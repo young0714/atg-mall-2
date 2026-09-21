@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Form";
+import { Pagination } from "@/components/ui/Pagination";
 import { PACKAGE_STATUS_FLOW } from "@/lib/constants";
 import { updatePackageStatusAction } from "./actions";
 import { formatDate } from "@/lib/utils";
@@ -12,18 +13,41 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 export const metadata: Metadata = { title: "Admin — Packages" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminPackagesPage() {
+const PAGE_SIZE = 100;
+
+export default async function AdminPackagesPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
   await requirePermission(PERMISSIONS.MANAGE_WAREHOUSE);
 
-  const packages = await db.package.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { user: true, order: true },
-    take: 100,
-  });
+  const currentPage = Math.max(1, Math.trunc(Number(searchParams.page)) || 1);
+  const [totalCount, packages] = await Promise.all([
+    db.package.count(),
+    db.package.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { user: true, order: true },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+  ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function pageHref(page: number): string {
+    return page > 1 ? `/admin/packages?page=${page}` : "/admin/packages";
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-display font-bold text-navy-900">Packages</h1>
+      <div>
+        <h1 className="text-2xl font-display font-bold text-navy-900">Packages</h1>
+        <p className="mt-1 text-sm text-navy-500">
+          {totalCount === 0
+            ? "0 packages"
+            : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, totalCount)} of ${totalCount} package${totalCount === 1 ? "" : "s"}`}
+        </p>
+      </div>
 
       {packages.length === 0 ? (
         <div className="rounded-xl2 border border-dashed border-navy-200 p-12 text-center text-navy-400">
@@ -67,6 +91,8 @@ export default async function AdminPackagesPage() {
           </table>
         </div>
       )}
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} hrefForPage={pageHref} />
     </div>
   );
 }
