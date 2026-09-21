@@ -6,6 +6,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { adjustWalletAction, reverseWalletTransferAction } from "./actions";
+import type { Prisma } from "@prisma/client";
 import type { Metadata } from "next";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
@@ -13,18 +14,31 @@ export const metadata: Metadata = { title: "Admin — Wallets" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 50;
+const WALLET_LIST_LIMIT = 20;
 
 export default async function AdminWalletsPage({
   searchParams,
 }: {
-  searchParams: { adjusted?: string; reversed?: string; error?: string; page?: string };
+  searchParams: { adjusted?: string; reversed?: string; error?: string; page?: string; q?: string };
 }) {
   await requirePermission(PERMISSIONS.MANAGE_WALLETS);
 
   const currentPage = Math.max(1, Math.trunc(Number(searchParams.page)) || 1);
+  const q = searchParams.q?.trim();
 
-  const [wallets, transferCount, transfers] = await Promise.all([
-    db.wallet.findMany({ orderBy: { balanceMinor: "desc" }, include: { user: true } }),
+  // The balances table (and the "Customer" picker above it, which shares
+  // this same result) never loads every wallet — that was both an
+  // unbounded query and an unusable multi-thousand-option <select>.
+  // Instead: top 20 by balance with nothing typed, or top 20 matches once
+  // an admin searches by name/email — never both a full list AND a search.
+  const walletWhere: Prisma.WalletWhereInput | undefined = q
+    ? { user: { OR: [{ fullName: { contains: q, mode: "insensitive" } }, { email: { contains: q, mode: "insensitive" } }] } }
+    : undefined;
+
+  const [totalWalletCount, matchingWalletCount, wallets, transferCount, transfers] = await Promise.all([
+    db.wallet.count(),
+    db.wallet.count({ where: walletWhere }),
+    db.wallet.findMany({ where: walletWhere, orderBy: { balanceMinor: "desc" }, include: { user: true }, take: WALLET_LIST_LIMIT }),
     db.walletTransfer.count(),
     db.walletTransfer.findMany({
       orderBy: { createdAt: "desc" },
@@ -34,6 +48,14 @@ export default async function AdminWalletsPage({
     }),
   ]);
   const totalTransferPages = Math.max(1, Math.ceil(transferCount / PAGE_SIZE));
+
+  const walletListHint = !q
+    ? `Showing top ${wallets.length} of ${totalWalletCount} customers by balance.`
+    : matchingWalletCount === 0
+      ? `No customers match "${q}".`
+      : matchingWalletCount > WALLET_LIST_LIMIT
+        ? `Filtered to "${q}" — ${matchingWalletCount} matches, showing the top ${wallets.length}. Narrow your search further to see a specific one.`
+        : `Filtered to "${q}" — narrows both the picker above and the table below.`;
 
   function pageHref(page: number): string {
     return page > 1 ? `/admin/wallets?page=${page}` : "/admin/wallets";
@@ -47,10 +69,21 @@ export default async function AdminWalletsPage({
       {searchParams.reversed && <div className="rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">Transfer reversed.</div>}
       {searchParams.error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{searchParams.error}</div>}
 
+      <form method="GET" className="max-w-sm">
+        <Field label="Search customer" htmlFor="q">
+          <Input id="q" name="q" type="search" placeholder="Name or email..." defaultValue={q} />
+        </Field>
+      </form>
+      <p className="-mt-3 text-xs text-navy-400">{walletListHint}</p>
+
       <form action={adjustWalletAction} className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-4">
         <Field label="Customer" htmlFor="userId" required>
           <Select id="userId" name="userId" required>
-            {wallets.map((w) => <option key={w.userId} value={w.userId}>{w.user.fullName}</option>)}
+            {wallets.length === 0 ? (
+              <option disabled>No matches</option>
+            ) : (
+              wallets.map((w) => <option key={w.userId} value={w.userId}>{w.user.fullName}</option>)
+            )}
           </Select>
         </Field>
         <Field label="Amount (+/-)" htmlFor="amount" required hint="Positive to credit, negative to debit">
@@ -78,6 +111,7 @@ export default async function AdminWalletsPage({
             ))}
           </tbody>
         </table>
+        {wallets.length === 0 && <p className="p-6 text-center text-sm text-navy-400">No customers match &quot;{q}&quot;.</p>}
       </div>
 
       <div>
