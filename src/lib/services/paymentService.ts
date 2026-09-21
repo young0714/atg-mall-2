@@ -313,7 +313,21 @@ class ModemPayPaymentProvider implements PaymentProvider {
         metadata: { orderNumber: params.orderNumber },
       });
 
-      if (!response.status || !response.data?.payment_link || !response.data?.id) {
+      // Read both field-name variants: a real retry attempt came back with
+      // response.status === true and Modem Pay's own success message, but
+      // neither response.data.id nor response.data.payment_link were
+      // present under those exact names — the shipped types already lied
+      // once about amount units, and retrieve()'s PaymentIntent type uses
+      // `link` where create()'s PaymentIntentResponse type declares
+      // `payment_link` for what should be the same field, so trusting
+      // either declared name alone isn't safe. Confirming the real field
+      // names is a follow-up once Vercel logs are checked; this defensive
+      // read is correct either way in the meantime.
+      const data = response.data as (typeof response.data & { link?: string; payment_intent_id?: string }) | undefined;
+      const paymentLink = data?.payment_link ?? data?.link;
+      const intentId = data?.id ?? data?.payment_intent_id;
+
+      if (!response.status || !paymentLink || !intentId) {
         return {
           providerRef: `MODEMPAY-FAILED-${Date.now().toString(36).toUpperCase()}`,
           providerName: this.name,
@@ -322,7 +336,7 @@ class ModemPayPaymentProvider implements PaymentProvider {
         };
       }
 
-      return { providerRef: response.data.id, providerName: this.name, status: "PENDING", redirectUrl: response.data.payment_link };
+      return { providerRef: intentId, providerName: this.name, status: "PENDING", redirectUrl: paymentLink };
     } catch (err) {
       // Unlike raw fetch (which resolves even on a 4xx/5xx), the SDK
       // throws on an API/network error — never let that crash checkout.
