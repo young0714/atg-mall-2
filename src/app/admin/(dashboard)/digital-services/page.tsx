@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PERMISSIONS } from "@/lib/rbac";
 import { StatusBadge } from "@/components/ui/Badge";
+import { Pagination } from "@/components/ui/Pagination";
 import { formatMoney } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { reloadlyService } from "@/lib/services/reloadlyService";
@@ -19,16 +20,40 @@ export const dynamic = "force-dynamic";
 // until the business configures one on Reloadly's side.
 const DEFAULT_LOW_BALANCE_THRESHOLD_MINOR = 5000; // $50.00
 
-export default async function AdminDigitalServicesPage() {
+const PAGE_SIZE = 100;
+
+export default async function AdminDigitalServicesPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
   await requirePermission(PERMISSIONS.MANAGE_DIGITAL_SERVICES);
-  const [orders, balance] = await Promise.all([
+
+  const currentPage = Math.max(1, Math.trunc(Number(searchParams.page)) || 1);
+
+  const [totalCount, orders, recentForFeeSummary, balance] = await Promise.all([
+    db.digitalServiceOrder.count(),
     db.digitalServiceOrder.findMany({
       orderBy: { createdAt: "desc" },
       include: { user: true },
+      skip: (currentPage - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    // Deliberately its own query, independent of the table's pagination
+    // above — the "last 100 orders" fee tile must always mean the same
+    // 100 regardless of which page of the table is currently showing.
+    db.digitalServiceOrder.findMany({
+      orderBy: { createdAt: "desc" },
+      select: { status: true, currency: true, feeMinor: true },
       take: 100,
     }),
     reloadlyService.getBalance(),
   ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function pageHref(page: number): string {
+    return page > 1 ? `/admin/digital-services?page=${page}` : "/admin/digital-services";
+  }
 
   const lowBalanceThresholdMinor =
     balance?.lowBalanceThresholdMinor && balance.lowBalanceThresholdMinor > 0
@@ -40,7 +65,7 @@ export default async function AdminDigitalServicesPage() {
   // only meaningful to sum within a single currency, so group rather than
   // add across orders that may be priced in NGN, USD, etc.
   const feeTotalsByCurrency = new Map<Currency, number>();
-  for (const order of orders) {
+  for (const order of recentForFeeSummary) {
     if (order.status !== "SUCCESSFUL") continue;
     feeTotalsByCurrency.set(order.currency, (feeTotalsByCurrency.get(order.currency) ?? 0) + order.feeMinor);
   }
@@ -54,6 +79,11 @@ export default async function AdminDigitalServicesPage() {
             {reloadlyService.isLive() && giftCardService.isLive() && utilityService.isLive()
               ? "Airtime, gift card, and bill payment orders are processed live via Reloadly, paid from the customer's ATG Wallet."
               : "No live Reloadly credentials are configured for at least one product — orders here may be processed via the mock provider."}
+          </p>
+          <p className="mt-1 text-sm text-navy-500">
+            {totalCount === 0
+              ? "0 orders"
+              : `Showing ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, totalCount)} of ${totalCount} order${totalCount === 1 ? "" : "s"}`}
           </p>
         </div>
 
@@ -146,6 +176,8 @@ export default async function AdminDigitalServicesPage() {
           <p className="p-6 text-center text-sm text-navy-400">No digital service orders yet.</p>
         )}
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} hrefForPage={pageHref} />
     </div>
   );
 }
