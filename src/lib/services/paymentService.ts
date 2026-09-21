@@ -313,29 +313,23 @@ class ModemPayPaymentProvider implements PaymentProvider {
         metadata: { orderNumber: params.orderNumber },
       });
 
-      // Read both field-name variants: a real retry attempt came back with
-      // response.status === true and Modem Pay's own success message, but
-      // neither response.data.id nor response.data.payment_link were
-      // present under those exact names — the shipped types already lied
-      // once about amount units, and retrieve()'s PaymentIntent type uses
-      // `link` where create()'s PaymentIntentResponse type declares
-      // `payment_link` for what should be the same field, so trusting
-      // either declared name alone isn't safe. Confirming the real field
-      // names is a follow-up once Vercel logs are checked; this defensive
-      // read is correct either way in the meantime.
+      // Read both field-name variants defensively: the shipped types
+      // already lied once about amount units, and retrieve()'s PaymentIntent
+      // type uses `link` where create()'s PaymentIntentResponse type
+      // declares `payment_link` for what should be the same field, so
+      // trusting either declared name alone isn't safe. Confirmed working
+      // via a real sandbox redirect to checkout.modempay.com 2026-09-21
+      // (correct GMD amount shown on their hosted page too).
       const data = response.data as (typeof response.data & { link?: string; payment_intent_id?: string }) | undefined;
       const paymentLink = data?.payment_link ?? data?.link;
       const intentId = data?.id ?? data?.payment_intent_id;
 
       if (!response.status || !paymentLink || !intentId) {
-        // TEMPORARY: two field-name guesses in a row have missed — dump the
-        // raw shape into the visible error banner instead of guessing a
-        // third time blind. Remove once the real shape is confirmed.
         return {
           providerRef: `MODEMPAY-FAILED-${Date.now().toString(36).toUpperCase()}`,
           providerName: this.name,
           status: "FAILED",
-          failureReason: `DEBUG raw response: ${JSON.stringify(response).slice(0, 900)}`,
+          failureReason: response.message || "Could not start the payment. Please try again.",
         };
       }
 
