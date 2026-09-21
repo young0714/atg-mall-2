@@ -1,5 +1,5 @@
 import { Container, Section } from "@/components/ui/Section";
-import { confirmFlutterwaveTransaction } from "@/lib/services/paymentService";
+import { confirmFlutterwaveTransaction, confirmModemPayTransaction } from "@/lib/services/paymentService";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -10,7 +10,14 @@ export const dynamic = "force-dynamic";
 export default async function CheckoutCallbackPage({
   searchParams,
 }: {
-  searchParams: { status?: string; transaction_id?: string; tx_ref?: string; wcref?: string; failed?: string };
+  searchParams: {
+    status?: string;
+    transaction_id?: string;
+    tx_ref?: string;
+    wcref?: string;
+    failed?: string;
+    payment_intent_id?: string;
+  };
 }) {
   // Flutterwave redirects the customer's browser here after the hosted
   // checkout page — this is a UX convenience only, never the source of
@@ -33,6 +40,18 @@ export default async function CheckoutCallbackPage({
     // if the webhook already landed, status reflects that already.
     const payment = await db.payment.findFirst({ where: { providerRef: searchParams.wcref } });
     orderId = payment?.status === "SUCCESSFUL" ? (payment.orderId ?? undefined) : undefined;
+  } else if (!cancelled && searchParams.payment_intent_id) {
+    // Modem Pay: NOT yet confirmed against a real sandbox redirect which
+    // query param they actually append (assumed "payment_intent_id",
+    // matching their webhook payload's own field name — see the doc
+    // comment on ModemPayPaymentProvider in paymentService.ts). If this
+    // guess is wrong, this branch simply never fires and the customer
+    // falls through to the generic "didn't go through" message below —
+    // the webhook (api/v1/webhooks/modempay) still confirms the order
+    // correctly regardless, so nothing is silently lost, just delayed
+    // until the customer refreshes /account/orders.
+    const result = await confirmModemPayTransaction(searchParams.payment_intent_id);
+    orderId = result.ok ? result.orderId : undefined;
   }
 
   const order = orderId ? await db.order.findUnique({ where: { id: orderId } }) : null;

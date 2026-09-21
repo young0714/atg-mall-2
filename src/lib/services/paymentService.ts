@@ -1,5 +1,7 @@
 import "server-only";
 import { randomBytes } from "crypto";
+import ModemPay from "modem-pay";
+import type { PaymentMethodType as ModemPayMethodType } from "modem-pay";
 import type { Currency, PaymentMethod } from "@prisma/client";
 import { db } from "@/lib/db";
 import { notificationService, NOTIFICATION_EVENTS } from "./notificationService";
@@ -25,11 +27,15 @@ const FLUTTERWAVE_SUPPORTED_CURRENCIES: Currency[] = [
  * pending) payment, used whenever a currency has no live provider configured
  * — so the order flow can be built and demoed end-to-end without ever
  * touching real money. `DefaultPaymentService` otherwise routes by currency:
- * GMD goes to `WaychitPaymentProvider` (the only one of the two that
- * supports Gambian Dalasi), everything else to `FlutterwavePaymentProvider`.
- * Both work the same way — initialize a hosted-checkout payment and return a
- * redirectUrl; actual confirmation only ever happens later, via
- * `confirmFlutterwaveTransaction`/`confirmWaychitTransaction`, called from
+ * GMD goes to `ModemPayPaymentProvider` when configured (the active GMD
+ * gateway — picked over `WaychitPaymentProvider` for having a real sandbox,
+ * a cleaner single Payment-Intents API, and an official SDK), falling back
+ * to `WaychitPaymentProvider` if `MODEMPAY_SECRET_KEY` is ever unset (kept
+ * around as a rollback path, not deleted); everything else goes to
+ * `FlutterwavePaymentProvider`. All three work the same way — initialize a
+ * hosted-checkout payment and return a redirectUrl; actual confirmation
+ * only ever happens later, via `confirmFlutterwaveTransaction`/
+ * `confirmWaychitTransaction`/`confirmModemPayTransaction`, called from
  * each provider's webhook route (authoritative) and the shared checkout
  * callback page (UX only).
  */
@@ -241,6 +247,90 @@ class WaychitPaymentProvider implements PaymentProvider {
   }
 }
 
+// The active GMD gateway (see resolveProvider() below) — picked over
+// Waychit for having a real sandbox (sk_test_... keys, a CLI that tunnels
+// webhooks to localhost) where Waychit has none at all. Uses the official
+// `modem-pay` SDK rather than raw fetch, specifically so webhook signature
+// verification is theirs to maintain, not hand-rolled HMAC like Waychit's.
+//
+// Confirmed via the SDK's own shipped type definitions (not just docs
+// prose, which was ambiguous on this) 2026-09-21:
+//  - `PaymentIntentResponse.data.amount` is documented as "in the smallest
+//    unit of the currency" — i.e. already minor units (butut), matching
+//    this app's own amountMinor convention directly. No /100 or *100
+//    conversion, unlike Waychit (whole Dalasi) or Flutterwave (major units).
+//  - `payment_methods` accepts exactly "card" | "bank" | "wallet"
+//    (PaymentMethodType) — mapped from our own two-option UI below.
+//  - `paymentIntents.retrieve(id)` takes the Payment Intent's own `id`
+//    field (present in the create response as `data.id`), not the
+//    `intent_secret` — confirmed by cross-referencing the retrieve
+//    signature against PaymentIntentResponse's distinct `id`/
+//    `intent_secret` fields. `data.id` is what's stored as providerRef.
+//
+// NOT yet confirmed against a real sandbox transaction: the exact query
+// param Modem Pay appends to return_url on redirect (assumed
+// "payment_intent_id" below, matching the webhook payload's own field name
+// — see confirmModemPayTransaction and checkout/callback/page.tsx). If
+// wrong, the webhook remains authoritative regardless; only the callback
+// page's same-request confirmation would lag until the customer refreshes.
+class ModemPayPaymentProvider implements PaymentProvider {
+  name = "MODEMPAY";
+  private client: ModemPay;
+  constructor(secretKey: string) {
+    this.client = new ModemPay(secretKey);
+  }
+
+  async charge(params: ChargeParams): Promise<PaymentInitiation> {
+    if (params.currency !== "GMD") {
+      return {
+        providerRef: `MODEMPAY-UNSUPPORTED-${Date.now().toString(36).toUpperCase()}`,
+        providerName: this.name,
+        status: "FAILED",
+        failureReason: "Modem Pay only supports GMD payments.",
+      };
+    }
+
+    // "Bank Transfer / Mobile Money" in the UI (same bundling label
+    // Waychit's UI copy already uses) maps to Modem Pay's "wallet" (Wave,
+    // Afrimoney, QMoney) + "bank" methods together — their hosted page lets
+    // the customer pick between them, same as Waychit's bundled flow does.
+    const paymentMethods: ModemPayMethodType[] = params.method === "CARD" ? ["card"] : ["wallet", "bank"];
+
+    try {
+      const response = await this.client.paymentIntents.create({
+        amount: params.amountMinor,
+        currency: params.currency,
+        return_url: params.redirectUrl,
+        cancel_url: params.redirectUrl,
+        payment_methods: paymentMethods,
+        customer_name: params.customerName,
+        customer_email: params.customerEmail,
+        metadata: { orderNumber: params.orderNumber },
+      });
+
+      if (!response.status || !response.data?.payment_link || !response.data?.id) {
+        return {
+          providerRef: `MODEMPAY-FAILED-${Date.now().toString(36).toUpperCase()}`,
+          providerName: this.name,
+          status: "FAILED",
+          failureReason: response.message || "Could not start the payment. Please try again.",
+        };
+      }
+
+      return { providerRef: response.data.id, providerName: this.name, status: "PENDING", redirectUrl: response.data.payment_link };
+    } catch (err) {
+      // Unlike raw fetch (which resolves even on a 4xx/5xx), the SDK
+      // throws on an API/network error — never let that crash checkout.
+      return {
+        providerRef: `MODEMPAY-ERROR-${Date.now().toString(36).toUpperCase()}`,
+        providerName: this.name,
+        status: "FAILED",
+        failureReason: err instanceof Error ? err.message : "Could not start the payment. Please try again.",
+      };
+    }
+  }
+}
+
 export interface PaymentService {
   charge(params: ChargeParams): Promise<PaymentInitiation>;
   // Both take an optional currency: omitted, they answer "is anything live
@@ -253,6 +343,7 @@ export interface PaymentService {
 class DefaultPaymentService implements PaymentService {
   private flutterwave: FlutterwavePaymentProvider | null;
   private waychit: WaychitPaymentProvider | null;
+  private modempay: ModemPayPaymentProvider | null;
   private mock = new MockPaymentProvider();
 
   constructor() {
@@ -260,13 +351,15 @@ class DefaultPaymentService implements PaymentService {
       ? new FlutterwavePaymentProvider(process.env.FLUTTERWAVE_SECRET_KEY)
       : null;
     this.waychit = process.env.WAYCHIT_API_KEY ? new WaychitPaymentProvider(process.env.WAYCHIT_API_KEY) : null;
+    this.modempay = process.env.MODEMPAY_SECRET_KEY ? new ModemPayPaymentProvider(process.env.MODEMPAY_SECRET_KEY) : null;
   }
 
-  // GMD only ever goes to Waychit (the one gateway here that supports it);
-  // everything else goes to Flutterwave. Either falls back to the mock
-  // provider when its key isn't configured.
+  // GMD goes to Modem Pay when configured, falling back to Waychit (kept
+  // as a rollback path, see the doc comment above) — everything else goes
+  // to Flutterwave. Either ultimately falls back to the mock provider when
+  // nothing's configured.
   private resolveProvider(currency: Currency): PaymentProvider {
-    if (currency === "GMD") return this.waychit ?? this.mock;
+    if (currency === "GMD") return this.modempay ?? this.waychit ?? this.mock;
     return this.flutterwave ?? this.mock;
   }
 
@@ -549,9 +642,96 @@ export async function confirmWaychitCardSessionTransaction(sessionId: string): P
   return finalizeWaychitPayment(data.clientReference, Number(data.totalAmount), data.currency);
 }
 
+/**
+ * The single source of truth for "a Modem Pay payment actually succeeded" —
+ * same shape as confirmFlutterwaveTransaction/finalizeWaychitPayment above:
+ * called from both the webhook (authoritative) and the checkout callback
+ * page (UX only), safe to call more than once, and never trusts a caller's
+ * claimed status — always re-fetches from Modem Pay's own API and
+ * cross-checks amount/currency against what we actually charged for.
+ *
+ * Takes the Payment Intent's own `id` (stored as Payment.providerRef at
+ * charge() time, and the same value the webhook payload calls
+ * `payment_intent_id`) — see the ModemPayPaymentProvider doc comment above
+ * for how that was confirmed against the SDK's shipped types.
+ */
+export async function confirmModemPayTransaction(paymentIntentId: string): Promise<{ ok: boolean; orderId?: string }> {
+  const secretKey = process.env.MODEMPAY_SECRET_KEY;
+  if (!secretKey) return { ok: false };
+
+  let intent;
+  try {
+    intent = await new ModemPay(secretKey).paymentIntents.retrieve(paymentIntentId);
+  } catch {
+    return { ok: false };
+  }
+  if (intent.status !== "successful") return { ok: false };
+
+  const payment = await db.payment.findFirst({ where: { providerRef: paymentIntentId }, include: { order: true } });
+  if (!payment) return { ok: false };
+
+  // amount is already minor units on both sides (see the provider's doc
+  // comment) — no unit conversion needed for this comparison, unlike
+  // Waychit/Flutterwave.
+  const amountMatches = intent.amount === payment.amountMinor;
+  const currencyMatches = intent.currency === payment.currency;
+  if (!amountMatches || !currencyMatches) return { ok: false };
+
+  if (payment.status === "SUCCESSFUL") return { ok: true, orderId: payment.orderId ?? undefined };
+
+  await db.payment.update({ where: { id: payment.id }, data: { status: "SUCCESSFUL" } });
+
+  if (payment.order) {
+    await db.order.update({ where: { id: payment.order.id }, data: { status: "PAID" } });
+    await db.trackingEvent.create({
+      data: { orderId: payment.order.id, status: "PAID", description: "Payment confirmed via Modem Pay." },
+    });
+    await commissionService.createForOrder(payment.order.id);
+    await db.cart
+      .update({ where: { userId: payment.order.userId }, data: { items: { deleteMany: {} } } })
+      .catch(() => {});
+
+    const profileUser = await db.user.findUnique({ where: { id: payment.order.userId } });
+    if (profileUser) {
+      await notificationService.notify({
+        userId: profileUser.id,
+        userContact: profileUser.email,
+        event: NOTIFICATION_EVENTS.PAYMENT_RECEIVED,
+        title: "Payment received",
+        body: `We've received your payment for order ${payment.order.orderNumber}.`,
+        html: await renderEmailLayout({
+          eyebrow: "PAYMENT RECEIVED",
+          heading: "We've got your payment",
+          bodyHtml: `We've received your payment for order <strong>${payment.order.orderNumber}</strong>.`,
+          cta: { label: "View Order", url: `${APP_URL}/account/orders` },
+          includeTrending: true,
+        }),
+        channels: ["IN_APP", "EMAIL"],
+      });
+    }
+
+    return { ok: true, orderId: payment.order.id };
+  }
+
+  if (payment.userId) {
+    await walletService.credit({
+      userId: payment.userId,
+      amountMinor: payment.amountMinor,
+      currency: payment.currency,
+      type: "DEPOSIT",
+      description: `Wallet top-up via ${payment.method === "CARD" ? "card" : "mobile money/bank transfer"} (Modem Pay)`,
+      referenceType: "DEPOSIT",
+      referenceId: payment.providerRef ?? payment.id,
+    });
+  }
+
+  return { ok: true };
+}
+
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   FLUTTERWAVE: "Flutterwave",
   WAYCHIT: "Waychit",
+  MODEMPAY: "Modem Pay",
 };
 
 /** UI label for a Card/Bank Transfer option: "(via Flutterwave)", "(via Waychit)", or a mock-mode note. */
