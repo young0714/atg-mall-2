@@ -296,10 +296,12 @@ class ModemPayPaymentProvider implements PaymentProvider {
     }
 
     // "Bank Transfer / Mobile Money" in the UI (same bundling label
-    // Waychit's UI copy already uses) maps to Modem Pay's "wallet" (Wave,
-    // Afrimoney, QMoney) + "bank" methods together — their hosted page lets
-    // the customer pick between them, same as Waychit's bundled flow does.
-    const paymentMethods: ModemPayMethodType[] = params.method === "CARD" ? ["card"] : ["wallet", "bank"];
+    // Waychit's UI copy already uses) maps to Modem Pay's "wallet" method
+    // (Wave, Afrimoney, QMoney). NOT "bank" too, despite PaymentMethodType
+    // declaring "bank" as valid — a real test order sending ["wallet",
+    // "bank"] together was rejected live with 400 "Invalid payment method
+    // detected: bank" (2026-09-21), the SDK's types being wrong yet again.
+    const paymentMethods: ModemPayMethodType[] = params.method === "CARD" ? ["card"] : ["wallet"];
 
     try {
       const response = await this.client.paymentIntents.create({
