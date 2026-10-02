@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { getOrCreateCartId } from "@/lib/services/cartService";
 import { hasVerifiedPurchase, recalculateProductRating } from "@/lib/services/reviewService";
 import { reviewSchema } from "@/lib/validation/schemas";
+import { buildPicker } from "@/lib/variantOptions";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -21,6 +22,24 @@ export async function addToCartAction(formData: FormData) {
     // Partner" link, which doesn't post to this action at all. This is
     // a defense-in-depth guard against a stale/tampered form.
     redirect(`/product/${formData.get("slug")}`);
+  }
+
+  // Colour/size choices are re-checked here, not just in the browser: the
+  // product page's own check can be bypassed, and a clothing order with no
+  // size (or a size that doesn't belong to this product) can't be fulfilled.
+  const productVariants = await db.productVariant.findMany({
+    where: { productId },
+    select: { id: true, name: true, priceDeltaMinor: true, stock: true, attributes: true },
+  });
+  const picker = buildPicker(productVariants);
+  const slugParam = String(formData.get("slug") ?? "");
+  const backWithError = (message: string): never => redirect(`/product/${slugParam}?cartError=${encodeURIComponent(message)}`);
+  if (variantId) {
+    const chosen = productVariants.find((v) => v.id === variantId);
+    if (!chosen) backWithError("That option is no longer available. Please choose again.");
+    else if (picker.kind === "options" && chosen.stock <= 0) backWithError("That choice is sold out. Please pick another.");
+  } else if (picker.kind === "options") {
+    backWithError(picker.hasSize ? "Please choose a size before adding to your cart." : "Please choose a colour before adding to your cart.");
   }
 
   // Adding to cart never requires an account — anonymous visitors get

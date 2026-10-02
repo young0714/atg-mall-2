@@ -1,17 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Currency } from "@prisma/client";
 import { formatMoney } from "@/lib/money";
 import { addToCartAction, requestSourcingForProductAction } from "@/app/product/[slug]/actions";
 import { Select } from "@/components/ui/Form";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { buildPicker, type PickerVariant } from "@/lib/variantOptions";
+import { useProductSelection } from "./ProductSelection";
 
-interface Variant {
-  id: string;
-  name: string;
-  priceDeltaMinor: number;
-}
+type Variant = PickerVariant;
 
 export function ProductPurchasePanel({
   productId,
@@ -36,11 +34,56 @@ export function ProductPurchasePanel({
   affiliateUrl?: string | null;
   affiliateProvider?: string | null;
 }) {
-  const [variantId, setVariantId] = useState(variants[0]?.id ?? "");
-  const [quantity, setQuantity] = useState(moq);
+  // Clothing-style products get separate Colour / Size dropdowns; anything
+  // else (supplier-imported variants) keeps the single "Variant" dropdown.
+  const picker = buildPicker(variants);
+  const options = picker.kind === "options" ? picker : null;
 
-  const selectedVariant = variants.find((v) => v.id === variantId);
+  const [variantId, setVariantId] = useState(options ? "" : (variants[0]?.id ?? ""));
+  const [colour, setColour] = useState(options?.colours[0] ?? "");
+  const [size, setSize] = useState("");
+  const [error, setError] = useState("");
+  const [quantity, setQuantity] = useState(moq);
+  const { setColour: shareColour } = useProductSelection();
+
+  useEffect(() => {
+    if (colour) shareColour(colour);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function pickColour(c: string) {
+    setColour(c);
+    shareColour(c);
+    setError("");
+    // keep the chosen size only if this colour still offers it in stock
+    if (options && size) {
+      const v = options.find(c, size);
+      if (!v || v.stock <= 0) setSize("");
+    }
+  }
+
+  const needsSize = !!options?.hasSize;
+  const selectedVariant: Variant | undefined = options
+    ? needsSize && !size
+      ? undefined
+      : options.find(colour, size)
+    : variants.find((v) => v.id === variantId);
   const unitPrice = basePriceMinor + (selectedVariant?.priceDeltaMinor ?? 0);
+  const formVariantId = options ? (selectedVariant?.id ?? "") : variantId;
+  const soldOut = !!options && !!selectedVariant && selectedVariant.stock <= 0;
+
+  function guardSubmit(e: React.FormEvent) {
+    if (!options) return;
+    if (needsSize && !size) {
+      e.preventDefault();
+      setError("Please choose a size before adding to your cart.");
+    } else if (!selectedVariant || soldOut) {
+      e.preventDefault();
+      setError("That choice is sold out. Please pick another.");
+    }
+  }
+
+  const availableSizes = options?.sizes.filter((s) => options.colours.length === 0 || options.colours.some((c) => (options.find(c, s)?.stock ?? 0) > 0)) ?? [];
 
   if (affiliateUrl) {
     return (
@@ -78,20 +121,72 @@ export function ProductPurchasePanel({
         </p>
       </div>
 
-      {variants.length > 1 && (
-        <div>
-          <label className="label" htmlFor="variant">Variant</label>
-          <Select id="variant" value={variantId} onChange={(e) => setVariantId(e.target.value)}>
-            {variants.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name || "Standard"}
-                {v.priceDeltaMinor !== 0
-                  ? ` (${v.priceDeltaMinor > 0 ? "+" : ""}${formatMoney(v.priceDeltaMinor, baseCurrency)})`
-                  : ""}
-              </option>
-            ))}
-          </Select>
+      {options ? (
+        <div className="space-y-3">
+          {options.hasSize && (
+            <p className="text-sm text-navy-600">Available sizes: {availableSizes.join(", ") || "none right now"}</p>
+          )}
+          <div className={`grid gap-3 ${options.hasColour && options.hasSize ? "sm:grid-cols-2" : ""}`}>
+            {options.hasColour && (
+              <div>
+                <label className="label" htmlFor="colour">Colour</label>
+                <Select id="colour" value={colour} onChange={(e) => pickColour(e.target.value)}>
+                  {options.colours.map((c) => {
+                    const allGone = options.hasSize
+                      ? options.sizes.every((s) => (options.find(c, s)?.stock ?? 0) <= 0)
+                      : (options.find(c, "")?.stock ?? 0) <= 0;
+                    return (
+                      <option key={c} value={c} disabled={allGone}>
+                        {c}{allGone ? " — sold out" : ""}
+                      </option>
+                    );
+                  })}
+                </Select>
+              </div>
+            )}
+            {options.hasSize && (
+              <div>
+                <label className="label" htmlFor="size">Size</label>
+                <Select
+                  id="size"
+                  value={size}
+                  onChange={(e) => { setSize(e.target.value); setError(""); }}
+                  className={error && !size ? "!border-red-400" : ""}
+                >
+                  <option value="">Choose a size</option>
+                  {options.sizes.map((s) => {
+                    const v = options.find(colour, s);
+                    const gone = !v || v.stock <= 0;
+                    return (
+                      <option key={s} value={s} disabled={gone}>
+                        {s}
+                        {v && v.priceDeltaMinor !== 0 ? ` (${v.priceDeltaMinor > 0 ? "+" : ""}${formatMoney(v.priceDeltaMinor, baseCurrency)})` : ""}
+                        {gone ? (v ? " — sold out" : " — not available") : ""}
+                      </option>
+                    );
+                  })}
+                </Select>
+              </div>
+            )}
+          </div>
+          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700" role="alert">{error}</p>}
         </div>
+      ) : (
+        variants.length > 1 && (
+          <div>
+            <label className="label" htmlFor="variant">Variant</label>
+            <Select id="variant" value={variantId} onChange={(e) => setVariantId(e.target.value)}>
+              {variants.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name || "Standard"}
+                  {v.priceDeltaMinor !== 0
+                    ? ` (${v.priceDeltaMinor > 0 ? "+" : ""}${formatMoney(v.priceDeltaMinor, baseCurrency)})`
+                    : ""}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )
       )}
 
       <div>
@@ -113,9 +208,9 @@ export function ProductPurchasePanel({
       </div>
 
       <div className="flex flex-col gap-2.5 sm:flex-row">
-        <form action={addToCartAction} className="w-full sm:flex-1">
+        <form action={addToCartAction} onSubmit={guardSubmit} className="w-full sm:flex-1">
           <input type="hidden" name="productId" value={productId} />
-          <input type="hidden" name="variantId" value={variantId} />
+          <input type="hidden" name="variantId" value={formVariantId} />
           <input type="hidden" name="quantity" value={quantity} />
           <input type="hidden" name="slug" value={slug} />
           <input type="hidden" name="redirectTo" value="/cart" />
@@ -123,9 +218,9 @@ export function ProductPurchasePanel({
             Add to Cart
           </SubmitButton>
         </form>
-        <form action={addToCartAction} className="w-full sm:flex-1">
+        <form action={addToCartAction} onSubmit={guardSubmit} className="w-full sm:flex-1">
           <input type="hidden" name="productId" value={productId} />
-          <input type="hidden" name="variantId" value={variantId} />
+          <input type="hidden" name="variantId" value={formVariantId} />
           <input type="hidden" name="quantity" value={quantity} />
           <input type="hidden" name="slug" value={slug} />
           <input type="hidden" name="redirectTo" value="/checkout" />

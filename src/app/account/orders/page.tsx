@@ -76,7 +76,9 @@ export default async function OrdersPage({
 
       const candidate = categoryIds.length
         ? await db.product.findFirst({
-            where: { isActive: true, categoryId: { in: categoryIds }, id: { notIn: orderedProductIds } },
+            // Products with variants (sizes/colours) are skipped: a one-tap add-on has no way to
+            // ask which one, and an unsized jersey can't be fulfilled.
+            where: { isActive: true, categoryId: { in: categoryIds }, id: { notIn: orderedProductIds }, variants: { none: {} } },
             include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
             orderBy: { createdAt: "desc" },
           })

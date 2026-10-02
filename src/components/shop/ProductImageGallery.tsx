@@ -2,15 +2,27 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useProductSelection } from "./ProductSelection";
 
 interface GalleryImage {
   id: string;
   url: string;
+  altText?: string | null;
 }
 
 export function ProductImageGallery({ images, productName }: { images: GalleryImage[]; productName: string }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const { colour } = useProductSelection();
+
+  // Picking a colour jumps to the first photo an admin tagged with that
+  // colour (a photo's alt text), so shoppers see what they're choosing.
+  useEffect(() => {
+    if (!colour) return;
+    const i = images.findIndex((img) => img.altText?.trim().toLowerCase() === colour.trim().toLowerCase());
+    if (i >= 0) setActiveIndex(i);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [colour]);
 
   const hasMultiple = images.length > 1;
 

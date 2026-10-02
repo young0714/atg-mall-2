@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Field, Input, Textarea } from "@/components/ui/Form";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
 import { ProductImageGallery } from "@/components/shop/ProductImageGallery";
+import { ProductSelectionProvider } from "@/components/shop/ProductSelection";
 import { Container, Section } from "@/components/ui/Section";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { formatDate } from "@/lib/utils";
@@ -41,7 +42,7 @@ export default async function ProductPage({
   searchParams,
 }: {
   params: { slug: string };
-  searchParams: { reviewError?: string; reviewSubmitted?: string };
+  searchParams: { reviewError?: string; reviewSubmitted?: string; cartError?: string };
 }) {
   const [destination, user] = await Promise.all([getDestination(), getCurrentUser()]);
 
@@ -77,6 +78,11 @@ export default async function ProductPage({
           <span className="text-navy-600">{product.name}</span>
         </nav>
 
+        {searchParams.cartError && (
+          <div className="mb-6 rounded-lg bg-red-50 p-3 text-sm text-red-700" role="alert">{searchParams.cartError}</div>
+        )}
+
+        <ProductSelectionProvider>
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
           <div>
             <ProductImageGallery images={product.images} productName={product.name} />
@@ -112,7 +118,7 @@ export default async function ProductPage({
               <ProductPurchasePanel
                 productId={product.id}
                 slug={product.slug}
-                variants={product.variants.map((v) => ({ id: v.id, name: v.name, priceDeltaMinor: v.priceDeltaMinor }))}
+                variants={product.variants.map((v) => ({ id: v.id, name: v.name, priceDeltaMinor: v.priceDeltaMinor, stock: v.stock, attributes: v.attributes }))}
                 moq={product.moq}
                 baseCurrency={product.baseCurrency}
                 basePriceMinor={product.basePriceMinor}
@@ -131,6 +137,7 @@ export default async function ProductPage({
             </dl>
           </div>
         </div>
+        </ProductSelectionProvider>
 
         <div className="mt-16 max-w-2xl">
           <h2 className="text-xl font-bold text-navy-900">Customer Reviews</h2>

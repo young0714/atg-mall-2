@@ -7,6 +7,7 @@ import { productSchema, productImageSchema, productVariantSchema } from "@/lib/v
 import { saveUploadedFile, saveUploadedVideo } from "@/lib/storage";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { variantColour, variantSize, variantLabel } from "@/lib/variantOptions";
 import { z } from "zod";
 
 export async function updateProductAction(formData: FormData) {
@@ -262,4 +263,114 @@ export async function deleteProductVariantsAction(formData: FormData) {
       ? `&error=${encodeURIComponent(`Deleted ${deletedCount}, skipped ${skippedCount} (existing order history).`)}`
       : "";
   redirect(`/admin/products/${productId}?updated=1${suffix}`);
+}
+
+const MAX_BULK_VARIANTS = 300;
+
+function cleanList(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const out: string[] = [];
+  for (const x of raw) {
+    const t = typeof x === "string" ? x.trim().slice(0, 40) : "";
+    if (t && !out.includes(t)) out.push(t);
+  }
+  return out.slice(0, 30);
+}
+
+/**
+ * Creates every colour x size combination in one go (the admin ticks sizes and
+ * lists colours instead of typing each variant). Combinations that already
+ * exist are skipped, so it's safe to run again after adding a size or colour.
+ * Surcharges arrive in whole currency units (e.g. 2.00) and are stored as
+ * minor-unit price deltas like every other variant.
+ */
+export async function addVariantsBulkAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const productId = String(formData.get("productId"));
+  const fail = (message: string): never => redirect(`/admin/products/${productId}?error=${encodeURIComponent(message)}`);
+
+  const product = await db.product.findUniqueOrThrow({
+    where: { id: productId },
+    select: { name: true, variants: { select: { attributes: true, id: true, name: true, priceDeltaMinor: true, stock: true } } },
+  });
+
+  let colours: string[] = [];
+  let sizes: string[] = [];
+  let surcharges: Record<string, unknown> = {};
+  try {
+    colours = cleanList(JSON.parse(String(formData.get("colours") ?? "[]")));
+    sizes = cleanList(JSON.parse(String(formData.get("sizes") ?? "[]")));
+    surcharges = JSON.parse(String(formData.get("surcharges") ?? "{}")) ?? {};
+  } catch {
+    fail("Couldn't read the sizes and colours. Please try again.");
+  }
+  if (colours.length === 0 && sizes.length === 0) fail("Add at least one size or one colour first.");
+
+  const stockRaw = Math.trunc(Number(formData.get("stock") ?? 999));
+  const stock = Number.isFinite(stockRaw) && stockRaw >= 0 ? stockRaw : 999;
+
+  const existing = new Set(product.variants.map((v) => `${variantColour(v)}||${variantSize(v)}`));
+  const data: { productId: string; name: string; priceDeltaMinor: number; stock: number; attributes: Record<string, string> }[] = [];
+  let skipped = 0;
+  for (const colour of colours.length ? colours : [""]) {
+    for (const size of sizes.length ? sizes : [""]) {
+      if (existing.has(`${colour}||${size}`)) { skipped++; continue; }
+      const extra = Number(surcharges[size]);
+      const attributes: Record<string, string> = {};
+      if (colour) attributes.color = colour;
+      if (size) attributes.size = size;
+      data.push({
+        productId,
+        name: variantLabel(colour, size),
+        priceDeltaMinor: size && Number.isFinite(extra) ? Math.round(extra * 100) : 0,
+        stock,
+        attributes,
+      });
+    }
+  }
+  if (data.length === 0) fail("Every combination already exists, so nothing was added.");
+  if (data.length + product.variants.length > MAX_BULK_VARIANTS) fail(`That would make more than ${MAX_BULK_VARIANTS} variants. Remove a few sizes or colours.`);
+
+  await db.productVariant.createMany({ data });
+  await db.auditLog.create({
+    data: {
+      actorId: staff.id,
+      action: "PRODUCT_VARIANTS_BULK_ADDED",
+      entityType: "Product",
+      entityId: productId,
+      summary: `Added ${data.length} size/colour variants to "${product.name}"${skipped ? ` (${skipped} already existed)` : ""}`,
+    },
+  });
+
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/shop");
+  redirect(`/admin/products/${productId}?updated=1`);
+}
+
+/**
+ * Tags product pictures with a colour (stored as the picture's alt text) so the
+ * storefront jumps to that colour's photo when a shopper picks it. Only pictures
+ * whose choice actually changed are written, so unrelated alt text is never wiped.
+ */
+export async function saveImageColoursAction(formData: FormData) {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const productId = String(formData.get("productId"));
+
+  const images = await db.productImage.findMany({ where: { productId }, select: { id: true } });
+  let changed = 0;
+  for (const img of images) {
+    const next = String(formData.get(`colour_${img.id}`) ?? "").trim().slice(0, 60);
+    const prev = String(formData.get(`prev_${img.id}`) ?? "").trim();
+    if (next === prev) continue;
+    await db.productImage.update({ where: { id: img.id }, data: { altText: next || null } });
+    changed++;
+  }
+  if (changed > 0) {
+    await db.auditLog.create({
+      data: { actorId: staff.id, action: "PRODUCT_IMAGE_COLOURS_SET", entityType: "Product", entityId: productId, summary: `Matched ${changed} picture(s) to colours` },
+    });
+  }
+
+  revalidatePath(`/admin/products/${productId}`);
+  redirect(`/admin/products/${productId}?updated=1`);
 }

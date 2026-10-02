@@ -39,7 +39,7 @@ export async function addWalletUpsellAction(formData: FormData) {
   }
 
   const product = await db.product.findFirst({
-    where: { id: productId, isActive: true },
+    where: { id: productId, isActive: true, variants: { none: {} } },
     include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
   });
   if (!product) {

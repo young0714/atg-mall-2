@@ -176,7 +176,10 @@ class DefaultOrderService implements OrderService {
               orderId: order.id,
               productId: item.productId,
               variantId: item.variantId,
-              nameSnapshot: item.product.name,
+              // Colour/size is part of the saved name so every order screen, packing
+              // list and email shows exactly what to ship, and it survives a variant
+              // being edited or deleted later.
+              nameSnapshot: item.variant?.name ? `${item.product.name} (${item.variant.name})` : item.product.name,
               imageSnapshot: undefined,
               quantity: item.quantity,
               unitPriceMinor,

@@ -14,8 +14,11 @@ import {
   addProductVariantAction,
   updateProductVideoAction,
   removeProductVideoAction,
+  saveImageColoursAction,
 } from "./actions";
 import { VariantsTable } from "./VariantsTable";
+import { BulkVariantForm } from "./BulkVariantForm";
+import { buildPicker, variantColour, variantSize } from "@/lib/variantOptions";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
@@ -44,6 +47,15 @@ export default async function AdminProductDetailPage({
     db.shippingOrigin.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
   ]);
   if (!product) notFound();
+
+  const colourOptions = [...new Set(product.variants.map(variantColour).filter(Boolean))];
+  const sizeOptions = [...new Set(product.variants.map(variantSize).filter(Boolean))];
+  // Variants made by hand (or imported) without colour/size details can't feed
+  // the storefront's Colour/Size dropdowns, and one of them is enough to make
+  // the whole product fall back to the single "Variant" list.
+  const hasPlainVariants =
+    product.variants.length > 0 && product.variants.some((v) => !variantColour(v) && !variantSize(v));
+  const storefrontUsesDropdowns = buildPicker(product.variants).kind === "options";
 
   const missingShippingData = !product.shippingOriginId || !product.packageLengthCm || !product.packageWidthCm || !product.packageHeightCm;
 
@@ -271,6 +283,62 @@ export default async function AdminProductDetailPage({
           </form>
         </details>
       </section>
+
+      <section className="card space-y-4 p-5">
+        <div>
+          <h2 className="font-semibold text-navy-900">Add sizes and colours</h2>
+          <p className="mt-1 text-sm text-navy-500">
+            Tick the sizes and list the colours, and every combination is created in one go. Shoppers then get a Colour and a Size dropdown on this product.
+          </p>
+        </div>
+        {hasPlainVariants && (
+          <div className="rounded-lg bg-gold-50 p-3 text-sm text-gold-700">
+            This product has variants without a colour or size. Delete those in the table above first, or the product page will keep the single &quot;Variant&quot; list instead of the Colour and Size dropdowns.
+          </div>
+        )}
+        {storefrontUsesDropdowns && (
+          <p className="text-sm text-atggreen-700">The product page is showing Colour and Size dropdowns for this product.</p>
+        )}
+        <BulkVariantForm
+          productId={product.id}
+          currency={product.baseCurrency}
+          existingColours={colourOptions}
+          existingSizes={sizeOptions}
+        />
+      </section>
+
+      {colourOptions.length > 0 && product.images.length > 0 && (
+        <section className="card space-y-4 p-5">
+          <div>
+            <h2 className="font-semibold text-navy-900">Match pictures to colours</h2>
+            <p className="mt-1 text-sm text-navy-500">
+              When a shopper picks a colour, the page jumps to the first picture matched to it. Leave a picture as &quot;Not matched&quot; if it isn&apos;t one colour.
+            </p>
+          </div>
+          <form action={saveImageColoursAction} className="space-y-4">
+            <input type="hidden" name="productId" value={product.id} />
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {product.images.map((img) => {
+                const current = colourOptions.find((c) => c.toLowerCase() === (img.altText ?? "").trim().toLowerCase()) ?? "";
+                return (
+                  <div key={img.id} className="space-y-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.url} alt={img.altText ?? ""} className="aspect-square w-full rounded-lg border border-navy-100 object-cover" />
+                    <input type="hidden" name={`prev_${img.id}`} value={current} />
+                    <select name={`colour_${img.id}`} defaultValue={current} className="input !py-1.5 text-xs" aria-label="Colour for this picture">
+                      <option value="">Not matched</option>
+                      {colourOptions.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+            <SubmitButton className="btn-primary">Save picture colours</SubmitButton>
+          </form>
+        </section>
+      )}
     </div>
   );
 }
