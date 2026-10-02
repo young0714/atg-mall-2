@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     title: "ATG Mall: Shop The World, Delivered To You.",
     description:
       "Shop products from China, the USA and the UK, delivered to supported destinations worldwide. Sourcing, purchasing, warehousing, consolidation and shipping are all handled by ATG Mall.",
-    url: appUrl,
+    url: "./",
     siteName: "ATG Mall",
     type: "website",
     images: [{ url: "/logo.png", width: 1254, height: 1254, alt: "ATG Mall" }],
@@ -55,7 +55,12 @@ export const metadata: Metadata = {
     description: "Shop from China, USA and UK. We handle the rest. Cross-border shopping, worldwide.",
     images: ["/logo.png"],
   },
-  alternates: { canonical: appUrl },
+  // "./" resolves to each page's own path (against metadataBase) — a fixed
+  // appUrl here made every page declare the homepage as its canonical, so
+  // Google treated shop/product pages as copies of the homepage and skipped
+  // indexing them. Pages whose content depends on query params (/shop
+  // categories, pagination) override this in their own generateMetadata.
+  alternates: { canonical: "./" },
   appleWebApp: {
     capable: true,
     title: "ATG Mall",

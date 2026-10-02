@@ -13,7 +13,7 @@ import type { Metadata } from "next";
 import type { Prisma } from "@prisma/client";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: "Shop: Buy from China, delivered worldwide",
   description: "Browse ATG Mall's catalog of products sourced from China, with worldwide delivery.",
   openGraph: {
@@ -28,6 +28,36 @@ export const metadata: Metadata = {
     images: ["/logo.png"],
   },
 };
+
+// /shop's content depends on query params, so the root layout's path-only
+// canonical isn't enough here: each category and each page number is its
+// own canonical URL, while sort/wholesale/search variants collapse onto the
+// category (or /shop) they're a re-view of. Free-text search results are
+// endless near-duplicates, so those aren't indexed at all.
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: { q?: string; category?: string; page?: string };
+}): Promise<Metadata> {
+  const params = new URLSearchParams();
+
+  // Only a real category slug gets its own canonical — an unknown slug
+  // renders the full catalog, so it canonicalizes to /shop instead of
+  // blessing an arbitrary URL.
+  if (searchParams.category) {
+    const exists = await db.category.findFirst({ where: { slug: searchParams.category }, select: { id: true } });
+    if (exists) params.set("category", searchParams.category);
+  }
+  const page = Math.trunc(Number(searchParams.page)) || 1;
+  if (page > 1) params.set("page", String(page));
+
+  const qs = params.toString();
+  return {
+    ...baseMetadata,
+    alternates: { canonical: qs ? `/shop?${qs}` : "/shop" },
+    ...(searchParams.q ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 export const dynamic = "force-dynamic";
 
