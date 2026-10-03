@@ -44,7 +44,7 @@ export default async function AdminCarriersPage({
             <Input id="code" name="code" required />
           </Field>
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
-            <input type="checkbox" name="isLiveApiEnabled" value="true" /> Live API enabled (informational until integrated)
+            <input type="checkbox" name="isLiveApiEnabled" value="true" /> Live API enabled (DHL only: also needs its API keys set)
           </label>
           <SubmitButton className="btn-primary sm:col-span-2 sm:w-fit">Add Carrier</SubmitButton>
         </form>

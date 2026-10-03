@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import type { Currency } from "@prisma/client";
 import { manualRateProvider } from "./manualRateProvider";
 import { createUnconfiguredLiveCarrierProvider } from "./liveCarrierProvider";
+import { dhlRateProvider } from "./dhlRateProvider";
 import { currencyRateService } from "./currencyRateService";
 import type { RateProvider } from "./rateProvider";
 import type { PackageDetails, ShippingRateOption, ShippingRateQuoteResult, ShippingRateRequest } from "./types";
@@ -33,11 +34,12 @@ export interface ShippingLaneQuote {
 }
 
 // Live carrier providers, tried in order before falling back to manual rate
-// cards. Empty/unconfigured until a real integration is built — see
-// liveCarrierProvider.ts. Adding a real one here is the only wiring needed
-// for it to start feeding checkout automatically.
+// cards. DHL is real but stays off until its API credentials are set and the
+// DHL carrier is switched on in admin (see dhlRateProvider.ts); FedEx is
+// still a placeholder. A provider listed here feeds checkout automatically
+// once it reports isConfigured().
 const LIVE_PROVIDERS: RateProvider[] = [
-  createUnconfiguredLiveCarrierProvider("DHL"),
+  dhlRateProvider,
   createUnconfiguredLiveCarrierProvider("FEDEX"),
 ];
 
@@ -78,7 +80,8 @@ export class DefaultShippingCalculationService implements ShippingCalculationSer
       try {
         const result = await provider.getRates(request);
         if (result.options.length > 0) {
-          return this.toDisplayQuote(result, displayCurrency);
+          // `await` so a conversion failure is caught below and falls back to manual rates.
+          return await this.toDisplayQuote(result, displayCurrency);
         }
       } catch (err) {
         liveApiFailed = true;
