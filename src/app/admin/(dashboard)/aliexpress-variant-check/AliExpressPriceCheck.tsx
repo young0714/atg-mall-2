@@ -1,7 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { checkPricesAction, type PriceCheckView } from "./actions";
+import {
+  applyRepriceAction,
+  checkPricesAction,
+  previewRepriceAction,
+  type PriceCheckView,
+  type RepriceApplied,
+  type RepricePreview,
+} from "./actions";
 import { Badge } from "@/components/ui/Badge";
 
 interface ProductRow {
@@ -25,8 +32,13 @@ const csvCell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
 
 export function AliExpressPriceCheck({ products }: { products: ProductRow[] }) {
   const [thinPct, setThinPct] = useState(20);
-  const [targetPct, setTargetPct] = useState(30);
+  const [targetPct, setTargetPct] = useState(50);
+  const [belowPct, setBelowPct] = useState(15);
   const [results, setResults] = useState<Record<string, PriceCheckView>>({});
+  const [previews, setPreviews] = useState<Record<string, RepricePreview>>({});
+  const [reviewing, setReviewing] = useState(false);
+  const [applied, setApplied] = useState<Record<string, RepriceApplied>>({});
+  const [applying, setApplying] = useState(false);
   const [running, setRunning] = useState(false);
   const [onlyProblems, setOnlyProblems] = useState(true);
   const stopRef = useRef(false);
@@ -39,6 +51,8 @@ export function AliExpressPriceCheck({ products }: { products: ProductRow[] }) {
     stopRef.current = false;
     setRunning(true);
     setResults({});
+    setPreviews({});
+    setApplied({});
     const queue = [...products];
     await Promise.all(
       Array.from({ length: CONCURRENCY }, async () => {
@@ -55,6 +69,53 @@ export function AliExpressPriceCheck({ products }: { products: ProductRow[] }) {
       }),
     );
     setRunning(false);
+  }
+
+  const candidates = products.filter((p) => {
+    const r = results[p.id];
+    return r?.ok && r.worstMarginPct !== null && r.worstMarginPct < belowPct;
+  });
+  const reviewed = candidates.filter((p) => previews[p.id]);
+  const plannable = reviewed.filter((p) => previews[p.id].ok && previews[p.id].changes.length > 0);
+  const totalChanges = plannable.reduce((n, p) => n + previews[p.id].changes.length, 0);
+  const pendingApply = plannable.filter((p) => !applied[p.id]?.ok);
+  const manualCount = reviewed.reduce((n, p) => n + (previews[p.id].ok ? previews[p.id].needsManual : 0), 0);
+
+  async function reviewRepricing() {
+    setReviewing(true);
+    setPreviews({});
+    const queue = [...candidates];
+    await Promise.all(
+      Array.from({ length: CONCURRENCY }, async () => {
+        while (queue.length) {
+          const p = queue.shift()!;
+          let pv: RepricePreview;
+          try {
+            pv = await previewRepriceAction(p.id, belowPct, targetPct);
+          } catch (e) {
+            pv = { productId: p.id, ok: false, note: e instanceof Error ? e.message : "Request failed", changes: [], needsManual: 0, warnings: [] };
+          }
+          setPreviews((cur) => ({ ...cur, [p.id]: pv }));
+        }
+      }),
+    );
+    setReviewing(false);
+  }
+
+  async function applyRepricing() {
+    const msg = `Raise the price of ${totalChanges} options across ${pendingApply.length} products to a ${targetPct}% margin over AliExpress's current price?\n\nPrices only go up. This changes your live shop.`;
+    if (!window.confirm(msg)) return;
+    setApplying(true);
+    for (const p of pendingApply) {
+      let r: RepriceApplied;
+      try {
+        r = await applyRepriceAction(p.id, belowPct, targetPct);
+      } catch (e) {
+        r = { productId: p.id, ok: false, note: e instanceof Error ? e.message : "Request failed", repriced: 0 };
+      }
+      setApplied((cur) => ({ ...cur, [p.id]: r }));
+    }
+    setApplying(false);
   }
 
   const rows = products
@@ -100,8 +161,12 @@ export function AliExpressPriceCheck({ products }: { products: ProductRow[] }) {
           <input id="thin" type="number" min={0} max={90} className="input w-28" value={thinPct} onChange={(e) => setThinPct(Number(e.target.value))} disabled={running} />
         </div>
         <div>
-          <label className="label" htmlFor="target">Suggest prices for (% margin)</label>
-          <input id="target" type="number" min={1} max={90} className="input w-28" value={targetPct} onChange={(e) => setTargetPct(Number(e.target.value))} disabled={running} />
+          <label className="label" htmlFor="target">Target margin (%)</label>
+          <input id="target" type="number" min={1} max={90} className="input w-28" value={targetPct} onChange={(e) => setTargetPct(Number(e.target.value))} disabled={running || reviewing || applying} />
+        </div>
+        <div>
+          <label className="label" htmlFor="below">Reprice options under (%)</label>
+          <input id="below" type="number" min={0} max={90} className="input w-28" value={belowPct} onChange={(e) => setBelowPct(Number(e.target.value))} disabled={running || reviewing || applying} />
         </div>
         {!running ? (
           <button type="button" onClick={start} className="btn-primary">
@@ -128,6 +193,38 @@ export function AliExpressPriceCheck({ products }: { products: ProductRow[] }) {
             <input type="checkbox" checked={onlyProblems} onChange={(e) => setOnlyProblems(e.target.checked)} />
             Show only products that need attention
           </label>
+        </div>
+      )}
+
+      {done > 0 && !running && candidates.length > 0 && (
+        <div className="card space-y-3 p-5">
+          <div>
+            <p className="font-display font-bold text-navy-900">Reprice ({candidates.length} products with options under {belowPct}% margin)</p>
+            <p className="text-sm text-navy-500">
+              Raises those options to a {targetPct}% margin over AliExpress&apos;s current price, rounded up to a .99 price. Prices only
+              go up. Review first — nothing changes until you press Apply.
+            </p>
+          </div>
+          {reviewed.length < candidates.length ? (
+            <button type="button" onClick={reviewRepricing} disabled={reviewing} className="btn-primary disabled:opacity-60">
+              {reviewing ? `Reviewing… ${reviewed.length}/${candidates.length}` : "Review the new prices"}
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-navy-700">
+                <strong>{totalChanges}</strong> option prices go up across <strong>{plannable.length}</strong> products
+                {manualCount > 0 ? <span className="text-gold-700"> · {manualCount} product price{manualCount === 1 ? "" : "s"} need editing by hand</span> : null}.
+                See the new prices in the table below.
+              </p>
+              <button type="button" onClick={applyRepricing} disabled={applying || pendingApply.length === 0} className="btn-primary disabled:opacity-60">
+                {applying
+                  ? `Applying… ${plannable.length - pendingApply.length}/${plannable.length}`
+                  : pendingApply.length === 0
+                    ? "All prices updated"
+                    : `Apply new prices (${pendingApply.length} products)`}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -182,6 +279,33 @@ export function AliExpressPriceCheck({ products }: { products: ProductRow[] }) {
                                 </tbody>
                               </table>
                             </details>
+                          )}
+                          {previews[p.id] && !applied[p.id] && (
+                            <div className="mt-2 rounded-lg bg-navy-50 p-2 text-xs text-navy-700">
+                              {previews[p.id].ok ? (
+                                previews[p.id].changes.length > 0 ? (
+                                  <>
+                                    <strong>New prices:</strong>
+                                    <ul className="mt-1 list-disc pl-4 tabular-nums">
+                                      {previews[p.id].changes.slice(0, 12).map((c) => (
+                                        <li key={c.name}>{c.name}: {usd(c.oldUsd)} → <strong>{usd(c.newUsd)}</strong> (AliExpress {usd(c.aeUsd)}, margin {c.marginBeforePct.toFixed(0)}% → {c.marginAfterPct.toFixed(0)}%)</li>
+                                      ))}
+                                    </ul>
+                                    {previews[p.id].changes.length > 12 && <p className="mt-1">…and {previews[p.id].changes.length - 12} more</p>}
+                                    {previews[p.id].warnings.map((w) => <p key={w} className="mt-1 text-gold-700">⚠ {w}</p>)}
+                                  </>
+                                ) : (
+                                  <span>{previews[p.id].needsManual > 0 ? "This product's own price is low — edit it on its product page." : "No price changes needed."}</span>
+                                )
+                              ) : (
+                                <span className="text-red-700">Can&apos;t plan new prices: {previews[p.id].note}</span>
+                              )}
+                            </div>
+                          )}
+                          {applied[p.id] && (
+                            <p className={`mt-2 text-xs font-medium ${applied[p.id].ok ? "text-atggreen-700" : "text-red-700"}`}>
+                              {applied[p.id].ok ? `✓ Repriced ${applied[p.id].repriced} option${applied[p.id].repriced === 1 ? "" : "s"}` : `Not applied: ${applied[p.id].note}`}
+                            </p>
                           )}
                         </>
                       ) : (

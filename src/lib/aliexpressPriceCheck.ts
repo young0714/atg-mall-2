@@ -16,6 +16,7 @@ export interface PriceStoredVariant extends StoredVariant {
 }
 
 export interface PriceOption {
+  variantId: string | null; // null = the product's own price (no options on the site)
   name: string;
   sellMinor: number;
   aeCostMinor: number;
@@ -38,25 +39,27 @@ export interface PriceCheckResult {
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
-export function checkPrices(args: {
+interface PriceArgs {
   basePriceMinor: number;
   productSupplierCostMinor: number | null;
   stored: PriceStoredVariant[];
   source: SourceSku[];
   thinPct: number; // flag margins below this, e.g. 20
   targetPct: number; // suggest prices that reach this margin, e.g. 30
-}): PriceCheckResult {
-  const { basePriceMinor, productSupplierCostMinor, stored, source, thinPct, targetPct } = args;
+}
+
+function buildOptions(args: PriceArgs): { options: PriceOption[]; unmatchedLive: number } {
+  const { basePriceMinor, productSupplierCostMinor, stored, source, targetPct } = args;
   const buyable = source.filter((s) => s.stock !== 0 && s.priceMinorUsd > 0);
 
-  const pairs: { name: string; sellMinor: number; aeCostMinor: number; importCostMinor: number | null }[] = [];
+  const pairs: { variantId: string | null; name: string; sellMinor: number; aeCostMinor: number; importCostMinor: number | null }[] = [];
   let unmatchedLive = 0;
 
   if (stored.length === 0) {
     // No options on the site: the product's own price against AliExpress's cheapest buyable option.
     if (buyable.length > 0) {
       const cheapest = Math.min(...buyable.map((s) => s.priceMinorUsd));
-      pairs.push({ name: "(product price)", sellMinor: basePriceMinor, aeCostMinor: cheapest, importCostMinor: productSupplierCostMinor });
+      pairs.push({ variantId: null, name: "(product price)", sellMinor: basePriceMinor, aeCostMinor: cheapest, importCostMinor: productSupplierCostMinor });
     }
   } else {
     const bySku = new Map(buyable.map((s) => [s.skuId, s]));
@@ -68,6 +71,7 @@ export function checkPrices(args: {
         continue;
       }
       pairs.push({
+        variantId: v.id,
         name: v.name,
         sellMinor: basePriceMinor + v.priceDeltaMinor,
         aeCostMinor: match.priceMinorUsd,
@@ -81,6 +85,12 @@ export function checkPrices(args: {
     marginPct: p.sellMinor > 0 ? ((p.sellMinor - p.aeCostMinor) / p.sellMinor) * 100 : -100,
     suggestedMinor: Math.ceil(p.aeCostMinor / (1 - targetPct / 100)),
   }));
+  return { options, unmatchedLive };
+}
+
+export function checkPrices(args: PriceArgs): PriceCheckResult {
+  const { thinPct } = args;
+  const { options, unmatchedLive } = buildOptions(args);
 
   const belowCost = options.filter((o) => o.sellMinor < o.aeCostMinor).length;
   const thinOnly = options.filter((o) => o.sellMinor >= o.aeCostMinor && o.marginPct < thinPct).length;
@@ -100,4 +110,77 @@ export function checkPrices(args: {
     worstMarginPct: options.length ? Math.min(...options.map((o) => o.marginPct)) : null,
     flagged,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Repricing: raise options that sell below the chosen margin up to the target
+// ---------------------------------------------------------------------------
+
+export interface RepriceChange {
+  variantId: string;
+  name: string;
+  oldSellMinor: number;
+  newSellMinor: number;
+  newDeltaMinor: number;
+  aeCostMinor: number;
+  marginBeforePct: number;
+  marginAfterPct: number;
+}
+
+export interface ReprisePlanResult {
+  changes: RepriceChange[];
+  needsManual: number; // below the margin but no option to change (product's own price)
+  cheapestAfterMinor: number | null; // cheapest option on sale after the change
+  basePriceMinor: number;
+  warnings: string[];
+}
+
+/** Rounds up to the shop's usual "...99" price style, never below the suggested price. */
+export function niceUp(minor: number): number {
+  let k = Math.ceil(minor / 100) * 100 - 1;
+  if (k < minor) k += 100;
+  return k;
+}
+
+export function planReprice(args: Omit<PriceArgs, "thinPct"> & { belowPct: number }): ReprisePlanResult {
+  const { basePriceMinor, belowPct } = args;
+  const { options } = buildOptions({ ...args, thinPct: belowPct });
+  const warnings: string[] = [];
+
+  const changes: RepriceChange[] = [];
+  let needsManual = 0;
+  for (const o of options) {
+    if (o.marginPct >= belowPct) continue;
+    if (o.variantId === null) {
+      needsManual++;
+      continue;
+    }
+    const newSell = niceUp(o.suggestedMinor);
+    if (newSell <= o.sellMinor) continue; // only ever raises a price
+    changes.push({
+      variantId: o.variantId,
+      name: o.name,
+      oldSellMinor: o.sellMinor,
+      newSellMinor: newSell,
+      newDeltaMinor: newSell - basePriceMinor,
+      aeCostMinor: o.aeCostMinor,
+      marginBeforePct: o.marginPct,
+      marginAfterPct: ((newSell - o.aeCostMinor) / newSell) * 100,
+    });
+  }
+  changes.sort((a, b) => a.marginBeforePct - b.marginBeforePct);
+
+  const changedIds = new Map(changes.map((c) => [c.variantId, c.newSellMinor]));
+  const after = options.map((o) => (o.variantId && changedIds.has(o.variantId) ? changedIds.get(o.variantId)! : o.sellMinor));
+  const cheapestAfterMinor = after.length ? Math.min(...after) : null;
+
+  if (changes.some((c) => c.newSellMinor > c.oldSellMinor * 2.5)) {
+    warnings.push("Some prices more than double (over 2.5x) — check they are reasonable for the product.");
+  }
+  if (changes.length > 0 && cheapestAfterMinor !== null && cheapestAfterMinor > basePriceMinor) {
+    warnings.push(
+      `Shop listings still show the product's base price ($${(basePriceMinor / 100).toFixed(2)}), but the cheapest option is now $${(cheapestAfterMinor / 100).toFixed(2)}. Update the base price on the product page if you want them to match.`,
+    );
+  }
+  return { changes, needsManual, cheapestAfterMinor, basePriceMinor, warnings };
 }

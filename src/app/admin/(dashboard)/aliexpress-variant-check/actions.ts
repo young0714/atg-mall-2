@@ -6,7 +6,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { aliexpressService } from "@/lib/services/aliexpressService";
 import { compare, type Status } from "@/lib/aliexpressVariantCompare";
 import { planFix, type FixPlan } from "@/lib/aliexpressVariantFix";
-import { checkPrices, type PriceStatus } from "@/lib/aliexpressPriceCheck";
+import { checkPrices, planReprice, type PriceStatus, type ReprisePlanResult } from "@/lib/aliexpressPriceCheck";
 import { revalidatePath } from "next/cache";
 
 export interface VariantCheckResult {
@@ -343,4 +343,126 @@ export async function checkPricesAction(productId: string, thinPct: number, targ
       suggestedUsd: o.suggestedMinor / 100,
     })),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Reprice: raise options that sell below the chosen margin up to the target
+// ---------------------------------------------------------------------------
+
+export interface RepricePreview {
+  productId: string;
+  ok: boolean;
+  note?: string;
+  changes: { name: string; oldUsd: number; newUsd: number; aeUsd: number; marginBeforePct: number; marginAfterPct: number }[];
+  needsManual: number;
+  warnings: string[];
+}
+
+type LoadedReprice = { ok: false; note: string } | { ok: true; product: { id: string; name: string; slug: string }; plan: ReprisePlanResult; aeCostById: Map<string, number> };
+
+// Always re-reads the product and asks AliExpress again — nothing is ever
+// applied from a stale screen.
+async function loadReprice(productId: string, belowPct: number, targetPct: number): Promise<LoadedReprice> {
+  if (!(belowPct >= 0 && belowPct <= 90 && targetPct >= 1 && targetPct <= 90 && targetPct > belowPct)) {
+    return { ok: false, note: "The target margin must be higher than the 'reprice under' margin (both between 0 and 90)." };
+  }
+  const product = await db.product.findUnique({
+    where: { id: productId },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      sourcePlatform: true,
+      sourceProductId: true,
+      basePriceMinor: true,
+      baseCurrency: true,
+      supplierCostMinor: true,
+      variants: { select: { id: true, name: true, sku: true, attributes: true, stock: true, priceDeltaMinor: true, supplierCostMinor: true } },
+    },
+  });
+  if (!product || product.sourcePlatform !== "ALIEXPRESS" || !product.sourceProductId) return { ok: false, note: "Not an AliExpress product with a saved AliExpress ID." };
+  if (product.baseCurrency !== "USD") return { ok: false, note: `Prices are saved in ${product.baseCurrency}, not USD — skipped.` };
+
+  let detail;
+  try {
+    detail = await aliexpressService.getById(product.sourceProductId);
+  } catch (e) {
+    return { ok: false, note: e instanceof Error ? e.message : String(e) };
+  }
+  if (!detail || detail.variants.length === 0) return { ok: false, note: "AliExpress returned no options to compare." };
+
+  const plan = planReprice({
+    basePriceMinor: product.basePriceMinor,
+    productSupplierCostMinor: product.supplierCostMinor,
+    stored: product.variants,
+    source: detail.variants,
+    belowPct,
+    targetPct,
+  });
+  const aeCostById = new Map(plan.changes.map((c) => [c.variantId, c.aeCostMinor]));
+  return { ok: true, product: { id: product.id, name: product.name, slug: product.slug }, plan, aeCostById };
+}
+
+export async function previewRepriceAction(productId: string, belowPct: number, targetPct: number): Promise<RepricePreview> {
+  await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const loaded = await loadReprice(productId, belowPct, targetPct);
+  if (!loaded.ok) return { productId, ok: false, note: loaded.note, changes: [], needsManual: 0, warnings: [] };
+  const { plan } = loaded;
+  return {
+    productId,
+    ok: true,
+    changes: plan.changes.map((c) => ({
+      name: c.name,
+      oldUsd: c.oldSellMinor / 100,
+      newUsd: c.newSellMinor / 100,
+      aeUsd: c.aeCostMinor / 100,
+      marginBeforePct: c.marginBeforePct,
+      marginAfterPct: c.marginAfterPct,
+    })),
+    needsManual: plan.needsManual,
+    warnings: plan.warnings,
+  };
+}
+
+export interface RepriceApplied {
+  productId: string;
+  ok: boolean;
+  note?: string;
+  repriced: number;
+}
+
+export async function applyRepriceAction(productId: string, belowPct: number, targetPct: number): Promise<RepriceApplied> {
+  const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const loaded = await loadReprice(productId, belowPct, targetPct);
+  if (!loaded.ok) return { productId, ok: false, note: loaded.note, repriced: 0 };
+  const { plan, product, aeCostById } = loaded;
+  if (plan.changes.length === 0) return { productId, ok: true, repriced: 0, note: "Nothing to change." };
+
+  try {
+    await db.$transaction(async (tx) => {
+      for (const c of plan.changes) {
+        // The saved supplier cost moves to today's AliExpress price, so any later
+        // pricing that works from this product's markup starts from the new reality.
+        await tx.productVariant.update({
+          where: { id: c.variantId },
+          data: { priceDeltaMinor: c.newDeltaMinor, supplierCostMinor: aeCostById.get(c.variantId) },
+        });
+      }
+      await tx.auditLog.create({
+        data: {
+          actorId: staff.id,
+          action: "ALIEXPRESS_OPTIONS_REPRICED",
+          entityType: "Product",
+          entityId: productId,
+          summary: `Repriced ${plan.changes.length} option(s) of "${product.name}" to a ${targetPct}% margin over AliExpress's current price (was below ${belowPct}%)`,
+        },
+      });
+    });
+  } catch (e) {
+    return { productId, ok: false, note: e instanceof Error ? e.message : String(e), repriced: 0 };
+  }
+
+  revalidatePath(`/product/${product.slug}`);
+  revalidatePath(`/admin/products/${productId}`);
+  return { productId, ok: true, repriced: plan.changes.length };
 }
