@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { aliexpressService } from "@/lib/services/aliexpressService";
 import { aliexpressAuthIsConfigured, isAliExpressConnected } from "@/lib/services/aliexpressAuthService";
 import { AliExpressVariantCheck } from "./AliExpressVariantCheck";
+import { AliExpressPriceCheck } from "./AliExpressPriceCheck";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Admin — Check AliExpress options" };
@@ -36,16 +37,23 @@ export default async function AdminAliExpressVariantCheckPage() {
           AliExpress isn&apos;t connected. Connect it on the <a className="underline" href="/admin/aliexpress-import">Import from AliExpress</a> page first.
         </div>
       ) : (
-        <AliExpressVariantCheck
-          products={products.map((p) => ({
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            isActive: p.isActive,
-            sourceUrl: p.sourceUrl,
-            variantCount: p._count.variants,
-          }))}
-        />
+        <>
+          <AliExpressVariantCheck
+            products={products.map((p) => ({
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              isActive: p.isActive,
+              sourceUrl: p.sourceUrl,
+              variantCount: p._count.variants,
+            }))}
+          />
+          <AliExpressPriceCheck
+            products={products
+              .filter((p) => p.isActive)
+              .map((p) => ({ id: p.id, name: p.name, sourceUrl: p.sourceUrl }))}
+          />
+        </>
       )}
     </div>
   );

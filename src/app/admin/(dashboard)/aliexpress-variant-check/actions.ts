@@ -6,6 +6,7 @@ import { PERMISSIONS } from "@/lib/rbac";
 import { aliexpressService } from "@/lib/services/aliexpressService";
 import { compare, type Status } from "@/lib/aliexpressVariantCompare";
 import { planFix, type FixPlan } from "@/lib/aliexpressVariantFix";
+import { checkPrices, type PriceStatus } from "@/lib/aliexpressPriceCheck";
 import { revalidatePath } from "next/cache";
 
 export interface VariantCheckResult {
@@ -263,4 +264,83 @@ export async function hideProductAction(productId: string): Promise<HideResult> 
   revalidatePath("/shop");
   revalidatePath(`/admin/products/${productId}`);
   return { productId, ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Price check (read-only): what each live option sells for vs AliExpress now
+// ---------------------------------------------------------------------------
+
+export interface PriceCheckView {
+  productId: string;
+  ok: boolean;
+  note?: string;
+  status: PriceStatus | "ERROR";
+  considered: number;
+  belowCost: number;
+  thin: number;
+  unmatchedLive: number;
+  worstMarginPct: number | null;
+  flagged: { name: string; sellUsd: number; aeUsd: number; marginPct: number; importUsd: number | null; suggestedUsd: number }[];
+}
+
+/** Read-only. Compares one product's live selling prices with AliExpress's current prices. */
+export async function checkPricesAction(productId: string, thinPct: number, targetPct: number): Promise<PriceCheckView> {
+  await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
+  const fail = (note: string): PriceCheckView => ({
+    productId, ok: false, note, status: "ERROR", considered: 0, belowCost: 0, thin: 0, unmatchedLive: 0, worstMarginPct: null, flagged: [],
+  });
+
+  const product = await db.product.findUnique({
+    where: { id: productId },
+    select: {
+      sourcePlatform: true,
+      sourceProductId: true,
+      basePriceMinor: true,
+      baseCurrency: true,
+      supplierCostMinor: true,
+      variants: { select: { id: true, name: true, sku: true, attributes: true, stock: true, priceDeltaMinor: true, supplierCostMinor: true } },
+    },
+  });
+  if (!product || product.sourcePlatform !== "ALIEXPRESS" || !product.sourceProductId) return fail("Not an AliExpress product with a saved AliExpress ID.");
+  if (product.baseCurrency !== "USD") return fail(`Prices are saved in ${product.baseCurrency}, not USD — skipped.`);
+
+  let detail;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      detail = await aliexpressService.getById(product.sourceProductId);
+      break;
+    } catch (e) {
+      if (attempt === 2) return fail(e instanceof Error ? e.message : String(e));
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+  }
+  if (!detail) return fail("AliExpress no longer lists this product.");
+  if (detail.variants.length === 0) return fail("AliExpress returned no options — nothing to compare.");
+
+  const r = checkPrices({
+    basePriceMinor: product.basePriceMinor,
+    productSupplierCostMinor: product.supplierCostMinor,
+    stored: product.variants,
+    source: detail.variants,
+    thinPct,
+    targetPct,
+  });
+  return {
+    productId,
+    ok: true,
+    status: r.status,
+    considered: r.considered,
+    belowCost: r.belowCost,
+    thin: r.thin,
+    unmatchedLive: r.unmatchedLive,
+    worstMarginPct: r.worstMarginPct,
+    flagged: r.flagged.slice(0, 60).map((o) => ({
+      name: o.name,
+      sellUsd: o.sellMinor / 100,
+      aeUsd: o.aeCostMinor / 100,
+      marginPct: o.marginPct,
+      importUsd: o.importCostMinor === null ? null : o.importCostMinor / 100,
+      suggestedUsd: o.suggestedMinor / 100,
+    })),
+  };
 }
