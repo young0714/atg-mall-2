@@ -62,7 +62,7 @@ export default async function AdminCouponsPage({ searchParams }: { searchParams:
           <CouponForm
             action={createCouponAction}
             submitLabel="Create code"
-            initial={{ code: "", percentOff: 20, windowType: "FIXED_DATES", startsAt: todayIso(), endsAt: plusDaysIso(14), daysAfterSignup: 14, maxRedemptions: 500, isActive: true }}
+            initial={{ code: "", percentOff: 20, windowType: "FIXED_DATES", startsAt: todayIso(), endsAt: plusDaysIso(14), daysAfterSignup: 14, maxRedemptions: 500, isActive: true, showOnSite: false, siteHeadline: "", showCountdown: true }}
           />
         </div>
       </details>
@@ -86,7 +86,10 @@ export default async function AdminCouponsPage({ searchParams }: { searchParams:
               return (
                 <tr key={c.id} className="border-b border-navy-50 align-top last:border-0">
                   <td className="p-3 font-mono font-semibold text-navy-900">{c.code}</td>
-                  <td className="max-w-sm p-3 text-navy-600">{describeCoupon(c)}</td>
+                  <td className="max-w-sm p-3 text-navy-600">
+                    {describeCoupon(c)}
+                    {c.showOnSite && <div className="mt-1"><Badge tone="blue">Shown on the website</Badge></div>}
+                  </td>
                   <td className="whitespace-nowrap p-3 tabular-nums">{u?.count ?? 0}{c.maxRedemptions ? ` / ${c.maxRedemptions}` : ""}</td>
                   <td className="whitespace-nowrap p-3 tabular-nums">
                     {u && u.byCurrency.length > 0 ? u.byCurrency.map((b) => <div key={b.currency}>{formatMoney(b.minor, b.currency as never)}</div>) : "—"}

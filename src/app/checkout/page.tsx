@@ -11,6 +11,9 @@ import { Field, Input, Select } from "@/components/ui/Form";
 import { paymentService, gatewayLabel } from "@/lib/services/paymentService";
 import { addAddressAction, initiateCheckoutOtpAction } from "./actions";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { OFFER_COOKIE } from "@/lib/offerCookie";
+import { checkCouponForCart, couponLinesFromCart, getPublicOffer } from "@/lib/services/couponService";
 import type { Metadata } from "next";
 import { CheckoutShippingSummary } from "@/components/checkout/CheckoutShippingSummary";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -54,6 +57,29 @@ export default async function CheckoutPage({
     0,
   );
   const serviceFeeMinor = Math.round(subtotalMinor * 0.01);
+
+  // An offer the customer claimed from the top bar is applied for them; otherwise, if a live
+  // offer fits this cart, suggest it with a one-tap button. Every rule is checked here on the
+  // server, and checked again when the order is placed. Never able to break checkout.
+  let initialCoupon: { code: string; percentOff: number; discountMinor: number; eligibleMinor: number } | null = null;
+  let suggestedOffer: { code: string; percentOff: number } | null = null;
+  try {
+    const lines = couponLinesFromCart(cart.items, orderCurrency);
+    const claimed = cookies().get(OFFER_COOKIE)?.value;
+    if (claimed) {
+      const r = await checkCouponForCart({ userId: user.id, code: claimed, lines });
+      if (r.ok) initialCoupon = { code: r.code, percentOff: r.percentOff, discountMinor: r.discountMinor, eligibleMinor: r.eligibleMinor };
+    }
+    if (!initialCoupon) {
+      const offer = await getPublicOffer(user.id);
+      if (offer) {
+        const r = await checkCouponForCart({ userId: user.id, code: offer.code, lines });
+        if (r.ok) suggestedOffer = { code: offer.code, percentOff: offer.percentOff };
+      }
+    }
+  } catch {
+    // Coupons unavailable: checkout continues without them.
+  }
 
   const { groups, unresolvedLines } = await groupCartForShipping(
     cart.items.map((i) => ({
@@ -193,6 +219,8 @@ export default async function CheckoutPage({
               subtotalMinor={subtotalMinor}
               serviceFeeMinor={serviceFeeMinor}
               orderCurrency={orderCurrency}
+              initialCoupon={initialCoupon}
+              suggestedOffer={suggestedOffer}
               customsDisclaimer={customs.disclaimer}
               canCheckout={canCheckout}
             >

@@ -16,6 +16,9 @@ interface ParsedCoupon {
   daysAfterSignup: number | null;
   maxRedemptions: number | null;
   isActive: boolean;
+  showOnSite: boolean;
+  siteHeadline: string | null;
+  showCountdown: boolean;
 }
 
 // Dates are whole days in UTC (Gambia time): a code runs from 00:00 on the first day to the last moment of the last day.
@@ -44,9 +47,24 @@ function parseCoupon(fd: FormData): { ok: true; data: ParsedCoupon } | { ok: fal
   const cap = Number(fd.get("maxRedemptions") || 0);
   if (!Number.isInteger(cap) || cap < 0) return { ok: false, error: "The order limit must be 0 (no limit) or a whole number." };
 
+  // Only fixed-date codes can be advertised (the bar needs an end date).
+  const showOnSite = windowType === "FIXED_DATES" && fd.get("showOnSite") === "true";
+  const headline = String(fd.get("siteHeadline") ?? "").trim().slice(0, 80);
+
   return {
     ok: true,
-    data: { percentOff, windowType, startsAt, endsAt, daysAfterSignup, maxRedemptions: cap === 0 ? null : cap, isActive: fd.get("isActive") === "true" },
+    data: {
+      percentOff,
+      windowType,
+      startsAt,
+      endsAt,
+      daysAfterSignup,
+      maxRedemptions: cap === 0 ? null : cap,
+      isActive: fd.get("isActive") === "true",
+      showOnSite,
+      siteHeadline: headline || null,
+      showCountdown: fd.get("showCountdown") === "true",
+    },
   };
 }
 
@@ -70,6 +88,7 @@ export async function createCouponAction(formData: FormData) {
     }
     throw e;
   }
+  revalidatePath("/", "layout"); // the offer bar lives on every page
   revalidatePath("/admin/coupons");
   redirect("/admin/coupons?saved=1");
 }
@@ -85,6 +104,7 @@ export async function updateCouponAction(formData: FormData) {
   await db.auditLog.create({
     data: { actorId: staff.id, action: "COUPON_UPDATED", entityType: "Coupon", entityId: id, summary: `Updated coupon ${coupon.code}` },
   });
+  revalidatePath("/", "layout"); // the offer bar lives on every page
   revalidatePath("/admin/coupons");
   redirect("/admin/coupons?saved=1");
 }
@@ -97,6 +117,7 @@ export async function toggleCouponAction(formData: FormData) {
   await db.auditLog.create({
     data: { actorId: staff.id, action: updated.isActive ? "COUPON_SWITCHED_ON" : "COUPON_SWITCHED_OFF", entityType: "Coupon", entityId: id, summary: `${updated.isActive ? "Switched on" : "Switched off"} coupon ${coupon.code}` },
   });
+  revalidatePath("/", "layout"); // the offer bar lives on every page
   revalidatePath("/admin/coupons");
   redirect("/admin/coupons?saved=1");
 }

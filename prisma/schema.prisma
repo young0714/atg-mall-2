@@ -1606,6 +1606,11 @@ model Coupon {
   daysAfterSignup Int? // SINCE_SIGNUP
   maxRedemptions  Int? // null = no total limit
   isActive        Boolean          @default(true)
+  // Advertise it on the website: a top bar (with optional countdown) and a one-tap
+  // suggestion at checkout. Only fixed-date codes can be advertised.
+  showOnSite      Boolean          @default(false)
+  siteHeadline    String?
+  showCountdown   Boolean          @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 

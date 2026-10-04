@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { formatMoney } from "@/lib/money";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { previewCouponAction } from "@/app/checkout/actions";
+import { OFFER_COOKIE } from "@/lib/offerCookie";
 import type { Currency } from "@prisma/client";
 
 type ShippingOption = {
@@ -32,6 +33,8 @@ export function CheckoutShippingSummary({
   subtotalMinor,
   serviceFeeMinor,
   orderCurrency,
+  initialCoupon = null,
+  suggestedOffer = null,
   customsDisclaimer,
   canCheckout,
   children,
@@ -40,6 +43,8 @@ export function CheckoutShippingSummary({
   subtotalMinor: number;
   serviceFeeMinor: number;
   orderCurrency: Currency;
+  initialCoupon?: { code: string; percentOff: number; discountMinor: number; eligibleMinor: number } | null;
+  suggestedOffer?: { code: string; percentOff: number } | null;
   customsDisclaimer: string;
   canCheckout: boolean;
   children: ReactNode;
@@ -50,18 +55,20 @@ export function CheckoutShippingSummary({
 
   // Coupon: the server decides everything (rules, eligible items, amount); this only shows it.
   const [couponInput, setCouponInput] = useState("");
-  const [coupon, setCoupon] = useState<{ code: string; percentOff: number; discountMinor: number; eligibleMinor: number } | null>(null);
-  const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [coupon, setCoupon] = useState<{ code: string; percentOff: number; discountMinor: number; eligibleMinor: number } | null>(initialCoupon);
+  const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(
+    initialCoupon ? { ok: true, text: `${initialCoupon.code} applied: ${initialCoupon.percentOff}% off eligible items.` } : null,
+  );
   const [couponBusy, setCouponBusy] = useState(false);
 
-  async function applyCoupon() {
-    if (!couponInput.trim()) {
+  async function applyCoupon(code: string = couponInput) {
+    if (!code.trim()) {
       setCouponMsg({ ok: false, text: "Enter a code first." });
       return;
     }
     setCouponBusy(true);
     try {
-      const r = await previewCouponAction(couponInput);
+      const r = await previewCouponAction(code);
       if (r.ok) {
         setCoupon(r);
         setCouponMsg({ ok: true, text: `Code applied: ${r.percentOff}% off eligible items.` });
@@ -76,6 +83,12 @@ export function CheckoutShippingSummary({
     setCouponBusy(false);
   }
   function removeCoupon() {
+    // Also forget a claimed offer, or it would be applied again on the next visit to checkout.
+    try {
+      document.cookie = `${OFFER_COOKIE}=; path=/; max-age=0`;
+    } catch {
+      // Cookies blocked: nothing to forget.
+    }
     setCoupon(null);
     setCouponMsg(null);
     setCouponInput("");
@@ -166,6 +179,14 @@ export function CheckoutShippingSummary({
           </div>
         </dl>
 
+        {!coupon && suggestedOffer && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg bg-atggreen-50 p-3 text-sm text-atggreen-700">
+            <span>An offer is available: <strong>{suggestedOffer.code}</strong>, {suggestedOffer.percentOff}% off.</span>
+            <button type="button" onClick={() => void applyCoupon(suggestedOffer.code)} disabled={couponBusy} className="btn-outline btn-sm disabled:opacity-60">
+              Apply {suggestedOffer.code}
+            </button>
+          </div>
+        )}
         {!coupon && (
           <div className="mt-4">
             <label className="label" htmlFor="couponInput">Have a code?</label>
@@ -175,11 +196,11 @@ export function CheckoutShippingSummary({
                 className="input flex-1 uppercase"
                 value={couponInput}
                 onChange={(e) => { setCouponInput(e.target.value); setCouponMsg(null); }}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void applyCoupon(); } }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void applyCoupon(couponInput); } }}
                 placeholder="LAUNCH20"
                 autoComplete="off"
               />
-              <button type="button" onClick={() => void applyCoupon()} disabled={couponBusy} className="btn-outline shrink-0 disabled:opacity-60">
+              <button type="button" onClick={() => void applyCoupon(couponInput)} disabled={couponBusy} className="btn-outline shrink-0 disabled:opacity-60">
                 {couponBusy ? "Checking…" : "Apply"}
               </button>
             </div>

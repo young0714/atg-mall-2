@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { InstallAppBanner } from "@/components/pwa/InstallAppBanner";
+import { SiteOffer } from "@/components/layout/SiteOffer";
 import { AppLockGate } from "@/components/account/AppLockGate";
 import { getCurrentUser } from "@/lib/auth/current-user";
 
@@ -117,6 +118,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ServiceWorkerRegister />
         <AppLockGate active={pinLockActive}>
           <InstallAppBanner />
+          <SiteOffer userId={user?.id ?? null} />
           <Header />
           <main className="flex-1 pb-16 lg:pb-0">{children}</main>
           <Footer />

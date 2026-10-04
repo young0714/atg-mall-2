@@ -13,6 +13,9 @@ export interface CouponFormValues {
   daysAfterSignup: number;
   maxRedemptions: number; // 0 = no limit
   isActive: boolean;
+  showOnSite: boolean;
+  siteHeadline: string;
+  showCountdown: boolean;
 }
 
 const fmt = (d: string) => (d ? new Date(`${d}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }) : "?");
@@ -41,6 +44,8 @@ export function CouponForm({
   return (
     <form action={action} className="space-y-5">
       {initial.id && <input type="hidden" name="id" value={initial.id} />}
+      {!(v.showOnSite && v.windowType === "FIXED_DATES") && v.showCountdown && <input type="hidden" name="showCountdown" value="true" />}
+      {!(v.showOnSite && v.windowType === "FIXED_DATES") && v.siteHeadline && <input type="hidden" name="siteHeadline" value={v.siteHeadline} />}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="label" htmlFor="code">Code</label>
@@ -95,6 +100,32 @@ export function CouponForm({
           </label>
           <p className="mt-1 text-xs text-navy-400">One use per customer is always on.</p>
         </div>
+      </div>
+
+      <div className="space-y-3 rounded-xl2 border border-navy-100 p-4">
+        <label className="flex items-start gap-2 text-sm">
+          <input type="checkbox" name="showOnSite" value="true" className="mt-1" checked={v.showOnSite && v.windowType === "FIXED_DATES"} disabled={v.windowType !== "FIXED_DATES"} onChange={(e) => set("showOnSite", e.target.checked)} />
+          <span>
+            <span className="font-medium text-navy-900">Show on the website</span>
+            <span className="block text-xs text-navy-500">
+              A bar across the top of every page with a Claim offer button, and a one-tap suggestion at checkout. It hides itself when
+              the code ends, is switched off, hits its order limit, or the customer has already used it.
+              {v.windowType !== "FIXED_DATES" && <span className="text-gold-700"> Only available for fixed-date codes.</span>}
+            </span>
+          </span>
+        </label>
+        {v.showOnSite && v.windowType === "FIXED_DATES" && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className="label" htmlFor="siteHeadline">Headline in the bar</label>
+              <input id="siteHeadline" name="siteHeadline" maxLength={80} className="input" value={v.siteHeadline} onChange={(e) => set("siteHeadline", e.target.value)} placeholder={`${v.percentOff || 20}% OFF everything`} />
+              <p className="mt-1 text-xs text-navy-400">Leave empty for "{v.percentOff || 20}% OFF everything".</p>
+            </div>
+            <label className="flex items-center gap-2 self-end pb-2 text-sm">
+              <input type="checkbox" name="showCountdown" value="true" checked={v.showCountdown} onChange={(e) => set("showCountdown", e.target.checked)} /> Show a countdown
+            </label>
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl2 border border-navy-100 bg-sand-50 p-4 text-sm leading-relaxed">

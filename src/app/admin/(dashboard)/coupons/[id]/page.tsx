@@ -41,6 +41,9 @@ export default async function AdminEditCouponPage({ params, searchParams }: { pa
             daysAfterSignup: c.daysAfterSignup ?? 14,
             maxRedemptions: c.maxRedemptions ?? 0,
             isActive: c.isActive,
+            showOnSite: c.showOnSite,
+            siteHeadline: c.siteHeadline ?? "",
+            showCountdown: c.showCountdown,
           }}
         />
       </div>

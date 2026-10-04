@@ -1,11 +1,28 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { evaluateCoupon, isLineEligible, normaliseCode, type CouponRule } from "@/lib/couponRules";
+import { currencyConversionService } from "@/lib/services/currencyConversionService";
+import type { Currency } from "@prisma/client";
+import { evaluateCoupon, isLineEligible, normaliseCode, pickPublicOffer, type CouponRule, type PublicOffer } from "@/lib/couponRules";
 
 export interface CartLineForCoupon {
   product: { noCoupons: boolean; sellerId: string | null; sourcePlatform: string };
   unitPriceMinor: number; // in the ORDER currency
   quantity: number;
+}
+
+type CartItemForCoupon = {
+  quantity: number;
+  product: { noCoupons: boolean; sellerId: string | null; sourcePlatform: string; basePriceMinor: number; baseCurrency: Currency };
+  variant: { priceDeltaMinor: number } | null;
+};
+
+/** Cart items priced exactly as checkout and order placement price them, in the order's currency. */
+export function couponLinesFromCart(items: CartItemForCoupon[], currency: Currency): CartLineForCoupon[] {
+  return items.map((i) => ({
+    product: { noCoupons: i.product.noCoupons, sellerId: i.product.sellerId, sourcePlatform: i.product.sourcePlatform },
+    unitPriceMinor: currencyConversionService.convert(i.product.basePriceMinor + (i.variant?.priceDeltaMinor ?? 0), i.product.baseCurrency, currency),
+    quantity: i.quantity,
+  }));
 }
 
 export type CouponCheck =
@@ -63,4 +80,20 @@ export async function checkCouponForCart(params: { userId: string; code: string;
     discountMinor: verdict.discountMinor,
     eligibleMinor: eligibleSubtotalMinor,
   };
+}
+
+/** The offer to advertise to this visitor right now (null = nothing to show). Cheap: one tiny query on the few codes marked "show on website". */
+export async function getPublicOffer(userId: string | null): Promise<PublicOffer | null> {
+  const candidates = await db.coupon.findMany({ where: { showOnSite: true, isActive: true } });
+  if (candidates.length === 0) return null;
+  const ids = candidates.map((c) => c.id);
+  const [counts, mine] = await Promise.all([
+    db.couponRedemption.groupBy({ by: ["couponId"], where: { couponId: { in: ids } }, _count: { _all: true } }),
+    userId ? db.couponRedemption.findMany({ where: { userId, couponId: { in: ids } }, select: { couponId: true } }) : Promise.resolve([]),
+  ]);
+  return pickPublicOffer(candidates, {
+    now: new Date(),
+    redemptionsByCoupon: new Map(counts.map((c) => [c.couponId, c._count._all])),
+    redeemedByUser: new Set(mine.map((m) => m.couponId)),
+  });
 }

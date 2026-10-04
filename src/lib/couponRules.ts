@@ -89,3 +89,52 @@ export function describeCoupon(c: Pick<CouponRule, "percentOff" | "windowType" |
       : `for ${c.daysAfterSignup ?? "?"} days after each customer signs up`;
   return `${c.percentOff}% off items (not shipping) ${when}. One use per customer${c.maxRedemptions ? `, first ${c.maxRedemptions} orders only` : ", no order limit"}.`;
 }
+
+// ---------------------------------------------------------------------------
+// The offer advertised on the website (top bar + checkout suggestion)
+// ---------------------------------------------------------------------------
+
+export interface PublicOfferCandidate extends CouponRule {
+  id: string;
+  showOnSite: boolean;
+  siteHeadline: string | null;
+  showCountdown: boolean;
+}
+
+export interface PublicOffer {
+  code: string;
+  percentOff: number;
+  headline: string;
+  endsAtIso: string; // always set: only fixed-date codes are advertised
+  showCountdown: boolean;
+}
+
+/**
+ * Picks the one code to advertise right now, or null. It advertises only what
+ * checkout would really honour: marked "show on website", switched on, a
+ * fixed-date code inside its dates, under its order limit, and not already used
+ * by this customer. If several qualify, the one ending soonest wins.
+ */
+export function pickPublicOffer(
+  candidates: PublicOfferCandidate[],
+  ctx: { now: Date; redemptionsByCoupon: Map<string, number>; redeemedByUser: Set<string> },
+): PublicOffer | null {
+  const live = candidates
+    .filter((c) => {
+      if (!c.showOnSite || !c.isActive || c.windowType !== "FIXED_DATES" || !c.startsAt || !c.endsAt) return false;
+      if (ctx.now < c.startsAt || ctx.now > c.endsAt) return false;
+      if (c.maxRedemptions !== null && (ctx.redemptionsByCoupon.get(c.id) ?? 0) >= c.maxRedemptions) return false;
+      if (ctx.redeemedByUser.has(c.id)) return false;
+      return true;
+    })
+    .sort((a, b) => a.endsAt!.getTime() - b.endsAt!.getTime());
+  const c = live[0];
+  if (!c) return null;
+  return {
+    code: c.code,
+    percentOff: c.percentOff,
+    headline: c.siteHeadline?.trim() || `${c.percentOff}% OFF everything`,
+    endsAtIso: c.endsAt!.toISOString(),
+    showCountdown: c.showCountdown,
+  };
+}
