@@ -88,34 +88,35 @@ model User {
   pinLockedUntil DateTime?
 
   webAuthnCredentials WebAuthnCredential[]
+  couponRedemptions   CouponRedemption[]
 
-  customerProfile CustomerProfile?
-  seller          Seller?
-  addresses       Address[]
-  wallet          Wallet?
-  orders          Order[]
-  cart            Cart?
-  shopForMeRequests   ShopForMeRequest[]
-  sourcingRequests    SourcingRequest[]
-  reviews             Review[]
-  supportTickets      SupportTicket[]        @relation("TicketCustomer")
-  assignedTickets     SupportTicket[]        @relation("TicketAssignee")
-  supportMessages     SupportMessage[]
-  notifications       Notification[]
-  auditLogs           AuditLog[]
-  productImportDrafts ProductImportDraft[]
-  warehouseReceipts   WarehouseReceipt[]     @relation("ReceivedBy")
-  quotationsIssued    Quotation[]            @relation("QuotationIssuedBy")
-  sourcingOptionsAdded SourcingOption[]      @relation("SourcingOptionAddedBy")
-  packages            Package[]
-  consolidations      Consolidation[]
-  magicLinkTokens     MagicLinkToken[]
-  walletDepositPayments Payment[]
-  digitalServiceOrders  DigitalServiceOrder[]
-  checkoutOtps          CheckoutOtp[]
-  walletTransfersSent      WalletTransfer[] @relation("WalletTransferSender")
-  walletTransfersReceived  WalletTransfer[] @relation("WalletTransferRecipient")
-  walletTransfersReversed  WalletTransfer[] @relation("WalletTransferReversedBy")
+  customerProfile         CustomerProfile?
+  seller                  Seller?
+  addresses               Address[]
+  wallet                  Wallet?
+  orders                  Order[]
+  cart                    Cart?
+  shopForMeRequests       ShopForMeRequest[]
+  sourcingRequests        SourcingRequest[]
+  reviews                 Review[]
+  supportTickets          SupportTicket[]       @relation("TicketCustomer")
+  assignedTickets         SupportTicket[]       @relation("TicketAssignee")
+  supportMessages         SupportMessage[]
+  notifications           Notification[]
+  auditLogs               AuditLog[]
+  productImportDrafts     ProductImportDraft[]
+  warehouseReceipts       WarehouseReceipt[]    @relation("ReceivedBy")
+  quotationsIssued        Quotation[]           @relation("QuotationIssuedBy")
+  sourcingOptionsAdded    SourcingOption[]      @relation("SourcingOptionAddedBy")
+  packages                Package[]
+  consolidations          Consolidation[]
+  magicLinkTokens         MagicLinkToken[]
+  walletDepositPayments   Payment[]
+  digitalServiceOrders    DigitalServiceOrder[]
+  checkoutOtps            CheckoutOtp[]
+  walletTransfersSent     WalletTransfer[]      @relation("WalletTransferSender")
+  walletTransfersReceived WalletTransfer[]      @relation("WalletTransferRecipient")
+  walletTransfersReversed WalletTransfer[]      @relation("WalletTransferReversedBy")
 
   @@index([role])
 }
@@ -133,16 +134,16 @@ model MagicLinkToken {
 }
 
 model CustomerProfile {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  countryIso       String
-  state            String?
-  city             String?
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  countryIso        String
+  state             String?
+  city              String?
   preferredCurrency Currency @default(NGN)
-  defaultAddressId String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  defaultAddressId  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Address {
@@ -198,11 +199,11 @@ enum StoreCountry {
 
 // How ATG actually connects to a store today — never claim more than this.
 enum StoreIntegrationType {
-  API             // a real, authorized product/search API is connected
-  AFFILIATE       // an approved affiliate program/tracking link
-  DIRECT_LINK     // just an external link to the store's own site
-  SHOP_FOR_ME     // no live integration; customers paste a link, ATG buys it manually
-  FUTURE          // planned, not yet built in any form
+  API // a real, authorized product/search API is connected
+  AFFILIATE // an approved affiliate program/tracking link
+  DIRECT_LINK // just an external link to the store's own site
+  SHOP_FOR_ME // no live integration; customers paste a link, ATG buys it manually
+  FUTURE // planned, not yet built in any form
 }
 
 model Category {
@@ -222,20 +223,20 @@ model Category {
 }
 
 model Supplier {
-  id           String   @id @default(cuid())
+  id           String         @id @default(cuid())
   name         String
   platform     SourcePlatform @default(MOCK_1688)
   externalUrl  String?
   contactName  String?
   contactPhone String?
-  location     String?  // e.g. "Guangzhou, China"
-  rating       Float?   @default(4.5)
-  verified     Boolean  @default(false)
+  location     String? // e.g. "Guangzhou, China"
+  rating       Float?         @default(4.5)
+  verified     Boolean        @default(false)
   notes        String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime       @default(now())
 
-  products         Product[]
-  sourcingOptions  SourcingOption[]
+  products          Product[]
+  sourcingOptions   SourcingOption[]
   warehouseReceipts WarehouseReceipt[]
 
   @@index([platform])
@@ -247,31 +248,31 @@ model Supplier {
 // Every field here is admin-configured; nothing about a Store implies a
 // live product feed unless integrationType is actually API.
 model Store {
-  id                 String   @id @default(cuid())
-  name               String
-  slug               String   @unique
-  country            StoreCountry
-  logoUrl            String?
+  id                    String               @id @default(cuid())
+  name                  String
+  slug                  String               @unique
+  country               StoreCountry
+  logoUrl               String?
   // External "Browse" destination (the store's real website). Null for the
   // "Other Store" catch-all, which only offers Send Product Link.
-  websiteUrl         String?
+  websiteUrl            String?
   // When set, "Browse" links here instead of `websiteUrl` — used only by
   // 1688/Taobao, which already have a real (mock-data, clearly labeled)
   // browse experience at /shop-from-china/1688 and /shop-from-china/taobao.
-  internalBrowsePath String?
-  description        String?
-  integrationType    StoreIntegrationType @default(SHOP_FOR_ME)
-  affiliateUrl       String?
+  internalBrowsePath    String?
+  description           String?
+  integrationType       StoreIntegrationType @default(SHOP_FOR_ME)
+  affiliateUrl          String?
   // Free-text status note for staff, e.g. "Mock demo data — pending
   // authorized API" or "Not yet configured" — never a claim of a live
   // integration that doesn't exist.
-  apiStatus          String?
-  isActive           Boolean  @default(true)
-  shopForMeEnabled   Boolean  @default(true)
-  supportedDestinations String[] @default(["NG", "GM"])
-  sortOrder          Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  apiStatus             String?
+  isActive              Boolean              @default(true)
+  shopForMeEnabled      Boolean              @default(true)
+  supportedDestinations String[]             @default(["NG", "GM"])
+  sortOrder             Int                  @default(0)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 
   products          Product[]
   shopForMeRequests ShopForMeRequest[]
@@ -280,16 +281,16 @@ model Store {
 }
 
 model Seller {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  storeName    String
-  storeSlug    String   @unique
-  description  String?
-  logoUrl      String?
-  status       SellerStatus @default(PENDING)
-  commissionPct Float   @default(10)
-  createdAt    DateTime @default(now())
+  id            String       @id @default(cuid())
+  userId        String       @unique
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeName     String
+  storeSlug     String       @unique
+  description   String?
+  logoUrl       String?
+  status        SellerStatus @default(PENDING)
+  commissionPct Float        @default(10)
+  createdAt     DateTime     @default(now())
 
   products    Product[]
   commissions Commission[]
@@ -303,20 +304,20 @@ enum SellerStatus {
 }
 
 model Product {
-  id             String         @id @default(cuid())
-  name           String
-  slug           String         @unique
-  description    String
-  categoryId     String
-  category       Category       @relation(fields: [categoryId], references: [id])
-  supplierId     String?
-  supplier       Supplier?      @relation(fields: [supplierId], references: [id])
-  sellerId       String?
-  seller         Seller?        @relation(fields: [sellerId], references: [id])
-  storeId        String?
-  store          Store?         @relation(fields: [storeId], references: [id])
-  sourcePlatform SourcePlatform @default(ATG)
-  sourceUrl      String?
+  id              String         @id @default(cuid())
+  name            String
+  slug            String         @unique
+  description     String
+  categoryId      String
+  category        Category       @relation(fields: [categoryId], references: [id])
+  supplierId      String?
+  supplier        Supplier?      @relation(fields: [supplierId], references: [id])
+  sellerId        String?
+  seller          Seller?        @relation(fields: [sellerId], references: [id])
+  storeId         String?
+  store           Store?         @relation(fields: [storeId], references: [id])
+  sourcePlatform  SourcePlatform @default(ATG)
+  sourceUrl       String?
   sourceProductId String?
 
   // The supplier's own price (always USD minor units) at the moment this was
@@ -334,10 +335,10 @@ model Product {
   affiliateProvider String?
 
   // Base pricing, in CNY minor units (fen) for China-sourced products, or NGN/GMD for ATG's own stock.
-  basePriceMinor   Int
-  baseCurrency     Currency @default(CNY)
-  moq              Int      @default(1)
-  weightGrams      Int      @default(500)
+  basePriceMinor Int
+  baseCurrency   Currency @default(CNY)
+  moq            Int      @default(1)
+  weightGrams    Int      @default(500)
 
   // Shipping-engine data (Phase 2). shippingOriginId is the authoritative
   // origin for the new shipping calculator — nullable so existing products
@@ -346,28 +347,30 @@ model Product {
   // above is mandatory already (has a default); dimensions are optional at
   // the DB layer but required by validation for new/edited shippable
   // products (Phase 3) — enforcing NOT NULL here would break existing rows.
-  shippingOriginId              String?
-  shippingOrigin                ShippingOrigin? @relation(fields: [shippingOriginId], references: [id])
-  packageLengthCm               Int?
-  packageWidthCm                Int?
-  packageHeightCm               Int?
-  shippingCategory              String?
-  internationalShippingAllowed  Boolean  @default(true)
-  customsRequired               Boolean  @default(false)
-  isFragile                     Boolean  @default(false)
-  isHazardous                   Boolean  @default(false)
+  shippingOriginId             String?
+  shippingOrigin               ShippingOrigin? @relation(fields: [shippingOriginId], references: [id])
+  packageLengthCm              Int?
+  packageWidthCm               Int?
+  packageHeightCm              Int?
+  shippingCategory             String?
+  internationalShippingAllowed Boolean         @default(true)
+  customsRequired              Boolean         @default(false)
+  isFragile                    Boolean         @default(false)
+  isHazardous                  Boolean         @default(false)
 
-  isWholesale    Boolean  @default(false)
-  isFeatured     Boolean  @default(false)
+  isWholesale    Boolean @default(false)
+  isFeatured     Boolean @default(false)
   // Unused/dormant — superseded by the standalone HeroImage model below,
   // which isn't tied to any specific product (the hero also needs generic
   // service/brand photography, not just product shots). Left in place
   // rather than dropped, per this project's additive-only migration
   // convention; no UI writes to it anymore.
-  isHeroEligible Boolean  @default(false)
-  isActive       Boolean  @default(true)
-  avgRating      Float    @default(0)
-  reviewCount    Int      @default(0)
+  isHeroEligible Boolean @default(false)
+  // Coupon codes never discount this product (e.g. thin-margin items).
+  noCoupons      Boolean @default(false)
+  isActive       Boolean @default(true)
+  avgRating      Float   @default(0)
+  reviewCount    Int     @default(0)
 
   // Single optional product video — auto-pulled from a supplier (CJ's
   // productVideo field) or uploaded directly by an admin. Most products have
@@ -377,11 +380,11 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  images      ProductImage[]
-  variants    ProductVariant[]
-  reviews     Review[]
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
+  images     ProductImage[]
+  variants   ProductVariant[]
+  reviews    Review[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
 
   @@index([categoryId])
   @@index([sourcePlatform])
@@ -398,34 +401,34 @@ model ProductImage {
 }
 
 model ProductVariant {
-  id             String  @id @default(cuid())
-  productId      String
-  product        Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  name           String  // e.g. "Color / Size"
-  sku            String?
-  priceDeltaMinor Int    @default(0) // added to base price, same currency as product
+  id                String  @id @default(cuid())
+  productId         String
+  product           Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name              String // e.g. "Color / Size"
+  sku               String?
+  priceDeltaMinor   Int     @default(0) // added to base price, same currency as product
   // This variant's own supplier price (USD minor units) at import time — see
   // Product.supplierCostMinor for the same reasoning. Null for anything not
   // imported, or imported before this field existed.
   supplierCostMinor Int?
-  stock          Int     @default(999)
-  attributes     Json    // { color: "Black", size: "XL" }
+  stock             Int     @default(999)
+  attributes        Json // { color: "Black", size: "XL" }
 
   cartItems  CartItem[]
   orderItems OrderItem[]
 }
 
 model Review {
-  id        String   @id @default(cuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rating    Int
-  title     String?
-  body      String
-  isApproved Boolean @default(true)
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating     Int
+  title      String?
+  body       String
+  isApproved Boolean  @default(true)
+  createdAt  DateTime @default(now())
 
   @@unique([productId, userId])
   @@index([productId])
@@ -484,38 +487,45 @@ enum OrderSource {
 }
 
 model Order {
-  id            String      @id @default(cuid())
-  orderNumber   String      @unique // e.g. ATG-NG-2026000123
-  userId        String
-  user          User        @relation(fields: [userId], references: [id])
-  addressId     String?
-  address       Address?    @relation(fields: [addressId], references: [id])
-  source        OrderSource @default(CATALOG)
-  status        OrderStatus @default(PENDING_PAYMENT)
+  id             String      @id @default(cuid())
+  orderNumber    String      @unique // e.g. ATG-NG-2026000123
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  addressId      String?
+  address        Address?    @relation(fields: [addressId], references: [id])
+  source         OrderSource @default(CATALOG)
+  status         OrderStatus @default(PENDING_PAYMENT)
   destinationIso String
-  currency      Currency
+  currency       Currency
 
-  subtotalMinor        Int
-  serviceFeeMinor       Int      @default(0)
-  domesticShippingMinor Int      @default(0)
-  intlShippingMinor     Int      @default(0)
-  otherChargesMinor     Int      @default(0)
+  subtotalMinor         Int
+  // Coupon discount taken off the items (never shipping). subtotalMinor stays the
+  // full item price; totalMinor already has this subtracted.
+  discountMinor         Int               @default(0)
+  couponId              String?
+  coupon                Coupon?           @relation(fields: [couponId], references: [id])
+  couponCodeSnapshot    String?
+  couponRedemption      CouponRedemption?
+  serviceFeeMinor       Int               @default(0)
+  domesticShippingMinor Int               @default(0)
+  intlShippingMinor     Int               @default(0)
+  otherChargesMinor     Int               @default(0)
   totalMinor            Int
 
-  shopForMeRequestId String?      @unique
+  shopForMeRequestId String?           @unique
   shopForMeRequest   ShopForMeRequest? @relation(fields: [shopForMeRequestId], references: [id])
-  sourcingRequestId  String?      @unique
+  sourcingRequestId  String?           @unique
   sourcingRequest    SourcingRequest?  @relation(fields: [sourcingRequestId], references: [id])
 
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  items      OrderItem[]
-  payments   Payment[]
-  packages   Package[]
+  items          OrderItem[]
+  payments       Payment[]
+  packages       Package[]
   trackingEvents TrackingEvent[]
-  shipments  OrderShipment[]
+  shipments      OrderShipment[]
 
   @@index([userId])
   @@index([status])
@@ -530,18 +540,18 @@ enum FulfillmentType {
 }
 
 model OrderItem {
-  id         String          @id @default(cuid())
-  orderId    String
-  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId  String?
-  product    Product?        @relation(fields: [productId], references: [id])
-  variantId  String?
-  variant    ProductVariant? @relation(fields: [variantId], references: [id])
-  nameSnapshot String
-  imageSnapshot String?
-  quantity   Int
+  id             String          @id @default(cuid())
+  orderId        String
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String?
+  product        Product?        @relation(fields: [productId], references: [id])
+  variantId      String?
+  variant        ProductVariant? @relation(fields: [variantId], references: [id])
+  nameSnapshot   String
+  imageSnapshot  String?
+  quantity       Int
   unitPriceMinor Int
-  currency   Currency
+  currency       Currency
 
   // Fulfillment-path snapshot, taken at order-creation time so it stays
   // accurate even if the product's own source/seller changes later.
@@ -556,8 +566,8 @@ model OrderItem {
   // under, and the weight actually used for that quote — snapshotted the
   // same way as the fields above, for the same reason (an order's shipping
   // math must never silently change if the product is edited later).
-  orderShipmentId    String?
-  orderShipment      OrderShipment? @relation(fields: [orderShipmentId], references: [id])
+  orderShipmentId     String?
+  orderShipment       OrderShipment? @relation(fields: [orderShipmentId], references: [id])
   weightGramsSnapshot Int?
 }
 
@@ -576,21 +586,21 @@ enum PaymentStatus {
 }
 
 model Payment {
-  id            String        @id @default(cuid())
-  orderId       String?
-  order         Order?        @relation(fields: [orderId], references: [id])
+  id           String        @id @default(cuid())
+  orderId      String?
+  order        Order?        @relation(fields: [orderId], references: [id])
   // Set instead of orderId for a wallet top-up (deposit) payment, which has
   // no associated order — walletService.credit() is applied to this user
   // once the payment is confirmed.
-  userId        String?
-  user          User?         @relation(fields: [userId], references: [id])
-  method        PaymentMethod
-  status        PaymentStatus @default(PENDING)
-  amountMinor   Int
-  currency      Currency
-  providerRef   String?       // opaque reference from the (mock) PaymentService
-  providerName  String        @default("MOCK") // e.g. "MOCK", "PAYSTACK", "FLUTTERWAVE"
-  createdAt     DateTime      @default(now())
+  userId       String?
+  user         User?         @relation(fields: [userId], references: [id])
+  method       PaymentMethod
+  status       PaymentStatus @default(PENDING)
+  amountMinor  Int
+  currency     Currency
+  providerRef  String? // opaque reference from the (mock) PaymentService
+  providerName String        @default("MOCK") // e.g. "MOCK", "PAYSTACK", "FLUTTERWAVE"
+  createdAt    DateTime      @default(now())
 
   // Bank-transfer sender name match (see nameMatchService.ts) — Nigeria/NGN
   // only, since it relies on NIBSS transfer metadata Flutterwave passes
@@ -601,7 +611,7 @@ model Payment {
   payerBankName            String?
   payerAccountName         String? // NIBSS originator name — the sender's own bank account name
   payerAccountNumberMasked String?
-  nameMatchScore           Float?  // 0–1, share of the profile name found in payerAccountName
+  nameMatchScore           Float? // 0–1, share of the profile name found in payerAccountName
 }
 
 // ---------------------------------------------------------------------------
@@ -621,22 +631,22 @@ enum DigitalServiceType {
 }
 
 model DigitalServiceOrder {
-  id             String             @id @default(cuid())
-  userId         String
-  user           User               @relation(fields: [userId], references: [id])
-  type           DigitalServiceType
-  status         PaymentStatus      @default(PENDING)
-  providerName   String             @default("RELOADLY")
-  providerRef    String? // Reloadly's transactionId
-  countryIso     String
-  operatorId     Int // reused as productId for gift cards, billerId for utility bills — all three are "the catalog item ordered"
-  operatorName   String // reused as brand/product name (gift cards) or biller name (utility bills) — snapshot, stays readable even if the catalog changes later
+  id           String             @id @default(cuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id])
+  type         DigitalServiceType
+  status       PaymentStatus      @default(PENDING)
+  providerName String             @default("RELOADLY")
+  providerRef  String? // Reloadly's transactionId
+  countryIso   String
+  operatorId   Int // reused as productId for gift cards, billerId for utility bills — all three are "the catalog item ordered"
+  operatorName String // reused as brand/product name (gift cards) or biller name (utility bills) — snapshot, stays readable even if the catalog changes later
 
   // Airtime delivers to a phone; gift cards deliver to an email; utility
   // bills pay against a meter/smartcard number. Exactly one of these three
   // is set, depending on `type`.
-  recipientPhone         String?
-  recipientEmail         String?
+  recipientPhone          String?
+  recipientEmail          String?
   subscriberAccountNumber String?
   // The customer name Reloadly returned for subscriberAccountNumber, when a
   // biller supports validating it — shown so the customer/admin can confirm
@@ -688,19 +698,19 @@ enum WalletTransactionType {
 }
 
 model Wallet {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  currency  Currency @default(NGN)
-  balanceMinor Int   @default(0) // cached projection of the ledger below
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency      Currency @default(NGN)
+  balanceMinor  Int      @default(0) // cached projection of the ledger below
   // Customer-facing identifier for wallet-to-wallet transfers — a 10-digit
   // number, generated once at wallet creation, never reused. Deliberately
   // NOT the user's email/phone: those are mutable and used for other
   // purposes, so a stable purpose-built number avoids both enumeration
   // risk and breakage if a customer later changes their email/phone.
-  accountNumber String @unique
-  updatedAt DateTime @updatedAt
-  createdAt DateTime @default(now())
+  accountNumber String   @unique
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
 
   transactions WalletTransaction[]
 }
@@ -715,11 +725,11 @@ enum WalletTransferStatus {
 // admin reversal tool and a reversed/not-reversed status that can't drift
 // out of sync between the two ledger legs.
 model WalletTransfer {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
   senderId    String
-  sender      User     @relation("WalletTransferSender", fields: [senderId], references: [id])
+  sender      User   @relation("WalletTransferSender", fields: [senderId], references: [id])
   recipientId String
-  recipient   User     @relation("WalletTransferRecipient", fields: [recipientId], references: [id])
+  recipient   User   @relation("WalletTransferRecipient", fields: [recipientId], references: [id])
 
   // Always the SENDER's own currency — the recipient's actual credited
   // amount (after FX conversion, if their wallet currency differs) lives
@@ -731,7 +741,7 @@ model WalletTransfer {
   status         WalletTransferStatus @default(COMPLETED)
   reversedAt     DateTime?
   reversedById   String?
-  reversedBy     User?    @relation("WalletTransferReversedBy", fields: [reversedById], references: [id])
+  reversedBy     User?                @relation("WalletTransferReversedBy", fields: [reversedById], references: [id])
   reversalReason String?
 
   createdAt DateTime @default(now())
@@ -741,17 +751,17 @@ model WalletTransfer {
 }
 
 model WalletTransaction {
-  id          String                @id @default(cuid())
-  walletId    String
-  wallet      Wallet                @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  type        WalletTransactionType
-  amountMinor Int                   // positive for credit, negative for debit
-  currency    Currency
+  id                String                @id @default(cuid())
+  walletId          String
+  wallet            Wallet                @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type              WalletTransactionType
+  amountMinor       Int // positive for credit, negative for debit
+  currency          Currency
   balanceAfterMinor Int
-  referenceType String?             // "ORDER" | "DEPOSIT" | "MANUAL"
-  referenceId   String?
-  description   String
-  createdAt     DateTime @default(now())
+  referenceType     String? // "ORDER" | "DEPOSIT" | "MANUAL"
+  referenceId       String?
+  description       String
+  createdAt         DateTime              @default(now())
 
   @@index([walletId])
 }
@@ -771,22 +781,22 @@ enum RequestStatus {
 }
 
 model ShopForMeRequest {
-  id            String        @id @default(cuid())
-  userId        String
-  user          User          @relation(fields: [userId], references: [id])
-  storeId       String?
-  store         Store?        @relation(fields: [storeId], references: [id])
-  productUrl    String
-  productName   String
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  storeId         String?
+  store           Store?        @relation(fields: [storeId], references: [id])
+  productUrl      String
+  productName     String
   productImageUrl String?
-  quantity      Int           @default(1)
-  size          String?
-  color         String?
-  destinationIso String
-  instructions  String?
-  status        RequestStatus @default(SUBMITTED)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  quantity        Int           @default(1)
+  size            String?
+  color           String?
+  destinationIso  String
+  instructions    String?
+  status          RequestStatus @default(SUBMITTED)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   quotations Quotation[]
   order      Order?
@@ -796,20 +806,20 @@ model ShopForMeRequest {
 }
 
 model SourcingRequest {
-  id            String        @id @default(cuid())
-  userId        String
-  user          User          @relation(fields: [userId], references: [id])
-  productName   String
-  productImageUrl String?
-  productUrl    String?
-  quantity      Int           @default(1)
+  id               String        @id @default(cuid())
+  userId           String
+  user             User          @relation(fields: [userId], references: [id])
+  productName      String
+  productImageUrl  String?
+  productUrl       String?
+  quantity         Int           @default(1)
   targetPriceMinor Int?
-  targetCurrency Currency?    @default(USD)
-  destinationIso String
-  notes         String?
-  status        RequestStatus @default(SUBMITTED)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  targetCurrency   Currency?     @default(USD)
+  destinationIso   String
+  notes            String?
+  status           RequestStatus @default(SUBMITTED)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   options    SourcingOption[]
   quotations Quotation[]
@@ -820,23 +830,23 @@ model SourcingRequest {
 }
 
 model SourcingOption {
-  id              String   @id @default(cuid())
-  sourcingRequestId String
-  sourcingRequest SourcingRequest @relation(fields: [sourcingRequestId], references: [id], onDelete: Cascade)
-  supplierId      String?
-  supplier        Supplier? @relation(fields: [supplierId], references: [id])
-  imageUrl        String?
-  unitPriceMinor  Int
-  currency        Currency @default(USD)
-  moq             Int      @default(1)
-  estimatedShippingMinor Int @default(0)
-  sourcingFeeMinor Int     @default(0)
-  leadTimeDays    Int      @default(14)
-  notes           String?
-  isSelected      Boolean  @default(false)
-  addedById       String?
-  addedBy         User?    @relation("SourcingOptionAddedBy", fields: [addedById], references: [id])
-  createdAt       DateTime @default(now())
+  id                     String          @id @default(cuid())
+  sourcingRequestId      String
+  sourcingRequest        SourcingRequest @relation(fields: [sourcingRequestId], references: [id], onDelete: Cascade)
+  supplierId             String?
+  supplier               Supplier?       @relation(fields: [supplierId], references: [id])
+  imageUrl               String?
+  unitPriceMinor         Int
+  currency               Currency        @default(USD)
+  moq                    Int             @default(1)
+  estimatedShippingMinor Int             @default(0)
+  sourcingFeeMinor       Int             @default(0)
+  leadTimeDays           Int             @default(14)
+  notes                  String?
+  isSelected             Boolean         @default(false)
+  addedById              String?
+  addedBy                User?           @relation("SourcingOptionAddedBy", fields: [addedById], references: [id])
+  createdAt              DateTime        @default(now())
 }
 
 enum QuotationStatus {
@@ -847,26 +857,26 @@ enum QuotationStatus {
 }
 
 model Quotation {
-  id            String   @id @default(cuid())
-  quotationNumber String @unique
+  id                 String            @id @default(cuid())
+  quotationNumber    String            @unique
   shopForMeRequestId String?
-  shopForMeRequest ShopForMeRequest? @relation(fields: [shopForMeRequestId], references: [id])
+  shopForMeRequest   ShopForMeRequest? @relation(fields: [shopForMeRequestId], references: [id])
   sourcingRequestId  String?
-  sourcingRequest    SourcingRequest? @relation(fields: [sourcingRequestId], references: [id])
+  sourcingRequest    SourcingRequest?  @relation(fields: [sourcingRequestId], references: [id])
 
   productCostMinor      Int
-  domesticShippingMinor Int @default(0)
-  serviceFeeMinor       Int @default(0)
-  intlShippingMinor     Int @default(0)
-  otherChargesMinor     Int @default(0)
+  domesticShippingMinor Int      @default(0)
+  serviceFeeMinor       Int      @default(0)
+  intlShippingMinor     Int      @default(0)
+  otherChargesMinor     Int      @default(0)
   totalMinor            Int
   currency              Currency @default(USD)
 
-  status      QuotationStatus @default(PENDING)
-  validUntil  DateTime?
-  issuedById  String
-  issuedBy    User     @relation("QuotationIssuedBy", fields: [issuedById], references: [id])
-  createdAt   DateTime @default(now())
+  status     QuotationStatus @default(PENDING)
+  validUntil DateTime?
+  issuedById String
+  issuedBy   User            @relation("QuotationIssuedBy", fields: [issuedById], references: [id])
+  createdAt  DateTime        @default(now())
 
   lineItems QuotationLineItem[]
 
@@ -886,35 +896,35 @@ model QuotationLineItem {
 // ---------------------------------------------------------------------------
 
 model Warehouse {
-  id        String   @id @default(cuid())
-  name      String
-  city      String
-  country   String   @default("China")
+  id          String  @id @default(cuid())
+  name        String
+  city        String
+  country     String  @default("China")
   addressLine String?
-  isActive  Boolean  @default(true)
+  isActive    Boolean @default(true)
 
-  receipts  WarehouseReceipt[]
-  packages  Package[]
+  receipts WarehouseReceipt[]
+  packages Package[]
 }
 
 model WarehouseReceipt {
-  id           String   @id @default(cuid())
-  warehouseId  String
-  warehouse    Warehouse @relation(fields: [warehouseId], references: [id])
-  packageId    String    @unique
-  package      Package   @relation(fields: [packageId], references: [id])
-  supplierId   String?
-  supplier     Supplier? @relation(fields: [supplierId], references: [id])
-  receivedById String?
-  receivedBy   User?     @relation("ReceivedBy", fields: [receivedById], references: [id])
+  id               String    @id @default(cuid())
+  warehouseId      String
+  warehouse        Warehouse @relation(fields: [warehouseId], references: [id])
+  packageId        String    @unique
+  package          Package   @relation(fields: [packageId], references: [id])
+  supplierId       String?
+  supplier         Supplier? @relation(fields: [supplierId], references: [id])
+  receivedById     String?
+  receivedBy       User?     @relation("ReceivedBy", fields: [receivedById], references: [id])
   trackingNumberIn String? // inbound domestic-China tracking number
-  weightGrams  Int
-  lengthCm     Int?
-  widthCm      Int?
-  heightCm     Int?
-  photos       String[]
-  notes        String?
-  receivedAt   DateTime @default(now())
+  weightGrams      Int
+  lengthCm         Int?
+  widthCm          Int?
+  heightCm         Int?
+  photos           String[]
+  notes            String?
+  receivedAt       DateTime  @default(now())
 }
 
 enum PackageStatus {
@@ -941,29 +951,29 @@ enum ShippingMethod {
 }
 
 model Package {
-  id            String        @id @default(cuid())
-  packageCode   String        @unique // e.g. ATG-PKG-000123
-  orderId       String?
-  order         Order?        @relation(fields: [orderId], references: [id])
-  userId        String
-  user          User          @relation(fields: [userId], references: [id])
-  warehouseId   String?
-  warehouse     Warehouse?    @relation(fields: [warehouseId], references: [id])
-  supplierName  String?
-  status        PackageStatus @default(ORDERED)
+  id             String          @id @default(cuid())
+  packageCode    String          @unique // e.g. ATG-PKG-000123
+  orderId        String?
+  order          Order?          @relation(fields: [orderId], references: [id])
+  userId         String
+  user           User            @relation(fields: [userId], references: [id])
+  warehouseId    String?
+  warehouse      Warehouse?      @relation(fields: [warehouseId], references: [id])
+  supplierName   String?
+  status         PackageStatus   @default(ORDERED)
   shippingMethod ShippingMethod?
-  weightGrams   Int?
-  lengthCm      Int?
-  widthCm       Int?
-  heightCm      Int?
-  photos        String[]
+  weightGrams    Int?
+  lengthCm       Int?
+  widthCm        Int?
+  heightCm       Int?
+  photos         String[]
   destinationIso String
-  addressId     String?
-  address       Address?      @relation(fields: [addressId], references: [id])
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  addressId      String?
+  address        Address?        @relation(fields: [addressId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
-  warehouseReceipt WarehouseReceipt?
+  warehouseReceipt   WarehouseReceipt?
   consolidationLinks ConsolidationPackage[]
   shipmentLinks      ShipmentPackage[]
   trackingEvents     TrackingEvent[]
@@ -973,15 +983,15 @@ model Package {
 }
 
 model Consolidation {
-  id          String   @id @default(cuid())
-  code        String   @unique // e.g. ATG-CONS-000045
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  status      String   @default("OPEN") // OPEN | PACKED | CLOSED
-  totalWeightGrams Int @default(0)
-  notes       String?
-  createdAt   DateTime @default(now())
-  closedAt    DateTime?
+  id               String    @id @default(cuid())
+  code             String    @unique // e.g. ATG-CONS-000045
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  status           String    @default("OPEN") // OPEN | PACKED | CLOSED
+  totalWeightGrams Int       @default(0)
+  notes            String?
+  createdAt        DateTime  @default(now())
+  closedAt         DateTime?
 
   packages ConsolidationPackage[]
 }
@@ -1006,29 +1016,29 @@ enum ShipmentStatus {
 }
 
 model Shipment {
-  id            String         @id @default(cuid())
-  trackingNumber String        @unique // e.g. ATG-NG-2026000123
-  method        ShippingMethod
-  origin        String         @default("Guangzhou, China")
+  id                    String         @id @default(cuid())
+  trackingNumber        String         @unique // e.g. ATG-NG-2026000123
+  method                ShippingMethod
+  origin                String         @default("Guangzhou, China")
   destinationCountryIso String
-  destinationCity    String?
-  status        ShipmentStatus @default(READY_TO_SHIP)
-  estimatedDeliveryAt DateTime?
-  shippedAt     DateTime?
+  destinationCity       String?
+  status                ShipmentStatus @default(READY_TO_SHIP)
+  estimatedDeliveryAt   DateTime?
+  shippedAt             DateTime?
 
   // Optional — set by warehouse staff once handed to an external courier.
   // Lets trackingService fall back to that courier's live tracking API when
   // ATG's own manually-entered TrackingEvents have gone stale. Never
   // required: a shipment with no carrier just relies on manual entries,
   // same as before this existed.
-  carrierId              String?
-  carrier                Carrier? @relation(fields: [carrierId], references: [id])
-  carrierTrackingNumber  String?
-  deliveredAt   DateTime?
-  totalWeightGrams Int @default(0)
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  carrierId             String?
+  carrier               Carrier?  @relation(fields: [carrierId], references: [id])
+  carrierTrackingNumber String?
+  deliveredAt           DateTime?
+  totalWeightGrams      Int       @default(0)
+  notes                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   packages       ShipmentPackage[]
   trackingEvents TrackingEvent[]
@@ -1065,19 +1075,19 @@ model TrackingEvent {
 
 // Admin-managed shipping rate table — never hardcoded "real" carrier rates in code.
 model ShippingRate {
-  id             String         @id @default(cuid())
-  originCountry  String         @default("China")
-  destinationCountry Country
-  method         ShippingMethod
-  pricePerKgMinor Int
-  currency       Currency       @default(USD)
-  minChargeableWeightGrams Int  @default(1000)
-  estimatedDaysMin Int
-  estimatedDaysMax Int
-  notes          String?
-  isActive       Boolean        @default(true)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id                       String         @id @default(cuid())
+  originCountry            String         @default("China")
+  destinationCountry       Country
+  method                   ShippingMethod
+  pricePerKgMinor          Int
+  currency                 Currency       @default(USD)
+  minChargeableWeightGrams Int            @default(1000)
+  estimatedDaysMin         Int
+  estimatedDaysMax         Int
+  notes                    String?
+  isActive                 Boolean        @default(true)
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
 
   @@unique([originCountry, destinationCountry, method])
 }
@@ -1088,14 +1098,14 @@ model ShippingRate {
 // /admin/settings. Replaces the old China-only singleton pricingService used
 // to hardcode as constants.
 model DeliveryZone {
-  id          String   @id @default(cuid())
-  countryIso  String
-  city        String
-  isActive    Boolean  @default(true)
-  localFeeMinor Int    @default(0)
-  currency    Currency
-  etaDaysMin  Int      @default(1)
-  etaDaysMax  Int      @default(3)
+  id            String   @id @default(cuid())
+  countryIso    String
+  city          String
+  isActive      Boolean  @default(true)
+  localFeeMinor Int      @default(0)
+  currency      Currency
+  etaDaysMin    Int      @default(1)
+  etaDaysMax    Int      @default(3)
 
   @@unique([countryIso, city])
 }
@@ -1105,13 +1115,13 @@ model DeliveryZone {
 // ---------------------------------------------------------------------------
 
 model Commission {
-  id          String   @id @default(cuid())
-  sellerId    String
-  seller      Seller   @relation(fields: [sellerId], references: [id])
-  orderItemRef String  @unique
-  amountMinor Int
-  currency    Currency
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  sellerId     String
+  seller       Seller   @relation(fields: [sellerId], references: [id])
+  orderItemRef String   @unique
+  amountMinor  Int
+  currency     Currency
+  createdAt    DateTime @default(now())
 }
 
 // ---------------------------------------------------------------------------
@@ -1131,7 +1141,7 @@ model Notification {
   userId    String
   user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   channel   NotificationChannel @default(IN_APP)
-  event     String              // e.g. "ORDER_CREATED", "PACKAGE_RECEIVED"
+  event     String // e.g. "ORDER_CREATED", "PACKAGE_RECEIVED"
   title     String
   body      String
   isRead    Boolean             @default(false)
@@ -1148,16 +1158,16 @@ enum TicketStatus {
 }
 
 model SupportTicket {
-  id          String       @id @default(cuid())
-  ticketNumber String      @unique
-  customerId  String
-  customer    User         @relation("TicketCustomer", fields: [customerId], references: [id])
-  assigneeId  String?
-  assignee    User?        @relation("TicketAssignee", fields: [assigneeId], references: [id])
-  subject     String
-  status      TicketStatus @default(OPEN)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id           String       @id @default(cuid())
+  ticketNumber String       @unique
+  customerId   String
+  customer     User         @relation("TicketCustomer", fields: [customerId], references: [id])
+  assigneeId   String?
+  assignee     User?        @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  subject      String
+  status       TicketStatus @default(OPEN)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   messages SupportMessage[]
 }
@@ -1176,7 +1186,7 @@ model AuditLog {
   id         String   @id @default(cuid())
   actorId    String?
   actor      User?    @relation(fields: [actorId], references: [id])
-  action     String   // e.g. "PRODUCT_UPDATED", "ORDER_STATUS_CHANGED"
+  action     String // e.g. "PRODUCT_UPDATED", "ORDER_STATUS_CHANGED"
   entityType String
   entityId   String
   summary    String
@@ -1243,7 +1253,7 @@ model DestinationCountry {
 model ShippingOrigin {
   id         String   @id @default(cuid())
   name       String
-  countryIso String   // e.g. "CN", "US", "GB" — matches DestinationCountry.isoCode convention
+  countryIso String // e.g. "CN", "US", "GB" — matches DestinationCountry.isoCode convention
   city       String?
   isActive   Boolean  @default(true)
   createdAt  DateTime @default(now())
@@ -1295,13 +1305,13 @@ model ShippingServiceLevel {
 // volumetricDivisor=5000 to match the value shippingService.ts already
 // hardcodes today — zero behavior change until an admin changes it.
 model ShippingGlobalSettings {
-  id                       String   @id @default(cuid())
-  volumetricDivisor        Int      @default(5000)
-  markupEnabled            Boolean  @default(true)
-  defaultMarkupPercent     Int      @default(0)
-  defaultMarkupFixedMinor  Int      @default(0)
-  defaultHandlingFeeMinor  Int      @default(0)
-  updatedAt                DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  volumetricDivisor       Int      @default(5000)
+  markupEnabled           Boolean  @default(true)
+  defaultMarkupPercent    Int      @default(0)
+  defaultMarkupFixedMinor Int      @default(0)
+  defaultHandlingFeeMinor Int      @default(0)
+  updatedAt               DateTime @updatedAt
 }
 
 // ---------------------------------------------------------------------------
@@ -1316,16 +1326,16 @@ model ShippingGlobalSettings {
 // per-origin/per-destination/per-method configuration without a separate
 // waterfall-rule table).
 model ShippingRateCard {
-  id                   String   @id @default(cuid())
+  id                   String               @id @default(cuid())
   shippingOriginId     String
-  shippingOrigin       ShippingOrigin      @relation(fields: [shippingOriginId], references: [id])
+  shippingOrigin       ShippingOrigin       @relation(fields: [shippingOriginId], references: [id])
   destinationCountryId String
-  destinationCountry   DestinationCountry  @relation(fields: [destinationCountryId], references: [id])
-  destinationRegion    String?             // sub-national e.g. a state/region name; null = all regions of the country
+  destinationCountry   DestinationCountry   @relation(fields: [destinationCountryId], references: [id])
+  destinationRegion    String? // sub-national e.g. a state/region name; null = all regions of the country
   serviceLevelId       String
   serviceLevel         ShippingServiceLevel @relation(fields: [serviceLevelId], references: [id])
   carrierId            String
-  carrier              Carrier             @relation(fields: [carrierId], references: [id])
+  carrier              Carrier              @relation(fields: [carrierId], references: [id])
 
   // Plain ISO currency code (not the bounded `Currency` enum) so rate cards
   // can be priced in currencies ATG doesn't otherwise support natively
@@ -1333,14 +1343,14 @@ model ShippingRateCard {
   // precedent of using a plain string specifically for extensibility.
   currency String
 
-  deliveryDaysMin    Int
-  deliveryDaysMax    Int
-  trackingAvailable  Boolean  @default(true)
+  deliveryDaysMin   Int
+  deliveryDaysMax   Int
+  trackingAvailable Boolean @default(true)
 
-  markupEnabled     Boolean? // null = inherit ShippingGlobalSettings.markupEnabled
-  markupPercent     Int?     // null = inherit
-  markupFixedMinor  Int?     // null = inherit
-  handlingFeeMinor  Int?     // null = inherit
+  markupEnabled    Boolean? // null = inherit ShippingGlobalSettings.markupEnabled
+  markupPercent    Int? // null = inherit
+  markupFixedMinor Int? // null = inherit
+  handlingFeeMinor Int? // null = inherit
 
   notes     String?
   isActive  Boolean  @default(true)
@@ -1357,16 +1367,16 @@ model ShippingRateCard {
 // "1-3kg = $20 base + $7.5/kg, min charge $35". maxGrams null = open-ended
 // (no upper bound — the last/heaviest bracket on a card).
 model ShippingRateBracket {
-  id             String           @id @default(cuid())
-  rateCardId     String
-  rateCard       ShippingRateCard @relation(fields: [rateCardId], references: [id], onDelete: Cascade)
-  minGrams       Int
-  maxGrams       Int?
-  basePriceMinor Int    @default(0)
-  pricePerKgMinor Int   @default(0)
-  minChargeMinor Int    @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              String           @id @default(cuid())
+  rateCardId      String
+  rateCard        ShippingRateCard @relation(fields: [rateCardId], references: [id], onDelete: Cascade)
+  minGrams        Int
+  maxGrams        Int?
+  basePriceMinor  Int              @default(0)
+  pricePerKgMinor Int              @default(0)
+  minChargeMinor  Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@index([rateCardId])
 }
@@ -1376,17 +1386,17 @@ model ShippingRateBracket {
 // integration), checkout must show the exact required disclaimer instead of
 // implying duties are included. See src/lib/services/shipping/customsService.ts.
 model CustomsSetting {
-  id                        String   @id @default(cuid())
-  destinationCountryId      String   @unique
+  id                        String             @id @default(cuid())
+  destinationCountryId      String             @unique
   destinationCountry        DestinationCountry @relation(fields: [destinationCountryId], references: [id])
   estimatedDutyPercent      Int?
   importTaxPercent          Int?
   customsProcessingFeeMinor Int?
-  currency                  String?  // ISO code for customsProcessingFeeMinor, if set
+  currency                  String? // ISO code for customsProcessingFeeMinor, if set
   notes                     String?
-  isConfigured              Boolean  @default(false)
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
+  isConfigured              Boolean            @default(false)
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
 }
 
 // Admin-managed exchange rates for the shipping engine's currency
@@ -1414,7 +1424,7 @@ model CurrencyRate {
 // ---------------------------------------------------------------------------
 
 enum ShippingRateSource {
-  MANUAL   // matched an admin-configured ShippingRateCard/Bracket
+  MANUAL // matched an admin-configured ShippingRateCard/Bracket
   LIVE_API // came from a live carrier API
   FALLBACK // a live API was tried and failed; fell back to MANUAL rates
 }
@@ -1433,13 +1443,13 @@ model OrderShipment {
   orderId String
   order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  shippingOriginId       String?
-  shippingOrigin         ShippingOrigin? @relation(fields: [shippingOriginId], references: [id])
-  originNameSnapshot     String
-  destinationCountryIso  String // e.g. "NG", "GM" — bridges to Order.destination
-  carrierId              String?
-  carrier                Carrier?        @relation(fields: [carrierId], references: [id])
-  carrierNameSnapshot    String
+  shippingOriginId         String?
+  shippingOrigin           ShippingOrigin? @relation(fields: [shippingOriginId], references: [id])
+  originNameSnapshot       String
+  destinationCountryIso    String // e.g. "NG", "GM" — bridges to Order.destination
+  carrierId                String?
+  carrier                  Carrier?        @relation(fields: [carrierId], references: [id])
+  carrierNameSnapshot      String
   serviceLevelNameSnapshot String // e.g. "Express"
 
   actualWeightGrams     Int
@@ -1447,8 +1457,8 @@ model OrderShipment {
   chargeableWeightGrams Int
 
   carrierCostMinor     Int // before markup/handling/customs
-  markupMinor          Int @default(0)
-  handlingFeeMinor     Int @default(0)
+  markupMinor          Int      @default(0)
+  handlingFeeMinor     Int      @default(0)
   customsEstimateMinor Int? // null = not configured/estimated for this lane
   customerPriceMinor   Int // final price the customer was charged for this shipment
   currency             Currency // the order's own (enum-bound) currency — what was actually charged
@@ -1493,14 +1503,14 @@ enum OtpPurpose {
 // counter are exactly what WebAuthn needs to verify a signature came from
 // that same enrolled authenticator without it being replayed.
 model WebAuthnCredential {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  credentialId String   @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialId String    @unique
   publicKey    Bytes
-  counter      BigInt   @default(0)
+  counter      BigInt    @default(0)
   deviceLabel  String? // customer-facing label, e.g. "iPhone" — best-effort from the browser's user agent at enrollment time
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
   lastUsedAt   DateTime?
 
   @@index([userId])
@@ -1572,4 +1582,50 @@ model ProductImportDraft {
   updatedAt                 DateTime @updatedAt
 
   @@index([createdByUserId, source])
+}
+
+// ---------------------------------------------------------------------------
+// Coupons: a code a customer types at checkout for a percentage off items
+// (never shipping). One use per customer; optional total-order cap; valid
+// either between fixed dates for everyone or for N days after each
+// customer's sign-up.
+// ---------------------------------------------------------------------------
+
+enum CouponWindowType {
+  FIXED_DATES
+  SINCE_SIGNUP
+}
+
+model Coupon {
+  id              String           @id @default(cuid())
+  code            String           @unique // stored UPPERCASE
+  percentOff      Int
+  windowType      CouponWindowType @default(FIXED_DATES)
+  startsAt        DateTime? // FIXED_DATES
+  endsAt          DateTime? // FIXED_DATES (inclusive)
+  daysAfterSignup Int? // SINCE_SIGNUP
+  maxRedemptions  Int? // null = no total limit
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  redemptions CouponRedemption[]
+  orders      Order[]
+}
+
+model CouponRedemption {
+  id            String   @id @default(cuid())
+  couponId      String
+  coupon        Coupon   @relation(fields: [couponId], references: [id])
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  orderId       String   @unique
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  discountMinor Int
+  currency      Currency
+  createdAt     DateTime @default(now())
+
+  // One use per customer, enforced by the database itself.
+  @@unique([couponId, userId])
+  @@index([couponId])
 }

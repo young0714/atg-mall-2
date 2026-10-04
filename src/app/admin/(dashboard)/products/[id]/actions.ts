@@ -33,6 +33,7 @@ export async function updateProductAction(formData: FormData) {
       weightGrams: data.weightGrams,
       isWholesale: data.isWholesale,
       isFeatured: data.isFeatured,
+      noCoupons: formData.get("noCoupons") === "true",
       sourcePlatform: data.sourcePlatform,
       affiliateUrl: data.affiliateUrl || null,
       affiliateProvider: data.affiliateProvider || null,

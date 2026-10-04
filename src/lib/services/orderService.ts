@@ -1,10 +1,10 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import type {
   Currency,
   OrderStatus,
   PaymentMethod,
-  Prisma,
   ShippingRateSource,
 } from "@prisma/client";
 import { generateAtgNumber } from "./trackingService";
@@ -15,6 +15,8 @@ import { renderEmailLayout, APP_URL } from "@/lib/email/emailLayout";
 import { currencyConversionService } from "./currencyConversionService";
 import { commissionService } from "./commissionService";
 import { sumMinor } from "@/lib/money";
+import { checkCouponForCart } from "./couponService";
+import { CouponError } from "@/lib/couponRules";
 import { fulfillmentTypeForSourcePlatform } from "@/lib/fulfillment";
 
 /**
@@ -58,6 +60,8 @@ export interface CreateOrderFromCartParams {
   domesticShippingMinor?: number;
   shipments: OrderShipmentSpec[];
   serviceFeeMinor?: number;
+  // Optional coupon code typed at checkout. Re-validated here, inside order placement.
+  couponCode?: string;
 }
 
 export interface OrderService {
@@ -105,14 +109,33 @@ class DefaultOrderService implements OrderService {
       throw new Error("No shipments provided — every cart item must belong to a quoted shipping origin group");
     }
 
+    // Coupon: re-checked here against the live cart — never trusts the browser's earlier preview.
+    let discountMinor = 0;
+    let coupon: { couponId: string; code: string } | null = null;
+    if (params.couponCode?.trim()) {
+      const check = await checkCouponForCart({
+        userId: params.userId,
+        code: params.couponCode,
+        lines: itemsInOrderCurrency.map(({ item, unitPriceMinor }) => ({
+          product: { noCoupons: item.product.noCoupons, sellerId: item.product.sellerId, sourcePlatform: item.product.sourcePlatform },
+          unitPriceMinor,
+          quantity: item.quantity,
+        })),
+      });
+      if (!check.ok) throw new CouponError(check.error);
+      discountMinor = check.discountMinor;
+      coupon = { couponId: check.couponId, code: check.code };
+    }
+
     const domesticShippingMinor = params.domesticShippingMinor ?? 0;
-    const serviceFeeMinor = params.serviceFeeMinor ?? Math.round(subtotalMinor * 0.01);
+    // The handling fee follows what the customer actually pays for items, after any discount.
+    const serviceFeeMinor = params.serviceFeeMinor ?? Math.round((subtotalMinor - discountMinor) * 0.01);
     // Order.intlShippingMinor stays a derived sum of every shipment's
     // customerPriceMinor — kept for backward-compat with anything still
     // reading it directly (admin margin math, etc.); the per-shipment
     // breakdown itself lives on the OrderShipment rows below.
     const intlShippingMinor = sumMinor(...params.shipments.map((s) => s.customerPriceMinor));
-    const totalMinor = sumMinor(subtotalMinor, domesticShippingMinor, intlShippingMinor, serviceFeeMinor);
+    const totalMinor = sumMinor(subtotalMinor - discountMinor, domesticShippingMinor, intlShippingMinor, serviceFeeMinor);
 
     const orderNumber = generateAtgNumber("ATG", params.destinationIso);
 
@@ -127,12 +150,32 @@ class DefaultOrderService implements OrderService {
           destinationIso: params.destinationIso,
           currency: params.currency,
           subtotalMinor,
+          discountMinor,
+          couponId: coupon?.couponId ?? null,
+          couponCodeSnapshot: coupon?.code ?? null,
           serviceFeeMinor,
           domesticShippingMinor,
           intlShippingMinor,
           totalMinor,
         },
       });
+
+      if (coupon) {
+        // The database enforces one use per customer (unique couponId + userId); the cap is
+        // re-counted here so two simultaneous checkouts can't both take the last place.
+        const cap = await tx.coupon.findUniqueOrThrow({ where: { id: coupon.couponId }, select: { maxRedemptions: true } });
+        if (cap.maxRedemptions !== null && (await tx.couponRedemption.count({ where: { couponId: coupon.couponId } })) >= cap.maxRedemptions) {
+          throw new CouponError("This offer has reached its limit.");
+        }
+        try {
+          await tx.couponRedemption.create({
+            data: { couponId: coupon.couponId, userId: params.userId, orderId: order.id, discountMinor, currency: params.currency },
+          });
+        } catch (e) {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") throw new CouponError("You have already used this code.");
+          throw e;
+        }
+      }
 
       const itemByProductVariant = new Map(
         itemsInOrderCurrency.map(({ item, unitPriceMinor, priceMinorInBaseCurrency }) => [
@@ -451,6 +494,8 @@ class DefaultOrderService implements OrderService {
 
   async advanceStatus(orderId: string, status: OrderStatus, description?: string): Promise<void> {
     await db.order.update({ where: { id: orderId }, data: { status } });
+    // A cancelled order never happened: free the customer's one use (and the offer's place).
+    if (status === "CANCELLED") await db.couponRedemption.deleteMany({ where: { orderId } });
     await db.trackingEvent.create({
       data: {
         orderId,

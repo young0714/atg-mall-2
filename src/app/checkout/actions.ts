@@ -7,6 +7,9 @@ import { orderService, type OrderShipmentSpec } from "@/lib/services/orderServic
 import { groupCartForShipping } from "@/lib/services/shipping/cartShipmentGrouping";
 import { isActiveDestinationIso, currencyForDestinationIso } from "@/lib/services/destinationCountryService";
 import { createCheckoutOtp, verifyCheckoutOtp } from "@/lib/services/otpService";
+import { checkCouponForCart, type CartLineForCoupon } from "@/lib/services/couponService";
+import { CouponError } from "@/lib/couponRules";
+import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import type { Currency, PaymentMethod } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -46,8 +49,45 @@ type ResolvedCheckoutOrder =
       currency: Currency;
       paymentMethod: PaymentMethod;
       shipments: OrderShipmentSpec[];
+      couponCode?: string;
     }
   | { ok: false; error: string };
+
+type CartItemForCoupon = {
+  quantity: number;
+  product: { noCoupons: boolean; sellerId: string | null; sourcePlatform: string; basePriceMinor: number; baseCurrency: Currency };
+  variant: { priceDeltaMinor: number } | null;
+};
+
+// Same per-item pricing the checkout page and order placement use, in the order's currency.
+function couponLines(items: CartItemForCoupon[], currency: Currency): CartLineForCoupon[] {
+  return items.map((i) => ({
+    product: { noCoupons: i.product.noCoupons, sellerId: i.product.sellerId, sourcePlatform: i.product.sourcePlatform },
+    unitPriceMinor: currencyConversionService.convert(i.product.basePriceMinor + (i.variant?.priceDeltaMinor ?? 0), i.product.baseCurrency, currency),
+    quantity: i.quantity,
+  }));
+}
+
+export type CouponPreview =
+  | { ok: true; code: string; percentOff: number; discountMinor: number; eligibleMinor: number }
+  | { ok: false; error: string };
+
+/** Live "Apply" button at checkout: what would this code take off the current cart? Nothing is saved. */
+export async function previewCouponAction(code: string): Promise<CouponPreview> {
+  const user = await requireUser();
+  if (!code.trim()) return { ok: false, error: "Enter a code first." };
+  const [cart, addresses, profile] = await Promise.all([
+    db.cart.findUnique({ where: { userId: user.id }, include: { items: { include: { product: true, variant: true } } } }),
+    db.address.findMany({ where: { userId: user.id }, orderBy: { isDefault: "desc" } }),
+    db.customerProfile.findUnique({ where: { userId: user.id } }),
+  ]);
+  if (!cart || cart.items.length === 0) return { ok: false, error: "Your cart is empty." };
+  const destinationIso = profile?.countryIso ?? addresses[0]?.countryIso ?? "NG";
+  const currency = profile?.preferredCurrency ?? currencyForDestinationIso(destinationIso);
+  const check = await checkCouponForCart({ userId: user.id, code, lines: couponLines(cart.items, currency) });
+  if (!check.ok) return { ok: false, error: check.error };
+  return { ok: true, code: check.code, percentOff: check.percentOff, discountMinor: check.discountMinor, eligibleMinor: check.eligibleMinor };
+}
 
 /**
  * Re-derives everything needed to place the order from the raw checkout
@@ -83,6 +123,15 @@ async function resolveCheckoutOrder(userId: string, payload: Record<string, stri
   const profile = await db.customerProfile.findUnique({ where: { userId } });
   const destinationIso = address.countryIso;
   const currency = profile?.preferredCurrency ?? currencyForDestinationIso(destinationIso);
+
+  // A code typed at checkout must still be valid right now, for this customer and this cart.
+  let couponCode: string | undefined;
+  const typedCode = String(payload.couponCode ?? "").trim();
+  if (typedCode) {
+    const check = await checkCouponForCart({ userId, code: typedCode, lines: couponLines(cart.items, currency) });
+    if (!check.ok) return { ok: false, error: check.error };
+    couponCode = check.code;
+  }
 
   const { groups, unresolvedLines } = await groupCartForShipping(
     cart.items.map((i) => ({
@@ -145,7 +194,7 @@ async function resolveCheckoutOrder(userId: string, payload: Record<string, stri
     });
   }
 
-  return { ok: true, addressId: address.id, destinationIso, currency, paymentMethod, shipments };
+  return { ok: true, addressId: address.id, destinationIso, currency, paymentMethod, shipments, couponCode };
 }
 
 /** Validates the order and emails a verification code — nothing is placed yet. */
@@ -188,14 +237,22 @@ export async function confirmCheckoutOtpAction(otpId: string, code: string): Pro
     return { ok: false, error: resolved.error };
   }
 
-  const { orderNumber, redirectUrl, failureReason } = await orderService.createOrderFromCart({
-    userId: user.id,
-    addressId: resolved.addressId,
-    destinationIso: resolved.destinationIso,
-    currency: resolved.currency,
-    paymentMethod: resolved.paymentMethod,
-    shipments: resolved.shipments,
-  });
+  let placed;
+  try {
+    placed = await orderService.createOrderFromCart({
+      userId: user.id,
+      addressId: resolved.addressId,
+      destinationIso: resolved.destinationIso,
+      currency: resolved.currency,
+      paymentMethod: resolved.paymentMethod,
+      shipments: resolved.shipments,
+      couponCode: resolved.couponCode,
+    });
+  } catch (e) {
+    if (e instanceof CouponError) return { ok: false, error: e.message };
+    throw e;
+  }
+  const { orderNumber, redirectUrl, failureReason } = placed;
 
   // Card/Bank Transfer via a live gateway: send the browser to the hosted
   // checkout page instead of the order-confirmation page — payment isn't

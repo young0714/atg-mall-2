@@ -136,6 +136,13 @@ export default async function AdminProductDetailPage({
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="isFeatured" value="true" defaultChecked={product.isFeatured} /> Featured / Trending
           </label>
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" name="noCoupons" value="true" defaultChecked={product.noCoupons} className="mt-1" />
+            <span>
+              No coupons on this product
+              <span className="block text-xs text-navy-400">Coupon codes never discount it (use for thin-margin items).</span>
+            </span>
+          </label>
           <Field label="Description" htmlFor="description" required>
             <Textarea id="description" name="description" defaultValue={product.description} required />
           </Field>

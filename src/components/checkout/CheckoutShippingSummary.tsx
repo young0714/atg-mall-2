@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { formatMoney } from "@/lib/money";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { previewCouponAction } from "@/app/checkout/actions";
 import type { Currency } from "@prisma/client";
 
 type ShippingOption = {
@@ -46,6 +47,42 @@ export function CheckoutShippingSummary({
   const [selected, setSelected] = useState<Record<string, string>>(() =>
     Object.fromEntries(groups.filter((g) => g.defaultServiceLevelId).map((g) => [g.shippingOriginId, g.defaultServiceLevelId as string])),
   );
+
+  // Coupon: the server decides everything (rules, eligible items, amount); this only shows it.
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; percentOff: number; discountMinor: number; eligibleMinor: number } | null>(null);
+  const [couponMsg, setCouponMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+
+  async function applyCoupon() {
+    if (!couponInput.trim()) {
+      setCouponMsg({ ok: false, text: "Enter a code first." });
+      return;
+    }
+    setCouponBusy(true);
+    try {
+      const r = await previewCouponAction(couponInput);
+      if (r.ok) {
+        setCoupon(r);
+        setCouponMsg({ ok: true, text: `Code applied: ${r.percentOff}% off eligible items.` });
+      } else {
+        setCoupon(null);
+        setCouponMsg({ ok: false, text: r.error });
+      }
+    } catch {
+      setCoupon(null);
+      setCouponMsg({ ok: false, text: "Couldn't check that code. Try again." });
+    }
+    setCouponBusy(false);
+  }
+  function removeCoupon() {
+    setCoupon(null);
+    setCouponMsg(null);
+    setCouponInput("");
+  }
+  const discountMinor = coupon?.discountMinor ?? 0;
+  // The handling fee follows what the customer pays for items, after the discount.
+  const shownFeeMinor = coupon ? Math.round((subtotalMinor - discountMinor) * 0.01) : serviceFeeMinor;
 
   const estimatedShippingMinor = groups.reduce((sum, g) => {
     const chosenId = selected[g.shippingOriginId];
@@ -113,12 +150,47 @@ export function CheckoutShippingSummary({
         <h2 className="mb-3 font-semibold text-navy-900">Order Summary</h2>
         <dl className="space-y-1.5 text-sm">
           <div className="flex justify-between"><dt className="text-navy-500">Subtotal</dt><dd>{formatMoney(subtotalMinor, orderCurrency)}</dd></div>
-          <div className="flex justify-between"><dt className="text-navy-500">Handling fee (1%)</dt><dd>{formatMoney(serviceFeeMinor, orderCurrency)}</dd></div>
+          {coupon && (
+            <div className="flex justify-between text-atggreen-700">
+              <dt>
+                Discount ({coupon.code}, {coupon.percentOff}% on {formatMoney(coupon.eligibleMinor, orderCurrency)} of items)
+                <button type="button" onClick={removeCoupon} className="ml-2 text-xs underline">Remove</button>
+              </dt>
+              <dd>-{formatMoney(discountMinor, orderCurrency)}</dd>
+            </div>
+          )}
+          <div className="flex justify-between"><dt className="text-navy-500">Handling fee (1%)</dt><dd>{formatMoney(shownFeeMinor, orderCurrency)}</dd></div>
           <div className="flex justify-between"><dt className="text-navy-500">Shipping</dt><dd>{formatMoney(estimatedShippingMinor, orderCurrency)}</dd></div>
           <div className="flex justify-between border-t border-navy-100 pt-1.5 font-semibold text-navy-900">
-            <dt>Estimated total</dt><dd>{formatMoney(subtotalMinor + serviceFeeMinor + estimatedShippingMinor, orderCurrency)}</dd>
+            <dt>Estimated total</dt><dd>{formatMoney(subtotalMinor - discountMinor + shownFeeMinor + estimatedShippingMinor, orderCurrency)}</dd>
           </div>
         </dl>
+
+        {!coupon && (
+          <div className="mt-4">
+            <label className="label" htmlFor="couponInput">Have a code?</label>
+            <div className="flex gap-2">
+              <input
+                id="couponInput"
+                className="input flex-1 uppercase"
+                value={couponInput}
+                onChange={(e) => { setCouponInput(e.target.value); setCouponMsg(null); }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void applyCoupon(); } }}
+                placeholder="LAUNCH20"
+                autoComplete="off"
+              />
+              <button type="button" onClick={() => void applyCoupon()} disabled={couponBusy} className="btn-outline shrink-0 disabled:opacity-60">
+                {couponBusy ? "Checking…" : "Apply"}
+              </button>
+            </div>
+          </div>
+        )}
+        {couponMsg && (
+          <p className={`mt-2 text-xs font-medium ${couponMsg.ok ? "text-atggreen-700" : "text-red-700"}`} role={couponMsg.ok ? "status" : "alert"}>
+            {couponMsg.text}
+          </p>
+        )}
+        <input type="hidden" name="couponCode" value={coupon?.code ?? ""} />
         <p className="mt-3 text-xs text-navy-400">
           Final total is recalculated from your actual shipping selection when the order is placed.
         </p>
