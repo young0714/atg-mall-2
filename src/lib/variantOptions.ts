@@ -70,6 +70,11 @@ export function buildPicker(variants: PickerVariant[]): VariantPicker {
   const uniq = (xs: string[]) => [...new Set(xs)];
   const byKey = new Map<string, PickerVariant>();
   variants.forEach((v, i) => byKey.set(`${hasColour ? colours[i] : ""}||${hasSize ? sizes[i] : ""}`, v));
+  // Colour + size must tell every variant apart. Supplier-imported products
+  // often carry a third option ("Specification", "Plug Type", "Ships From")
+  // or duplicate colour names; two dropdowns would silently hide some
+  // choices, so those keep the full single list instead.
+  if (byKey.size !== variants.length) return { kind: "flat" };
   return {
     kind: "options",
     colours: hasColour ? uniq(colours) : [],
