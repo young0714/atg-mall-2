@@ -39,8 +39,19 @@ export function ProductPurchasePanel({
   const picker = buildPicker(variants);
   const options = picker.kind === "options" ? picker : null;
 
+  // A colour with nothing left in stock (e.g. retired after the supplier dropped it).
+  const colourInStock = (c: string) =>
+    !options
+      ? false
+      : options.hasSize
+        ? options.sizes.some((s) => (options.find(c, s)?.stock ?? 0) > 0)
+        : (options.find(c, "")?.stock ?? 0) > 0;
+  // Offer only colours still in stock — unless none are, then show them all so
+  // the product still reads as sold out rather than as having no choices.
+  const shownColours = options ? (options.colours.some(colourInStock) ? options.colours.filter(colourInStock) : options.colours) : [];
+
   const [variantId, setVariantId] = useState(options ? "" : (variants.find((v) => v.stock > 0) ?? variants[0])?.id ?? "");
-  const [colour, setColour] = useState(options?.colours[0] ?? "");
+  const [colour, setColour] = useState(shownColours[0] ?? "");
   const [size, setSize] = useState("");
   const [error, setError] = useState("");
   const [quantity, setQuantity] = useState(moq);
@@ -137,7 +148,7 @@ export function ProductPurchasePanel({
               <div>
                 <label className="label" htmlFor="colour">Colour</label>
                 <Select id="colour" value={colour} onChange={(e) => pickColour(e.target.value)}>
-                  {options.colours.map((c) => {
+                  {shownColours.map((c) => {
                     const allGone = options.hasSize
                       ? options.sizes.every((s) => (options.find(c, s)?.stock ?? 0) <= 0)
                       : (options.find(c, "")?.stock ?? 0) <= 0;

@@ -69,12 +69,21 @@ export function buildPicker(variants: PickerVariant[]): VariantPicker {
 
   const uniq = (xs: string[]) => [...new Set(xs)];
   const byKey = new Map<string, PickerVariant>();
-  variants.forEach((v, i) => byKey.set(`${hasColour ? colours[i] : ""}||${hasSize ? sizes[i] : ""}`, v));
-  // Colour + size must tell every variant apart. Supplier-imported products
-  // often carry a third option ("Specification", "Plug Type", "Ships From")
-  // or duplicate colour names; two dropdowns would silently hide some
-  // choices, so those keep the full single list instead.
-  if (byKey.size !== variants.length) return { kind: "flat" };
+  // Colour + size must tell every BUYABLE variant apart. Supplier-imported
+  // products often carry a third option ("Specification", "Plug Type") that two
+  // dropdowns would silently hide, so two in-stock variants sharing a colour and
+  // size keep the full single list instead. A retired (stock 0) variant that
+  // shares its colour/size with a live one is just a leftover from a supplier
+  // relisting: the live one wins.
+  let ambiguous = false;
+  variants.forEach((v, i) => {
+    const key = `${hasColour ? colours[i] : ""}||${hasSize ? sizes[i] : ""}`;
+    const existing = byKey.get(key);
+    if (!existing) byKey.set(key, v);
+    else if (existing.stock > 0 && v.stock > 0) ambiguous = true;
+    else if (existing.stock <= 0 && v.stock > 0) byKey.set(key, v);
+  });
+  if (ambiguous) return { kind: "flat" };
   return {
     kind: "options",
     colours: hasColour ? uniq(colours) : [],
