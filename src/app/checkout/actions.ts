@@ -68,9 +68,17 @@ async function resolveCheckoutOrder(userId: string, payload: Record<string, stri
 
   const cart = await db.cart.findUnique({
     where: { userId },
-    include: { items: { include: { product: true } } },
+    include: { items: { include: { product: true, variant: true } } },
   });
   if (!cart || cart.items.length === 0) return { ok: false, error: "Your cart is empty." };
+
+  // Items can become unavailable after being added (option sold out or retired,
+  // product hidden) — never take payment for something we can't supply.
+  const unavailable = cart.items.find((i) => !i.product.isActive || (i.variant && i.variant.stock <= 0));
+  if (unavailable) {
+    const label = unavailable.variant?.name ? `${unavailable.product.name} (${unavailable.variant.name})` : unavailable.product.name;
+    return { ok: false, error: `"${label}" is no longer available. Please remove it from your cart to continue.` };
+  }
 
   const profile = await db.customerProfile.findUnique({ where: { userId } });
   const destinationIso = address.countryIso;

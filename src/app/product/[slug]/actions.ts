@@ -37,7 +37,7 @@ export async function addToCartAction(formData: FormData) {
   if (variantId) {
     const chosen = productVariants.find((v) => v.id === variantId);
     if (!chosen) backWithError("That option is no longer available. Please choose again.");
-    else if (picker.kind === "options" && chosen.stock <= 0) backWithError("That choice is sold out. Please pick another.");
+    else if (chosen.stock <= 0) backWithError("That choice is sold out. Please pick another.");
   } else if (picker.kind === "options") {
     backWithError(picker.hasSize ? "Please choose a size before adding to your cart." : "Please choose a colour before adding to your cart.");
   }

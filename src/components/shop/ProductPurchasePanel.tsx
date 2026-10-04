@@ -39,7 +39,7 @@ export function ProductPurchasePanel({
   const picker = buildPicker(variants);
   const options = picker.kind === "options" ? picker : null;
 
-  const [variantId, setVariantId] = useState(options ? "" : (variants[0]?.id ?? ""));
+  const [variantId, setVariantId] = useState(options ? "" : (variants.find((v) => v.stock > 0) ?? variants[0])?.id ?? "");
   const [colour, setColour] = useState(options?.colours[0] ?? "");
   const [size, setSize] = useState("");
   const [error, setError] = useState("");
@@ -70,10 +70,16 @@ export function ProductPurchasePanel({
     : variants.find((v) => v.id === variantId);
   const unitPrice = basePriceMinor + (selectedVariant?.priceDeltaMinor ?? 0);
   const formVariantId = options ? (selectedVariant?.id ?? "") : variantId;
-  const soldOut = !!options && !!selectedVariant && selectedVariant.stock <= 0;
+  const soldOut = !!selectedVariant && selectedVariant.stock <= 0;
 
   function guardSubmit(e: React.FormEvent) {
-    if (!options) return;
+    if (!options) {
+      if (soldOut) {
+        e.preventDefault();
+        setError("That choice is sold out. Please pick another.");
+      }
+      return;
+    }
     if (needsSize && !size) {
       e.preventDefault();
       setError("Please choose a size before adding to your cart.");
@@ -169,16 +175,15 @@ export function ProductPurchasePanel({
               </div>
             )}
           </div>
-          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700" role="alert">{error}</p>}
         </div>
       ) : (
         variants.length > 1 && (
           <div>
             <label className="label" htmlFor="variant">Variant</label>
-            <Select id="variant" value={variantId} onChange={(e) => setVariantId(e.target.value)}>
+            <Select id="variant" value={variantId} onChange={(e) => { setVariantId(e.target.value); setError(""); }}>
               {variants.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name || "Standard"}
+                <option key={v.id} value={v.id} disabled={v.stock <= 0}>
+                  {v.name || "Standard"}{v.stock <= 0 ? " — sold out" : ""}
                   {v.priceDeltaMinor !== 0
                     ? ` (${v.priceDeltaMinor > 0 ? "+" : ""}${formatMoney(v.priceDeltaMinor, baseCurrency)})`
                     : ""}
@@ -188,6 +193,8 @@ export function ProductPurchasePanel({
           </div>
         )
       )}
+
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700" role="alert">{error}</p>}
 
       <div>
         <label className="label" htmlFor="quantity">Quantity {moq > 1 && <span className="text-navy-400">(MOQ {moq})</span>}</label>
