@@ -12,6 +12,9 @@ import { Field, Input, Textarea } from "@/components/ui/Form";
 import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
 import { ProductImageGallery } from "@/components/shop/ProductImageGallery";
 import { ProductSelectionProvider } from "@/components/shop/ProductSelection";
+import { RelatedProducts } from "@/components/shop/RelatedProducts";
+import { getRelatedProducts } from "@/lib/services/relatedProductsService";
+import { toProductCard } from "@/lib/product-view";
 import { Container, Section } from "@/components/ui/Section";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { formatDate } from "@/lib/utils";
@@ -58,6 +61,11 @@ export default async function ProductPage({
   });
 
   if (!product || !product.isActive) notFound();
+
+  // Similar products for the "You may also like" row. A problem here must never break the product page.
+  const relatedCards = await getRelatedProducts(product, 8)
+    .then((list) => Promise.all(list.map((p) => toProductCard(p, destination))))
+    .catch(() => []);
 
   const [verifiedPurchase, existingReview] = user
     ? await Promise.all([
@@ -138,6 +146,8 @@ export default async function ProductPage({
           </div>
         </div>
         </ProductSelectionProvider>
+
+        <RelatedProducts products={relatedCards} />
 
         <div className="mt-16 max-w-2xl">
           <h2 className="text-xl font-bold text-navy-900">Customer Reviews</h2>
