@@ -6,6 +6,10 @@ const SIZE_CLASSES = {
   hero: "h-24 w-24",
 } as const;
 
+// The size each variant is really shown at (matches the classes above). Declaring it
+// honestly makes the browser fetch a small copy instead of one sized for 200px.
+const SIZE_PX = { nav: 40, hero: 96 } as const;
+
 /**
  * ATG Mall's real logo artwork (navy/green on a transparent background).
  * Since the art itself is fixed-color, `dark` picks how it's presented
@@ -26,8 +30,8 @@ export function Logo({
     <Image
       src="/logo.png"
       alt="ATG Mall: Shop Global. Delivered Local."
-      width={200}
-      height={200}
+      width={SIZE_PX[size]}
+      height={SIZE_PX[size]}
       priority
       className="h-full w-full object-contain"
     />
