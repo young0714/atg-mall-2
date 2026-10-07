@@ -130,6 +130,9 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
             <h2 className="mb-2 font-semibold text-navy-900">Cost</h2>
             <dl className="space-y-1 text-sm">
               <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatMoney(order.subtotalMinor, order.currency)}</dd></div>
+              {order.saleSavingsMinor > 0 && (
+                <div className="flex justify-between text-atggreen-700"><dt>Sale savings (already in the prices)</dt><dd>{formatMoney(order.saleSavingsMinor, order.currency)}</dd></div>
+              )}
               {order.discountMinor > 0 && (
                 <div className="flex justify-between text-atggreen-700"><dt>Discount{order.couponCodeSnapshot ? ` (${order.couponCodeSnapshot})` : ""}</dt><dd>-{formatMoney(order.discountMinor, order.currency)}</dd></div>
               )}

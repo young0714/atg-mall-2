@@ -5,6 +5,8 @@ import { requireUser } from "@/lib/auth/current-user";
 import { walletService } from "@/lib/services/walletService";
 import { commissionService } from "@/lib/services/commissionService";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
+import { getActiveSale } from "@/lib/services/saleService";
+import { priceWithSale } from "@/lib/salePricing";
 import { fulfillmentTypeForSourcePlatform } from "@/lib/fulfillment";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -46,7 +48,12 @@ export async function addWalletUpsellAction(formData: FormData) {
     redirect("/account/orders?error=" + encodeURIComponent("That item is no longer available."));
   }
 
-  const unitPriceMinor = currencyConversionService.convert(product!.basePriceMinor, product!.baseCurrency, order!.currency);
+  // A live sale applies to the add-on too (same function the shop and checkout use).
+  const addOnPrice = priceWithSale(product!.basePriceMinor, product!, await getActiveSale());
+  const unitPriceMinor = currencyConversionService.convert(addOnPrice.saleMinor, product!.baseCurrency, order!.currency);
+  const listUnitPriceMinor = addOnPrice.onSale
+    ? currencyConversionService.convert(addOnPrice.listMinor, product!.baseCurrency, order!.currency)
+    : null;
 
   const debit = await walletService.debit({
     userId: user.id,
@@ -69,11 +76,12 @@ export async function addWalletUpsellAction(formData: FormData) {
         imageSnapshot: product!.images[0]?.url ?? null,
         quantity: 1,
         unitPriceMinor,
+        listUnitPriceMinor,
         currency: order!.currency,
         fulfillmentType: fulfillmentTypeForSourcePlatform(product!.sourcePlatform, product!.sellerId),
         // Same cost-basis convention as orderService.createOrderFromCart:
         // the catalog price itself, in the product's own base currency.
-        costBasisMinor: product!.basePriceMinor,
+        costBasisMinor: addOnPrice.saleMinor,
         costCurrency: product!.baseCurrency,
         sourcePlatformSnapshot: product!.sourcePlatform,
         sellerIdSnapshot: product!.sellerId,
@@ -81,7 +89,11 @@ export async function addWalletUpsellAction(formData: FormData) {
     }),
     db.order.update({
       where: { id: order!.id },
-      data: { totalMinor: { increment: unitPriceMinor }, subtotalMinor: { increment: unitPriceMinor } },
+      data: {
+        totalMinor: { increment: unitPriceMinor },
+        subtotalMinor: { increment: unitPriceMinor },
+        ...(listUnitPriceMinor !== null ? { saleSavingsMinor: { increment: listUnitPriceMinor - unitPriceMinor } } : {}),
+      },
     }),
     db.trackingEvent.create({
       data: { orderId: order!.id, status: order!.status, description: `Added ${product!.name} to the order (instant Wallet add-on).` },

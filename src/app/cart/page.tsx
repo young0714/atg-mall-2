@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { getCartId } from "@/lib/services/cartService";
 import { getDestination } from "@/lib/destination";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
+import { getActiveSale } from "@/lib/services/saleService";
+import { priceWithSale } from "@/lib/salePricing";
 import { formatMoney } from "@/lib/money";
 import { Container, Section } from "@/components/ui/Section";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
@@ -31,15 +33,22 @@ export default async function CartPage() {
   // products doesn't just add raw minor units from different currencies
   // together. Shown as a stable reference figure in USD; the real total in
   // the customer's own destination currency is calculated at checkout.
-  const itemsInUsd = items.map((item) => ({
-    item,
-    unitPriceUsdMinor: currencyConversionService.convert(
-      item.product.basePriceMinor + (item.variant?.priceDeltaMinor ?? 0),
-      item.product.baseCurrency,
-      "USD",
-    ),
-  }));
+  // While a sale is live, eligible items are priced at their sale price, with the normal price crossed out.
+  const sale = await getActiveSale();
+  const itemsInUsd = items.map((item) => {
+    const price = priceWithSale(item.product.basePriceMinor + (item.variant?.priceDeltaMinor ?? 0), item.product, sale);
+    return {
+      item,
+      unitPriceUsdMinor: currencyConversionService.convert(price.saleMinor, item.product.baseCurrency, "USD"),
+      listPriceUsdMinor: price.onSale ? currencyConversionService.convert(price.listMinor, item.product.baseCurrency, "USD") : null,
+      percentOff: price.onSale ? price.percentOff : 0,
+    };
+  });
   const subtotalMinor = itemsInUsd.reduce((sum, { item, unitPriceUsdMinor }) => sum + unitPriceUsdMinor * item.quantity, 0);
+  const savingsMinor = itemsInUsd.reduce(
+    (sum, { item, unitPriceUsdMinor, listPriceUsdMinor }) => sum + (listPriceUsdMinor !== null ? (listPriceUsdMinor - unitPriceUsdMinor) * item.quantity : 0),
+    0,
+  );
 
   return (
     <PullToRefresh>
@@ -55,7 +64,7 @@ export default async function CartPage() {
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
             <div className="space-y-4">
-              {itemsInUsd.map(({ item, unitPriceUsdMinor }) => {
+              {itemsInUsd.map(({ item, unitPriceUsdMinor, listPriceUsdMinor, percentOff }) => {
                 return (
                   <div key={item.id} className="card flex gap-4 p-4">
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-sand-100">
@@ -69,7 +78,14 @@ export default async function CartPage() {
                       </Link>
                       {item.variant && <p className="text-xs text-navy-400">{item.variant.name}</p>}
                       <p className="mt-1 text-sm font-medium text-navy-700">
-                        {formatMoney(unitPriceUsdMinor, "USD")} × {item.quantity}
+                        {listPriceUsdMinor !== null && (
+                          <>
+                            <s className="mr-1.5 font-normal text-navy-400">{formatMoney(listPriceUsdMinor, "USD")}</s>
+                            <span className="mr-1.5 text-red-700">{formatMoney(unitPriceUsdMinor, "USD")}</span>
+                            <span className="mr-1.5 rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-semibold text-red-700">{percentOff}% OFF</span>
+                          </>
+                        )}
+                        {listPriceUsdMinor === null && formatMoney(unitPriceUsdMinor, "USD")} × {item.quantity}
                       </p>
                       <div className="mt-auto flex items-center gap-3 pt-2">
                         <form action={updateCartItemAction} className="flex items-center gap-2">
@@ -102,6 +118,12 @@ export default async function CartPage() {
                 <span className="text-navy-500">Subtotal (product cost)</span>
                 <span className="font-medium text-navy-800">{formatMoney(subtotalMinor, "USD")}</span>
               </div>
+              {savingsMinor > 0 && (
+                <div className="mt-1 flex justify-between text-sm text-atggreen-700">
+                  <span>You save with the sale</span>
+                  <span className="font-medium">{formatMoney(savingsMinor, "USD")}</span>
+                </div>
+              )}
               <p className="mt-2 text-xs text-navy-400">
                 Shipping, handling fee and final total in {destination.currency} are calculated at checkout.
               </p>

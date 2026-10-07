@@ -14,6 +14,8 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { OFFER_COOKIE } from "@/lib/offerCookie";
 import { checkCouponForCart, couponLinesFromCart, getPublicOffer } from "@/lib/services/couponService";
+import { getActiveSale } from "@/lib/services/saleService";
+import { priceWithSale } from "@/lib/salePricing";
 import type { Metadata } from "next";
 import { CheckoutShippingSummary } from "@/components/checkout/CheckoutShippingSummary";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -49,13 +51,17 @@ export default async function CheckoutPage({
 
   // Convert each item from its OWN base currency (CNY, USD, etc.) — not
   // hardcoded as if every product were CNY-priced.
-  const subtotalMinor = cart.items.reduce(
-    (sum, i) =>
-      sum +
-      currencyConversionService.convert(i.product.basePriceMinor + (i.variant?.priceDeltaMinor ?? 0), i.product.baseCurrency, orderCurrency) *
-        i.quantity,
-    0,
-  );
+  // While a sale is live, eligible items are charged at their sale price. Same function as the shop,
+  // cart and order placement, so what the customer saw is what they pay.
+  const sale = await getActiveSale();
+  let subtotalMinor = 0;
+  let saleSavingsMinor = 0;
+  for (const i of cart.items) {
+    const price = priceWithSale(i.product.basePriceMinor + (i.variant?.priceDeltaMinor ?? 0), i.product, sale);
+    const unit = currencyConversionService.convert(price.saleMinor, i.product.baseCurrency, orderCurrency);
+    subtotalMinor += unit * i.quantity;
+    if (price.onSale) saleSavingsMinor += (currencyConversionService.convert(price.listMinor, i.product.baseCurrency, orderCurrency) - unit) * i.quantity;
+  }
   const serviceFeeMinor = Math.round(subtotalMinor * 0.01);
 
   // An offer the customer claimed from the top bar is applied for them; otherwise, if a live
@@ -64,7 +70,7 @@ export default async function CheckoutPage({
   let initialCoupon: { code: string; percentOff: number; discountMinor: number; eligibleMinor: number } | null = null;
   let suggestedOffer: { code: string; percentOff: number } | null = null;
   try {
-    const lines = couponLinesFromCart(cart.items, orderCurrency);
+    const lines = couponLinesFromCart(cart.items, orderCurrency, sale);
     const claimed = cookies().get(OFFER_COOKIE)?.value;
     if (claimed) {
       const r = await checkCouponForCart({ userId: user.id, code: claimed, lines });
@@ -217,6 +223,7 @@ export default async function CheckoutPage({
             <CheckoutShippingSummary
               groups={shippingGroupsForClient}
               subtotalMinor={subtotalMinor}
+              saleSavingsMinor={saleSavingsMinor}
               serviceFeeMinor={serviceFeeMinor}
               orderCurrency={orderCurrency}
               initialCoupon={initialCoupon}

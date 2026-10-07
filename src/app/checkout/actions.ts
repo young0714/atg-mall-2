@@ -8,6 +8,7 @@ import { groupCartForShipping } from "@/lib/services/shipping/cartShipmentGroupi
 import { isActiveDestinationIso, currencyForDestinationIso } from "@/lib/services/destinationCountryService";
 import { createCheckoutOtp, verifyCheckoutOtp } from "@/lib/services/otpService";
 import { checkCouponForCart, couponLinesFromCart } from "@/lib/services/couponService";
+import { getActiveSale } from "@/lib/services/saleService";
 import { CouponError } from "@/lib/couponRules";
 import type { Currency, PaymentMethod } from "@prisma/client";
 import { redirect } from "next/navigation";
@@ -70,7 +71,7 @@ export async function previewCouponAction(code: string): Promise<CouponPreview> 
   if (!cart || cart.items.length === 0) return { ok: false, error: "Your cart is empty." };
   const destinationIso = profile?.countryIso ?? addresses[0]?.countryIso ?? "NG";
   const currency = profile?.preferredCurrency ?? currencyForDestinationIso(destinationIso);
-  const check = await checkCouponForCart({ userId: user.id, code, lines: couponLinesFromCart(cart.items, currency) });
+  const check = await checkCouponForCart({ userId: user.id, code, lines: couponLinesFromCart(cart.items, currency, await getActiveSale()) });
   if (!check.ok) return { ok: false, error: check.error };
   return { ok: true, code: check.code, percentOff: check.percentOff, discountMinor: check.discountMinor, eligibleMinor: check.eligibleMinor };
 }
@@ -114,7 +115,7 @@ async function resolveCheckoutOrder(userId: string, payload: Record<string, stri
   let couponCode: string | undefined;
   const typedCode = String(payload.couponCode ?? "").trim();
   if (typedCode) {
-    const check = await checkCouponForCart({ userId, code: typedCode, lines: couponLinesFromCart(cart.items, currency) });
+    const check = await checkCouponForCart({ userId, code: typedCode, lines: couponLinesFromCart(cart.items, currency, await getActiveSale()) });
     if (!check.ok) return { ok: false, error: check.error };
     couponCode = check.code;
   }

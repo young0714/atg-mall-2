@@ -15,6 +15,8 @@ import { ProductSelectionProvider } from "@/components/shop/ProductSelection";
 import { RelatedProducts } from "@/components/shop/RelatedProducts";
 import { getRelatedProducts } from "@/lib/services/relatedProductsService";
 import { toProductCard } from "@/lib/product-view";
+import { getActiveSale } from "@/lib/services/saleService";
+import { saleEligible } from "@/lib/salePricing";
 import { Container, Section } from "@/components/ui/Section";
 import { PullToRefresh } from "@/components/ui/PullToRefresh";
 import { formatDate } from "@/lib/utils";
@@ -61,6 +63,10 @@ export default async function ProductPage({
   });
 
   if (!product || !product.isActive) notFound();
+
+  // A live sale applies to this product unless it is excluded; the panel shows the crossed-out normal price.
+  const activeSale = await getActiveSale();
+  const salePercent = activeSale && saleEligible(product) ? activeSale.percentOff : null;
 
   // Similar products for the "You may also like" row. A problem here must never break the product page.
   const relatedCards = await getRelatedProducts(product, 8)
@@ -130,6 +136,7 @@ export default async function ProductPage({
                 moq={product.moq}
                 baseCurrency={product.baseCurrency}
                 basePriceMinor={product.basePriceMinor}
+                salePercent={salePercent}
                 imageUrl={product.images[0]?.url ?? null}
                 productName={product.name}
                 affiliateUrl={product.sourcePlatform === "AFFILIATE" ? product.affiliateUrl : null}

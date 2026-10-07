@@ -138,6 +138,9 @@ export default async function OrderDetailPage({
             <h2 className="mb-3 font-semibold text-navy-900">Cost Breakdown</h2>
             <dl className="space-y-1.5 text-sm">
               <Row label="Subtotal" value={formatMoney(order.subtotalMinor, order.currency)} />
+              {order.saleSavingsMinor > 0 && (
+                <Row label="Sale savings (already in the prices above)" value={formatMoney(order.saleSavingsMinor, order.currency)} />
+              )}
               {order.discountMinor > 0 && (
                 <Row label={`Discount${order.couponCodeSnapshot ? ` (${order.couponCodeSnapshot})` : ""}`} value={`-${formatMoney(order.discountMinor, order.currency)}`} />
               )}

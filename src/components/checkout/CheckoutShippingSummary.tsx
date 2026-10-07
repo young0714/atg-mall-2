@@ -31,6 +31,7 @@ type ShipmentGroup = {
 export function CheckoutShippingSummary({
   groups,
   subtotalMinor,
+  saleSavingsMinor = 0,
   serviceFeeMinor,
   orderCurrency,
   initialCoupon = null,
@@ -41,6 +42,7 @@ export function CheckoutShippingSummary({
 }: {
   groups: ShipmentGroup[];
   subtotalMinor: number;
+  saleSavingsMinor?: number;
   serviceFeeMinor: number;
   orderCurrency: Currency;
   initialCoupon?: { code: string; percentOff: number; discountMinor: number; eligibleMinor: number } | null;
@@ -163,6 +165,9 @@ export function CheckoutShippingSummary({
         <h2 className="mb-3 font-semibold text-navy-900">Order Summary</h2>
         <dl className="space-y-1.5 text-sm">
           <div className="flex justify-between"><dt className="text-navy-500">Subtotal</dt><dd>{formatMoney(subtotalMinor, orderCurrency)}</dd></div>
+          {saleSavingsMinor > 0 && (
+            <div className="flex justify-between text-xs text-atggreen-700"><dt>Includes sale savings of</dt><dd>{formatMoney(saleSavingsMinor, orderCurrency)}</dd></div>
+          )}
           {coupon && (
             <div className="flex justify-between text-atggreen-700">
               <dt>

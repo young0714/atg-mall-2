@@ -2,12 +2,14 @@ import "server-only";
 import { db } from "@/lib/db";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
 import type { Currency } from "@prisma/client";
+import { priceWithSale, type SaleRule } from "@/lib/salePricing";
 import { evaluateCoupon, isLineEligible, normaliseCode, pickPublicOffer, type CouponRule, type PublicOffer } from "@/lib/couponRules";
 
 export interface CartLineForCoupon {
   product: { noCoupons: boolean; sellerId: string | null; sourcePlatform: string };
-  unitPriceMinor: number; // in the ORDER currency
+  unitPriceMinor: number; // in the ORDER currency (the sale price when the line is on sale)
   quantity: number;
+  onSale: boolean; // lines already on sale never get a coupon on top
 }
 
 type CartItemForCoupon = {
@@ -17,12 +19,16 @@ type CartItemForCoupon = {
 };
 
 /** Cart items priced exactly as checkout and order placement price them, in the order's currency. */
-export function couponLinesFromCart(items: CartItemForCoupon[], currency: Currency): CartLineForCoupon[] {
-  return items.map((i) => ({
-    product: { noCoupons: i.product.noCoupons, sellerId: i.product.sellerId, sourcePlatform: i.product.sourcePlatform },
-    unitPriceMinor: currencyConversionService.convert(i.product.basePriceMinor + (i.variant?.priceDeltaMinor ?? 0), i.product.baseCurrency, currency),
-    quantity: i.quantity,
-  }));
+export function couponLinesFromCart(items: CartItemForCoupon[], currency: Currency, sale: SaleRule | null): CartLineForCoupon[] {
+  return items.map((i) => {
+    const price = priceWithSale(i.product.basePriceMinor + (i.variant?.priceDeltaMinor ?? 0), i.product, sale);
+    return {
+      product: { noCoupons: i.product.noCoupons, sellerId: i.product.sellerId, sourcePlatform: i.product.sourcePlatform },
+      unitPriceMinor: currencyConversionService.convert(price.saleMinor, i.product.baseCurrency, currency),
+      quantity: i.quantity,
+      onSale: price.onSale,
+    };
+  });
 }
 
 export type CouponCheck =
@@ -48,7 +54,7 @@ export async function checkCouponForCart(params: { userId: string; code: string;
     : [0, null];
 
   const eligibleSubtotalMinor = params.lines
-    .filter((l) => isLineEligible(l.product))
+    .filter((l) => isLineEligible(l.product) && !l.onSale)
     .reduce((sum, l) => sum + l.unitPriceMinor * l.quantity, 0);
 
   const rule: CouponRule | null = coupon

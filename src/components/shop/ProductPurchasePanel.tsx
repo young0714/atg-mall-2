@@ -7,6 +7,7 @@ import { addToCartAction, requestSourcingForProductAction } from "@/app/product/
 import { Select } from "@/components/ui/Form";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { buildPicker, type PickerVariant } from "@/lib/variantOptions";
+import { salePriceMinor } from "@/lib/salePricing";
 import { useProductSelection } from "./ProductSelection";
 
 type Variant = PickerVariant;
@@ -22,10 +23,12 @@ export function ProductPurchasePanel({
   productName,
   affiliateUrl,
   affiliateProvider,
+  salePercent = null,
 }: {
   productId: string;
   slug: string;
   variants: Variant[];
+  salePercent?: number | null;
   moq: number;
   baseCurrency: Currency;
   basePriceMinor: number;
@@ -79,7 +82,13 @@ export function ProductPurchasePanel({
       ? undefined
       : options.find(colour, size)
     : variants.find((v) => v.id === variantId);
-  const unitPrice = basePriceMinor + (selectedVariant?.priceDeltaMinor ?? 0);
+  // While a sale is live (salePercent is null for excluded products), the chosen option's normal price
+  // is shown crossed out beside its sale price. Same function the cart, checkout and orders use.
+  const listPrice = basePriceMinor + (selectedVariant?.priceDeltaMinor ?? 0);
+  const salePrice = salePercent ? salePriceMinor(listPrice, salePercent) : listPrice;
+  const onSale = !!salePercent && salePrice < listPrice;
+  const unitPrice = onSale ? salePrice : listPrice;
+  const savedPercent = onSale ? Math.round(((listPrice - salePrice) / listPrice) * 100) : 0;
   const formVariantId = options ? (selectedVariant?.id ?? "") : variantId;
   const soldOut = !!selectedVariant && selectedVariant.stock <= 0;
 
@@ -131,11 +140,20 @@ export function ProductPurchasePanel({
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-xs uppercase tracking-wide text-navy-400">Price</p>
+        <p className="flex items-center gap-2 text-xs uppercase tracking-wide text-navy-400">
+          Price
+          {onSale && <span className="rounded bg-red-50 px-2 py-0.5 text-xs font-semibold normal-case text-red-700">{savedPercent}% OFF</span>}
+        </p>
         <p className="text-2xl font-display font-bold text-navy-900">
-          {formatMoney(unitPrice, baseCurrency)}{" "}
+          {onSale && (
+            <s className="mr-2 text-base font-normal text-navy-400" aria-label={`Normal price ${formatMoney(listPrice, baseCurrency)}`}>
+              {formatMoney(listPrice, baseCurrency)}
+            </s>
+          )}
+          <span className={onSale ? "text-red-700" : undefined}>{formatMoney(unitPrice, baseCurrency)}</span>{" "}
           <span className="text-sm font-normal text-navy-400">/ unit</span>
         </p>
+        {onSale && <p className="mt-1 text-sm font-medium text-atggreen-700">You save {formatMoney(listPrice - salePrice, baseCurrency)}</p>}
       </div>
 
       {options ? (

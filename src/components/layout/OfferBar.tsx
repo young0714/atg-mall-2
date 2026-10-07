@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { OFFER_COOKIE } from "@/lib/offerCookie";
+import { remaining } from "@/lib/countdown";
 
 interface Offer {
   code: string;
@@ -9,17 +10,6 @@ interface Offer {
   headline: string;
   endsAtIso: string;
   showCountdown: boolean;
-}
-
-function remaining(endsAtIso: string): { text: string; over: boolean } {
-  const s = Math.floor((new Date(endsAtIso).getTime() - Date.now()) / 1000);
-  if (s <= 0) return { text: "", over: true };
-  const d = Math.floor(s / 86400);
-  const h = Math.floor((s % 86400) / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return { text: `${d > 0 ? `${d}d ` : ""}${pad(h)}h ${pad(m)}m ${pad(sec)}s`, over: false };
 }
 
 /**

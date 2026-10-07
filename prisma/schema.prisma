@@ -502,6 +502,8 @@ model Order {
   // Coupon discount taken off the items (never shipping). subtotalMinor stays the
   // full item price; totalMinor already has this subtracted.
   discountMinor         Int               @default(0)
+  // What the customer saved through the site-wide sale (items are already charged at sale prices).
+  saleSavingsMinor      Int               @default(0)
   couponId              String?
   coupon                Coupon?           @relation(fields: [couponId], references: [id])
   couponCodeSnapshot    String?
@@ -540,18 +542,20 @@ enum FulfillmentType {
 }
 
 model OrderItem {
-  id             String          @id @default(cuid())
-  orderId        String
-  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId      String?
-  product        Product?        @relation(fields: [productId], references: [id])
-  variantId      String?
-  variant        ProductVariant? @relation(fields: [variantId], references: [id])
-  nameSnapshot   String
-  imageSnapshot  String?
-  quantity       Int
-  unitPriceMinor Int
-  currency       Currency
+  id                 String          @id @default(cuid())
+  orderId            String
+  order              Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId          String?
+  product            Product?        @relation(fields: [productId], references: [id])
+  variantId          String?
+  variant            ProductVariant? @relation(fields: [variantId], references: [id])
+  nameSnapshot       String
+  imageSnapshot      String?
+  quantity           Int
+  unitPriceMinor     Int
+  // The normal price per unit when a sale price was charged (unitPriceMinor is what was paid). Null = no sale.
+  listUnitPriceMinor Int?
+  currency           Currency
 
   // Fulfillment-path snapshot, taken at order-creation time so it stays
   // accurate even if the product's own source/seller changes later.
@@ -1633,4 +1637,22 @@ model CouponRedemption {
   // One use per customer, enforced by the database itself.
   @@unique([couponId, userId])
   @@index([couponId])
+}
+
+// ---------------------------------------------------------------------------
+// Site-wide sale: one sale setting. While it is live, every eligible product
+// shows its normal price crossed out beside the sale price and is charged at
+// the sale price. Products ticked "No coupons or sale discounts" are excluded.
+// ---------------------------------------------------------------------------
+
+model SiteSale {
+  id            String   @id @default(cuid())
+  percentOff    Int
+  startsAt      DateTime
+  endsAt        DateTime // inclusive
+  isActive      Boolean  @default(true)
+  headline      String?
+  showCountdown Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

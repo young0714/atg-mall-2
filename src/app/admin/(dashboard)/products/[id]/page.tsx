@@ -139,8 +139,8 @@ export default async function AdminProductDetailPage({
           <label className="flex items-start gap-2 text-sm">
             <input type="checkbox" name="noCoupons" value="true" defaultChecked={product.noCoupons} className="mt-1" />
             <span>
-              No coupons on this product
-              <span className="block text-xs text-navy-400">Coupon codes never discount it (use for thin-margin items).</span>
+              No coupons or sale discounts
+              <span className="block text-xs text-navy-400">Coupon codes and the site-wide sale never discount it (use for thin-margin items).</span>
             </span>
           </label>
           <Field label="Description" htmlFor="description" required>

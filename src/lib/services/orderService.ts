@@ -16,6 +16,8 @@ import { currencyConversionService } from "./currencyConversionService";
 import { commissionService } from "./commissionService";
 import { sumMinor } from "@/lib/money";
 import { checkCouponForCart } from "./couponService";
+import { getActiveSale } from "./saleService";
+import { priceWithSale } from "@/lib/salePricing";
 import { CouponError } from "@/lib/couponRules";
 import { fulfillmentTypeForSourcePlatform } from "@/lib/fulfillment";
 
@@ -91,15 +93,22 @@ class DefaultOrderService implements OrderService {
     // Cart items are priced in each product's supplier (base) currency —
     // almost always CNY. Convert every line into the order's currency before
     // summing, so subtotal/shipping/fees/total are never a mix of currencies.
+    // While a site-wide sale is live, eligible items are charged at the sale price (the same function the
+    // shop, cart and checkout use). The normal price and the saving are kept on the order.
+    const sale = await getActiveSale();
     const itemsInOrderCurrency = cart.items.map((item) => {
-      const priceMinorInBaseCurrency = item.product.basePriceMinor + (item.variant?.priceDeltaMinor ?? 0);
-      const unitPriceMinor = currencyConversionService.convert(
-        priceMinorInBaseCurrency,
-        item.product.baseCurrency,
-        params.currency,
-      );
-      return { item, unitPriceMinor, priceMinorInBaseCurrency };
+      const price = priceWithSale(item.product.basePriceMinor + (item.variant?.priceDeltaMinor ?? 0), item.product, sale);
+      const priceMinorInBaseCurrency = price.saleMinor;
+      const unitPriceMinor = currencyConversionService.convert(price.saleMinor, item.product.baseCurrency, params.currency);
+      const listUnitPriceMinor = price.onSale
+        ? currencyConversionService.convert(price.listMinor, item.product.baseCurrency, params.currency)
+        : null;
+      return { item, unitPriceMinor, priceMinorInBaseCurrency, listUnitPriceMinor, onSale: price.onSale };
     });
+    const saleSavingsMinor = itemsInOrderCurrency.reduce(
+      (sum, l) => sum + (l.listUnitPriceMinor !== null ? (l.listUnitPriceMinor - l.unitPriceMinor) * l.item.quantity : 0),
+      0,
+    );
 
     const subtotalMinor = sumMinor(
       ...itemsInOrderCurrency.map(({ item, unitPriceMinor }) => unitPriceMinor * item.quantity),
@@ -116,10 +125,11 @@ class DefaultOrderService implements OrderService {
       const check = await checkCouponForCart({
         userId: params.userId,
         code: params.couponCode,
-        lines: itemsInOrderCurrency.map(({ item, unitPriceMinor }) => ({
+        lines: itemsInOrderCurrency.map(({ item, unitPriceMinor, onSale }) => ({
           product: { noCoupons: item.product.noCoupons, sellerId: item.product.sellerId, sourcePlatform: item.product.sourcePlatform },
           unitPriceMinor,
           quantity: item.quantity,
+          onSale,
         })),
       });
       if (!check.ok) throw new CouponError(check.error);
@@ -151,6 +161,7 @@ class DefaultOrderService implements OrderService {
           currency: params.currency,
           subtotalMinor,
           discountMinor,
+          saleSavingsMinor,
           couponId: coupon?.couponId ?? null,
           couponCodeSnapshot: coupon?.code ?? null,
           serviceFeeMinor,
@@ -178,9 +189,9 @@ class DefaultOrderService implements OrderService {
       }
 
       const itemByProductVariant = new Map(
-        itemsInOrderCurrency.map(({ item, unitPriceMinor, priceMinorInBaseCurrency }) => [
+        itemsInOrderCurrency.map(({ item, unitPriceMinor, priceMinorInBaseCurrency, listUnitPriceMinor }) => [
           `${item.productId}_${item.variantId ?? ""}`,
-          { item, unitPriceMinor, priceMinorInBaseCurrency },
+          { item, unitPriceMinor, priceMinorInBaseCurrency, listUnitPriceMinor },
         ]),
       );
 
@@ -213,7 +224,7 @@ class DefaultOrderService implements OrderService {
         for (const line of shipment.lines) {
           const matched = itemByProductVariant.get(`${line.productId}_${line.variantId ?? ""}`);
           if (!matched) continue; // defensive — every line should have a matching cart item
-          const { item, unitPriceMinor, priceMinorInBaseCurrency } = matched;
+          const { item, unitPriceMinor, priceMinorInBaseCurrency, listUnitPriceMinor } = matched;
           await tx.orderItem.create({
             data: {
               orderId: order.id,
@@ -226,6 +237,7 @@ class DefaultOrderService implements OrderService {
               imageSnapshot: undefined,
               quantity: item.quantity,
               unitPriceMinor,
+              listUnitPriceMinor,
               currency: params.currency,
               fulfillmentType: fulfillmentTypeForSourcePlatform(item.product.sourcePlatform, item.product.sellerId),
               // The variant-adjusted price *is* its cost basis for ATG's own

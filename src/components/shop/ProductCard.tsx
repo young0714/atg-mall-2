@@ -16,6 +16,9 @@ export interface ProductCardData {
   isAffiliate: boolean;
   moq: number;
   priceMinor: number;
+  // Set only while a sale is live for this product: the normal price (crossed out) and the real saving.
+  listPriceMinor?: number;
+  salePercent?: number;
   currency: Currency;
 }
 
@@ -35,6 +38,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <div className="flex h-full w-full items-center justify-center text-navy-200">No image</div>
         )}
         <div className="absolute left-2 top-2 flex flex-col gap-1">
+          {product.salePercent ? <Badge tone="red">{product.salePercent}% OFF</Badge> : null}
           {product.isFeatured && <Badge tone="gold">Trending</Badge>}
           {product.isWholesale && <Badge tone="blue">Wholesale</Badge>}
           {product.isAffiliate && <Badge tone="neutral">Partner</Badge>}
@@ -47,8 +51,13 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <p className="text-[11px] uppercase tracking-wide text-navy-400">
             {product.isAffiliate ? "Price at partner" : "Price"}
           </p>
-          <p className="text-lg font-display font-bold text-navy-900">
-            {formatMoney(product.priceMinor, product.currency)}
+          <p className="flex flex-wrap items-baseline gap-x-2 text-lg font-display font-bold text-navy-900">
+            {product.listPriceMinor ? (
+              <s className="text-sm font-normal text-navy-400" aria-label={`Normal price ${formatMoney(product.listPriceMinor, product.currency)}`}>
+                {formatMoney(product.listPriceMinor, product.currency)}
+              </s>
+            ) : null}
+            <span className={product.listPriceMinor ? "text-red-700" : undefined}>{formatMoney(product.priceMinor, product.currency)}</span>
           </p>
           {product.moq > 1 && <p className="text-[11px] text-navy-400">MOQ: {product.moq} pcs</p>}
         </div>

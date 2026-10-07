@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { getDestination } from "@/lib/destination";
 import { toProductCard } from "@/lib/product-view";
 import { currencyConversionService } from "@/lib/services/currencyConversionService";
+import { getActiveSale } from "@/lib/services/saleService";
+import { priceWithSale } from "@/lib/salePricing";
 import { StatusBadge } from "@/components/ui/Badge";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { formatMoney } from "@/lib/money";
@@ -91,7 +93,11 @@ export default async function OrdersPage({
           name: candidate.name,
           slug: candidate.slug,
           imageUrl: candidate.images[0]?.url ?? null,
-          priceMinor: currencyConversionService.convert(candidate.basePriceMinor, candidate.baseCurrency, justPlacedOrder.currency),
+          priceMinor: currencyConversionService.convert(
+            priceWithSale(candidate.basePriceMinor, candidate, await getActiveSale()).saleMinor,
+            candidate.baseCurrency,
+            justPlacedOrder.currency,
+          ),
           currency: justPlacedOrder.currency,
         };
       }
