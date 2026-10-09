@@ -193,13 +193,18 @@ export async function removeImportDraftAction(draftId: string): Promise<void> {
 }
 
 export interface ImportBatchResult {
+  hidden: boolean;
   succeeded: { draftId: string; productId: string; name: string }[];
   failed: { draftId: string; name: string; error: string }[];
 }
 
-export async function importBatchAction(drafts: ImportDraftInput[]): Promise<ImportBatchResult> {
+export async function importBatchAction(
+  drafts: ImportDraftInput[],
+  options: { hidden?: boolean } = {},
+): Promise<ImportBatchResult> {
   const staff = await requirePermission(PERMISSIONS.MANAGE_PRODUCTS);
-  const result: ImportBatchResult = { succeeded: [], failed: [] };
+  const hidden = options.hidden === true;
+  const result: ImportBatchResult = { hidden, succeeded: [], failed: [] };
 
   for (const draft of drafts) {
     try {
@@ -256,6 +261,7 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
           baseCurrency: "USD",
           weightGrams: draft.weightGrams,
           isFeatured: draft.isFeatured,
+          isActive: !hidden,
           sourcePlatform: SOURCE_PLATFORM_BY_IMPORT_SOURCE[draft.source],
           sourceUrl: fresh.sourceUrl,
           sourceProductId: fresh.externalId,
@@ -277,7 +283,7 @@ export async function importBatchAction(drafts: ImportDraftInput[]): Promise<Imp
         },
       });
 
-      let auditSummary = `Imported "${product.name}" from ${SOURCE_DISPLAY_NAME[draft.source]} (batch import)`;
+      let auditSummary = `Imported "${product.name}" from ${SOURCE_DISPLAY_NAME[draft.source]} (batch import${hidden ? ", hidden draft" : ""})`;
       if (draft.source === "CJ") {
         const addedToCjMyProducts = await cjDropshippingService.addToMyProduct(draft.externalId);
         auditSummary += addedToCjMyProducts ? " and added to CJ My Products" : " (could not register in CJ My Products)";

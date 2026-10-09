@@ -121,6 +121,9 @@ export function ProductImportWorkspace({
   const [batch, setBatch] = useState<Draft[]>(() => initialBatch.map(draftFromPersisted));
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportBatchResult | null>(null);
+  // On by default: imported products start hidden so they can be priced and
+  // checked in /admin/products before customers can see or buy them.
+  const [importHidden, setImportHidden] = useState(true);
 
   const defaultCategoryId = categories[0]?.id ?? "";
 
@@ -232,7 +235,7 @@ export function ProductImportWorkspace({
           removedVariantExternalIds: Array.from(d.removedVariantIds),
           variantPrices: Object.fromEntries(Object.entries(d.variantPrices).map(([id, text]) => [id, Number(text)])),
         }));
-      const result = await importBatchAction(inputs);
+      const result = await importBatchAction(inputs, { hidden: importHidden });
       setImportResult(result);
       const succeededIds = new Set(result.succeeded.map((s) => s.draftId));
       setBatch((prev) => prev.filter((d) => !(d.draftId && succeededIds.has(d.draftId))));
@@ -320,7 +323,8 @@ export function ProductImportWorkspace({
           <div className="space-y-2">
             {importResult.succeeded.length > 0 && (
               <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
-                Imported {importResult.succeeded.length} product{importResult.succeeded.length === 1 ? "" : "s"}:{" "}
+                Imported {importResult.succeeded.length} product{importResult.succeeded.length === 1 ? "" : "s"}
+                {importResult.hidden ? " as hidden drafts (switch them on in Products when ready)" : ""}:{" "}
                 {importResult.succeeded.map((s) => s.name).join(", ")}
               </div>
             )}
@@ -368,6 +372,18 @@ export function ProductImportWorkspace({
             ))}
           </ul>
         )}
+        <label className="flex items-start gap-2 text-sm text-navy-700">
+          <input
+            type="checkbox"
+            checked={importHidden}
+            onChange={(e) => setImportHidden(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            Import as hidden drafts
+            <span className="block text-xs text-navy-400">Customers can&apos;t see them until you switch them on in Products.</span>
+          </span>
+        </label>
         <button
           onClick={handleImportAll}
           disabled={batch.length === 0 || importing}
